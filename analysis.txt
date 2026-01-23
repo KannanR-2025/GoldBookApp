@@ -1,0 +1,26 @@
+Analyzing goldbook_desktop...                                   
+
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/parties/screens/parties_screen.dart:572:17 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/parties/screens/parties_screen.dart:573:17 • deprecated_member_use
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/parties/screens/parties_screen.dart:581:17 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/parties/screens/parties_screen.dart:582:17 • deprecated_member_use
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/parties/screens/parties_screen.dart:957:17 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/parties/screens/parties_screen.dart:958:17 • deprecated_member_use
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/parties/screens/parties_screen.dart:964:17 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/parties/screens/parties_screen.dart:965:17 • deprecated_member_use
+   info • Unnecessary use of multiple underscores • lib/features/reports/cash_book_screen.dart:242:49 • unnecessary_underscores
+   info • Statements in an if should be enclosed in a block • lib/features/transactions/screens/metal_issue_entry_screen.dart:417:41 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/transactions/screens/metal_receipt_entry_screen.dart:420:41 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/transactions/screens/payment_entry_screen.dart:416:41 • curly_braces_in_flow_control_structures
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/payment_entry_screen.dart:847:19 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/payment_entry_screen.dart:1024:19 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/features/transactions/screens/purchase_entry_screen.dart:417:41 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/transactions/screens/receipt_entry_screen.dart:416:41 • curly_braces_in_flow_control_structures
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/receipt_entry_screen.dart:847:19 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/receipt_entry_screen.dart:1024:19 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/features/transactions/screens/sale_entry_screen.dart:414:41 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/transactions/screens/transaction_entry_screen.dart:433:41 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/transactions/screens/transaction_entry_screen_backup.dart:433:41 • curly_braces_in_flow_control_structures
+warning • Unused import: 'package:goldbook_desktop/core/database/database.dart' • lib/main.dart:6:8 • unused_import
+warning • Unused import: 'package:goldbook_desktop/core/utils/seeder_service.dart' • lib/main.dart:7:8 • unused_import
+
