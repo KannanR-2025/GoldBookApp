@@ -14,6 +14,8 @@ import 'package:goldbook_desktop/features/reports/day_book_screen.dart';
 import 'package:goldbook_desktop/features/reports/cash_book_screen.dart';
 import 'package:goldbook_desktop/features/transactions/screens/metal_issue_entry_screen.dart';
 import 'package:goldbook_desktop/features/transactions/screens/metal_receipt_entry_screen.dart';
+import 'package:goldbook_desktop/features/transactions/screens/stock_transfer_entry_screen.dart';
+import 'package:goldbook_desktop/features/transactions/screens/inventory_adjustment_entry_screen.dart';
 import 'package:goldbook_desktop/features/settings/screens/settings_screen.dart';
 import 'package:goldbook_desktop/features/reports/financial_reports_screen.dart';
 
@@ -208,6 +210,49 @@ final router = GoRouter(
           builder: (context, state) => MetalReceiptEntryScreen(
             transactionId: int.parse(state.pathParameters['id']!),
           ),
+        ),
+        // Stock Transfer
+        GoRoute(
+          path: '/stock-transfer',
+          builder: (context, state) =>
+              const TransactionsListScreen(typeFilter: 'Stock Transfer'),
+          routes: [
+            GoRoute(
+              path: 'new',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) => const StockTransferEntryScreen(),
+            ),
+            GoRoute(
+              path: 'edit/:id',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                final id = int.tryParse(state.pathParameters['id'] ?? '');
+                return StockTransferEntryScreen(transactionId: id);
+              },
+            ),
+          ],
+        ),
+        // Inventory Adjustment
+        GoRoute(
+          path: '/inventory-adjustment',
+          builder: (context, state) =>
+              const TransactionsListScreen(typeFilter: 'Inventory Adjustment'),
+          routes: [
+            GoRoute(
+              path: 'new',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) =>
+                  const InventoryAdjustmentEntryScreen(),
+            ),
+            GoRoute(
+              path: 'edit/:id',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                final id = int.tryParse(state.pathParameters['id'] ?? '');
+                return InventoryAdjustmentEntryScreen(transactionId: id);
+              },
+            ),
+          ],
         ),
         // Accountant module routes
         GoRoute(

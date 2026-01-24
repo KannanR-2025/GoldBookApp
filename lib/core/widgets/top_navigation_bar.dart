@@ -60,113 +60,166 @@ class TopNavigationBar extends StatelessWidget {
 
           // Navigation Items
           Expanded(
-            child: Row(
-              children: [
-                _NavItem(
-                  label: 'Dashboard',
-                  path: '/dashboard',
-                  currentPath: currentPath,
-                  onTap: () => context.go('/dashboard'),
-                ),
-                _NavItem(
-                  label: 'Customers',
-                  path: '/customers',
-                  currentPath: currentPath,
-                  onTap: () => context.go('/customers'),
-                ),
-                _NavItem(
-                  label: 'Suppliers',
-                  path: '/suppliers',
-                  currentPath: currentPath,
-                  onTap: () => context.go('/suppliers'),
-                ),
-                _NavDropdown(
-                  label: 'Items',
-                  currentPath: currentPath,
-                  basePath: '/items',
-                  items: [
-                    _DropdownItem(
-                      label: 'Item List',
-                      path: '/items',
-                      onTap: () => context.go('/items'),
-                    ),
-                    // Future items
-                    // _DropdownItem(
-                    //   label: 'Tags',
-                    //   path: '/items/tags',
-                    //   onTap: () => context.go('/items/tags'),
-                    // ),
-                  ],
-                ),
-                _NavDropdown(
-                  label: 'Transactions',
-                  currentPath: currentPath,
-                  basePath: '/sales,/purchases,/receipts,/payments',
-                  items: [
-                    _DropdownItem(
-                      label: 'Sales',
-                      path: '/sales',
-                      onTap: () => context.go('/sales'),
-                    ),
-                    _DropdownItem(
-                      label: 'Purchase',
-                      path: '/purchases',
-                      onTap: () => context.go('/purchases'),
-                    ),
-                    _DropdownItem(
-                      label: 'Receipt/Payment',
-                      path: '/receipts',
-                      onTap: () => context.go('/receipts'),
-                    ),
-                    _DropdownItem(
-                      label: 'Metal Issue',
-                      path: '/metal-issue/new',
-                      onTap: () => context.go('/metal-issue/new'),
-                    ),
-                    _DropdownItem(
-                      label: 'Metal Receipt',
-                      path: '/metal-receipt/new',
-                      onTap: () => context.go('/metal-receipt/new'),
-                    ),
-                    // Future items
-                    // _DropdownItem(
-                    //   label: 'Metal Issue/Receipt',
-                    //   path: '/metal-transactions',
-                    //   onTap: () => context.go('/metal-transactions'),
-                    // ),
-                  ],
-                ),
-                _NavDropdown(
-                  label: 'Accountant',
-                  currentPath: currentPath,
-                  basePath: '/day-book,/cash-book',
-                  items: [
-                    _DropdownItem(
-                      label: 'Day Book',
-                      path: '/day-book',
-                      onTap: () => context.go('/day-book'),
-                    ),
-                    _DropdownItem(
-                      label: 'Cash Book',
-                      path: '/cash-book',
-                      onTap: () => context.go('/cash-book'),
-                    ),
-                  ],
-                ),
-                _NavDropdown(
-                  label: 'Reports',
-                  currentPath: currentPath,
-                  basePath: '/reports',
-                  items: [
-                    _DropdownItem(
-                      label: 'All Reports',
-                      path: '/reports',
-                      onTap: () => context.go('/reports'),
-                    ),
-                    // Future detailed reports
-                  ],
-                ),
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _NavItem(
+                    label: 'Dashboard',
+                    path: '/dashboard',
+                    currentPath: currentPath,
+                    onTap: () => context.go('/dashboard'),
+                  ),
+                  _NavItem(
+                    label: 'Customers',
+                    path: '/customers',
+                    currentPath: currentPath,
+                    onTap: () => context.go('/customers'),
+                  ),
+                  _NavItem(
+                    label: 'Suppliers',
+                    path: '/suppliers',
+                    currentPath: currentPath,
+                    onTap: () => context.go('/suppliers'),
+                  ),
+                  _NavDropdown(
+                    label: 'Items',
+                    currentPath: currentPath,
+                    basePath: '/items',
+                    items: [
+                      _DropdownItem(
+                        label: 'Item List',
+                        path: '/items',
+                        onTap: () => context.go('/items'),
+                      ),
+                      _DropdownItem(
+                        label: 'Stock Transfer',
+                        path: '/stock-transfer',
+                        onTap: () => context.go('/stock-transfer'),
+                      ),
+                      _DropdownItem(
+                        label: 'Inventory Adjustment',
+                        path: '/inventory-adjustment',
+                        onTap: () => context.go('/inventory-adjustment'),
+                      ),
+                      // Future items
+                      // _DropdownItem(
+                      //   label: 'Tags',
+                      //   path: '/items/tags',
+                      //   onTap: () => context.go('/items/tags'),
+                      // ),
+                    ],
+                  ),
+                  _MegaNavDropdown(
+                    label: 'Transactions',
+                    currentPath: currentPath,
+                    basePath:
+                        '/sales,/purchases,/receipts,/payments,/metal-issue,/metal-receipt,/approval',
+                    columns: [
+                      _MegaColumn(
+                        header: 'Sales',
+                        items: [
+                          _MegaItem(
+                            label: 'Sales',
+                            icon: Icons.shopping_cart_outlined,
+                            onTap: () => context.go('/sales'),
+                          ),
+                          _MegaItem(
+                            label: 'Sales Return',
+                            icon: Icons.refresh,
+                            onTap: () => _showCoomingSoon(context),
+                          ), // Placeholder
+                          _MegaItem(
+                            label: 'Receipt',
+                            icon: Icons.download,
+                            onTap: () => context.go('/receipts'),
+                          ), // Reused /receipts for now
+                          _MegaItem(
+                            label: 'Approval Issue',
+                            icon: Icons.assignment_turned_in_outlined,
+                            onTap: () => _showCoomingSoon(context),
+                          ), // Placeholder
+                        ],
+                      ),
+                      _MegaColumn(
+                        header: 'Purchase',
+                        items: [
+                          _MegaItem(
+                            label: 'Purchase',
+                            icon: Icons.shopping_bag_outlined,
+                            onTap: () => context.go('/purchases'),
+                          ),
+                          _MegaItem(
+                            label: 'Purchase Return',
+                            icon: Icons.refresh,
+                            onTap: () => _showCoomingSoon(context),
+                          ), // Placeholder
+                          _MegaItem(
+                            label: 'Payment',
+                            icon: Icons.upload,
+                            onTap: () => context.go('/payments'),
+                          ), // Reused /payments (mapped to receipts)?? No, usually separate logic, but routing to /receipts/new with type 'Payment'
+                          _MegaItem(
+                            label: 'Approval Receive',
+                            icon: Icons.assignment_return_outlined,
+                            onTap: () => _showCoomingSoon(context),
+                          ), // Placeholder
+                        ],
+                      ),
+                      _MegaColumn(
+                        header: 'Other',
+                        items: [
+                          _MegaItem(
+                            label: 'Rate-Cut',
+                            icon: Icons.currency_rupee,
+                            onTap: () => _showCoomingSoon(context),
+                          ),
+                          _MegaItem(
+                            label: 'Daily Cash',
+                            icon: Icons.savings_outlined,
+                            onTap: () => context.go('/cash-book'),
+                          ), // Mapping to Cash Book
+                          _MegaItem(
+                            label: 'Metal In/Out',
+                            icon: Icons.swap_vert,
+                            onTap: () => context.go('/metal-issue/new'),
+                          ), // Mapping to Metal Issue for now
+                        ],
+                      ),
+                    ],
+                  ),
+                  _NavDropdown(
+                    label: 'Accountant',
+                    currentPath: currentPath,
+                    basePath: '/day-book,/cash-book',
+                    items: [
+                      _DropdownItem(
+                        label: 'Day Book',
+                        path: '/day-book',
+                        onTap: () => context.go('/day-book'),
+                      ),
+                      _DropdownItem(
+                        label: 'Cash Book',
+                        path: '/cash-book',
+                        onTap: () => context.go('/cash-book'),
+                      ),
+                    ],
+                  ),
+                  _NavDropdown(
+                    label: 'Reports',
+                    currentPath: currentPath,
+                    basePath: '/reports',
+                    items: [
+                      _DropdownItem(
+                        label: 'All Reports',
+                        path: '/reports',
+                        onTap: () => context.go('/reports'),
+                      ),
+                      // Future detailed reports
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -262,6 +315,12 @@ class TopNavigationBar extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _showCoomingSoon(BuildContext context) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Feature Coming Soon')));
   }
 }
 
@@ -400,4 +459,264 @@ class _DropdownItem {
   final VoidCallback onTap;
 
   _DropdownItem({required this.label, required this.path, required this.onTap});
+}
+
+// --- Mega Menu Implementation ---
+
+class _MegaNavDropdown extends StatefulWidget {
+  final String label;
+  final String currentPath;
+  final String basePath; // comma separated
+  final List<_MegaColumn> columns;
+
+  const _MegaNavDropdown({
+    required this.label,
+    required this.currentPath,
+    required this.basePath,
+    required this.columns,
+  });
+
+  @override
+  State<_MegaNavDropdown> createState() => _MegaNavDropdownState();
+}
+
+class _MegaNavDropdownState extends State<_MegaNavDropdown> {
+  bool _isHovered = false;
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+
+  @override
+  void dispose() {
+    _removeOverlay();
+    super.dispose();
+  }
+
+  void _showOverlay() {
+    if (_overlayEntry != null) return;
+
+    _overlayEntry = _createOverlayEntry();
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  OverlayEntry _createOverlayEntry() {
+    return OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            // Full screen transparent detector to close menu when clicking outside
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => _isHovered = false);
+                  _removeOverlay();
+                },
+                behavior: HitTestBehavior.translucent,
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+            // The Menu
+            Positioned(
+              width: 600, // Fixed width for Mega Menu
+              child: CompositedTransformFollower(
+                link: _layerLink,
+                showWhenUnlinked: false,
+                offset: const Offset(0, 50), // Drop down below
+                child: Material(
+                  elevation: 8,
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white,
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.borderLight),
+                    ),
+                    child: IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: widget.columns.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final col = entry.value;
+                          return Expanded(
+                            child: Container(
+                              decoration: index < widget.columns.length - 1
+                                  ? const BoxDecoration(
+                                      border: Border(
+                                        right: BorderSide(
+                                          color: AppTheme.borderLight,
+                                        ),
+                                      ),
+                                    )
+                                  : null,
+                              padding: EdgeInsets.only(
+                                left: index == 0 ? 0 : 24,
+                                right: index == widget.columns.length - 1
+                                    ? 0
+                                    : 24,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    col.header.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  ...col.items.map(
+                                    (item) => _MegaItemWidget(
+                                      item: item,
+                                      onTap: () {
+                                        setState(() => _isHovered = false);
+                                        _removeOverlay();
+                                        item.onTap();
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final paths = widget.basePath.split(',');
+    final isActive = paths.any((p) => widget.currentPath.startsWith(p.trim()));
+
+    // Logic to show/hide overlay based on hover state
+    // Note: In Flutter Web/Desktop, MouseRegion doesn't perfectly handle "hovering over the overlay" logic
+    // without complex hit testing if the overlay is separate.
+    // However, clicking label opens it (toggle).
+
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter:
+            (
+              _,
+            ) {}, // Could auto-open, but click is safer for Overlay management
+        child: InkWell(
+          onTap: () {
+            if (_overlayEntry == null) {
+              setState(() => _isHovered = true);
+              _showOverlay();
+            } else {
+              setState(() => _isHovered = false);
+              _removeOverlay();
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: isActive
+                      ? AppTheme.primaryGoldDark
+                      : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: isActive
+                        ? AppTheme.primaryGoldDark
+                        : AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  _isHovered // Use local state or check overlay
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  size: 18,
+                  color: isActive
+                      ? AppTheme.primaryGoldDark
+                      : AppTheme.textPrimary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MegaColumn {
+  final String header;
+  final List<_MegaItem> items;
+  _MegaColumn({required this.header, required this.items});
+}
+
+class _MegaItem {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  _MegaItem({required this.label, required this.icon, required this.onTap});
+}
+
+class _MegaItemWidget extends StatelessWidget {
+  final _MegaItem item;
+  final VoidCallback onTap;
+
+  const _MegaItemWidget({required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      hoverColor: Colors.grey.withValues(alpha: 0.05),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+        child: Row(
+          children: [
+            Icon(item.icon, size: 18, color: AppTheme.textSecondary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                item.label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textPrimary,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

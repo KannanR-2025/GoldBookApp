@@ -527,6 +527,108 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _customerTypeMeta = const VerificationMeta(
+    'customerType',
+  );
+  @override
+  late final GeneratedColumn<String> customerType = GeneratedColumn<String>(
+    'customer_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Individual'),
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _workNumberMeta = const VerificationMeta(
+    'workNumber',
+  );
+  @override
+  late final GeneratedColumn<String> workNumber = GeneratedColumn<String>(
+    'work_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _preferredCourierMeta = const VerificationMeta(
+    'preferredCourier',
+  );
+  @override
+  late final GeneratedColumn<String> preferredCourier = GeneratedColumn<String>(
+    'preferred_courier',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _billingFlatMeta = const VerificationMeta(
+    'billingFlat',
+  );
+  @override
+  late final GeneratedColumn<String> billingFlat = GeneratedColumn<String>(
+    'billing_flat',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _billingAreaMeta = const VerificationMeta(
+    'billingArea',
+  );
+  @override
+  late final GeneratedColumn<String> billingArea = GeneratedColumn<String>(
+    'billing_area',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _billingLandmarkMeta = const VerificationMeta(
+    'billingLandmark',
+  );
+  @override
+  late final GeneratedColumn<String> billingLandmark = GeneratedColumn<String>(
+    'billing_landmark',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _debitLimitMeta = const VerificationMeta(
+    'debitLimit',
+  );
+  @override
+  late final GeneratedColumn<double> debitLimit = GeneratedColumn<double>(
+    'debit_limit',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _debitLimitCurrencyMeta =
+      const VerificationMeta('debitLimitCurrency');
+  @override
+  late final GeneratedColumn<String> debitLimitCurrency =
+      GeneratedColumn<String>(
+        'debit_limit_currency',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('INR'),
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -576,6 +678,15 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
     createdAt,
     defaultWastage,
     defaultRate,
+    customerType,
+    displayName,
+    workNumber,
+    preferredCourier,
+    billingFlat,
+    billingArea,
+    billingLandmark,
+    debitLimit,
+    debitLimitCurrency,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -943,6 +1054,81 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
         ),
       );
     }
+    if (data.containsKey('customer_type')) {
+      context.handle(
+        _customerTypeMeta,
+        customerType.isAcceptableOrUnknown(
+          data['customer_type']!,
+          _customerTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('work_number')) {
+      context.handle(
+        _workNumberMeta,
+        workNumber.isAcceptableOrUnknown(data['work_number']!, _workNumberMeta),
+      );
+    }
+    if (data.containsKey('preferred_courier')) {
+      context.handle(
+        _preferredCourierMeta,
+        preferredCourier.isAcceptableOrUnknown(
+          data['preferred_courier']!,
+          _preferredCourierMeta,
+        ),
+      );
+    }
+    if (data.containsKey('billing_flat')) {
+      context.handle(
+        _billingFlatMeta,
+        billingFlat.isAcceptableOrUnknown(
+          data['billing_flat']!,
+          _billingFlatMeta,
+        ),
+      );
+    }
+    if (data.containsKey('billing_area')) {
+      context.handle(
+        _billingAreaMeta,
+        billingArea.isAcceptableOrUnknown(
+          data['billing_area']!,
+          _billingAreaMeta,
+        ),
+      );
+    }
+    if (data.containsKey('billing_landmark')) {
+      context.handle(
+        _billingLandmarkMeta,
+        billingLandmark.isAcceptableOrUnknown(
+          data['billing_landmark']!,
+          _billingLandmarkMeta,
+        ),
+      );
+    }
+    if (data.containsKey('debit_limit')) {
+      context.handle(
+        _debitLimitMeta,
+        debitLimit.isAcceptableOrUnknown(data['debit_limit']!, _debitLimitMeta),
+      );
+    }
+    if (data.containsKey('debit_limit_currency')) {
+      context.handle(
+        _debitLimitCurrencyMeta,
+        debitLimitCurrency.isAcceptableOrUnknown(
+          data['debit_limit_currency']!,
+          _debitLimitCurrencyMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1140,6 +1326,42 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
         DriftSqlType.double,
         data['${effectivePrefix}default_rate'],
       ),
+      customerType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}customer_type'],
+      )!,
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      ),
+      workNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}work_number'],
+      ),
+      preferredCourier: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}preferred_courier'],
+      ),
+      billingFlat: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}billing_flat'],
+      ),
+      billingArea: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}billing_area'],
+      ),
+      billingLandmark: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}billing_landmark'],
+      ),
+      debitLimit: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}debit_limit'],
+      )!,
+      debitLimitCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}debit_limit_currency'],
+      )!,
     );
   }
 
@@ -1197,6 +1419,15 @@ class Party extends DataClass implements Insertable<Party> {
   final DateTime createdAt;
   final double? defaultWastage;
   final double? defaultRate;
+  final String customerType;
+  final String? displayName;
+  final String? workNumber;
+  final String? preferredCourier;
+  final String? billingFlat;
+  final String? billingArea;
+  final String? billingLandmark;
+  final double debitLimit;
+  final String debitLimitCurrency;
   const Party({
     required this.id,
     required this.name,
@@ -1245,6 +1476,15 @@ class Party extends DataClass implements Insertable<Party> {
     required this.createdAt,
     this.defaultWastage,
     this.defaultRate,
+    required this.customerType,
+    this.displayName,
+    this.workNumber,
+    this.preferredCourier,
+    this.billingFlat,
+    this.billingArea,
+    this.billingLandmark,
+    required this.debitLimit,
+    required this.debitLimitCurrency,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1356,6 +1596,27 @@ class Party extends DataClass implements Insertable<Party> {
     if (!nullToAbsent || defaultRate != null) {
       map['default_rate'] = Variable<double>(defaultRate);
     }
+    map['customer_type'] = Variable<String>(customerType);
+    if (!nullToAbsent || displayName != null) {
+      map['display_name'] = Variable<String>(displayName);
+    }
+    if (!nullToAbsent || workNumber != null) {
+      map['work_number'] = Variable<String>(workNumber);
+    }
+    if (!nullToAbsent || preferredCourier != null) {
+      map['preferred_courier'] = Variable<String>(preferredCourier);
+    }
+    if (!nullToAbsent || billingFlat != null) {
+      map['billing_flat'] = Variable<String>(billingFlat);
+    }
+    if (!nullToAbsent || billingArea != null) {
+      map['billing_area'] = Variable<String>(billingArea);
+    }
+    if (!nullToAbsent || billingLandmark != null) {
+      map['billing_landmark'] = Variable<String>(billingLandmark);
+    }
+    map['debit_limit'] = Variable<double>(debitLimit);
+    map['debit_limit_currency'] = Variable<String>(debitLimitCurrency);
     return map;
   }
 
@@ -1464,6 +1725,27 @@ class Party extends DataClass implements Insertable<Party> {
       defaultRate: defaultRate == null && nullToAbsent
           ? const Value.absent()
           : Value(defaultRate),
+      customerType: Value(customerType),
+      displayName: displayName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(displayName),
+      workNumber: workNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(workNumber),
+      preferredCourier: preferredCourier == null && nullToAbsent
+          ? const Value.absent()
+          : Value(preferredCourier),
+      billingFlat: billingFlat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(billingFlat),
+      billingArea: billingArea == null && nullToAbsent
+          ? const Value.absent()
+          : Value(billingArea),
+      billingLandmark: billingLandmark == null && nullToAbsent
+          ? const Value.absent()
+          : Value(billingLandmark),
+      debitLimit: Value(debitLimit),
+      debitLimitCurrency: Value(debitLimitCurrency),
     );
   }
 
@@ -1530,6 +1812,17 @@ class Party extends DataClass implements Insertable<Party> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       defaultWastage: serializer.fromJson<double?>(json['defaultWastage']),
       defaultRate: serializer.fromJson<double?>(json['defaultRate']),
+      customerType: serializer.fromJson<String>(json['customerType']),
+      displayName: serializer.fromJson<String?>(json['displayName']),
+      workNumber: serializer.fromJson<String?>(json['workNumber']),
+      preferredCourier: serializer.fromJson<String?>(json['preferredCourier']),
+      billingFlat: serializer.fromJson<String?>(json['billingFlat']),
+      billingArea: serializer.fromJson<String?>(json['billingArea']),
+      billingLandmark: serializer.fromJson<String?>(json['billingLandmark']),
+      debitLimit: serializer.fromJson<double>(json['debitLimit']),
+      debitLimitCurrency: serializer.fromJson<String>(
+        json['debitLimitCurrency'],
+      ),
     );
   }
   @override
@@ -1583,6 +1876,15 @@ class Party extends DataClass implements Insertable<Party> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'defaultWastage': serializer.toJson<double?>(defaultWastage),
       'defaultRate': serializer.toJson<double?>(defaultRate),
+      'customerType': serializer.toJson<String>(customerType),
+      'displayName': serializer.toJson<String?>(displayName),
+      'workNumber': serializer.toJson<String?>(workNumber),
+      'preferredCourier': serializer.toJson<String?>(preferredCourier),
+      'billingFlat': serializer.toJson<String?>(billingFlat),
+      'billingArea': serializer.toJson<String?>(billingArea),
+      'billingLandmark': serializer.toJson<String?>(billingLandmark),
+      'debitLimit': serializer.toJson<double>(debitLimit),
+      'debitLimitCurrency': serializer.toJson<String>(debitLimitCurrency),
     };
   }
 
@@ -1634,6 +1936,15 @@ class Party extends DataClass implements Insertable<Party> {
     DateTime? createdAt,
     Value<double?> defaultWastage = const Value.absent(),
     Value<double?> defaultRate = const Value.absent(),
+    String? customerType,
+    Value<String?> displayName = const Value.absent(),
+    Value<String?> workNumber = const Value.absent(),
+    Value<String?> preferredCourier = const Value.absent(),
+    Value<String?> billingFlat = const Value.absent(),
+    Value<String?> billingArea = const Value.absent(),
+    Value<String?> billingLandmark = const Value.absent(),
+    double? debitLimit,
+    String? debitLimitCurrency,
   }) => Party(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -1696,6 +2007,19 @@ class Party extends DataClass implements Insertable<Party> {
         ? defaultWastage.value
         : this.defaultWastage,
     defaultRate: defaultRate.present ? defaultRate.value : this.defaultRate,
+    customerType: customerType ?? this.customerType,
+    displayName: displayName.present ? displayName.value : this.displayName,
+    workNumber: workNumber.present ? workNumber.value : this.workNumber,
+    preferredCourier: preferredCourier.present
+        ? preferredCourier.value
+        : this.preferredCourier,
+    billingFlat: billingFlat.present ? billingFlat.value : this.billingFlat,
+    billingArea: billingArea.present ? billingArea.value : this.billingArea,
+    billingLandmark: billingLandmark.present
+        ? billingLandmark.value
+        : this.billingLandmark,
+    debitLimit: debitLimit ?? this.debitLimit,
+    debitLimitCurrency: debitLimitCurrency ?? this.debitLimitCurrency,
   );
   Party copyWithCompanion(PartiesCompanion data) {
     return Party(
@@ -1794,6 +2118,33 @@ class Party extends DataClass implements Insertable<Party> {
       defaultRate: data.defaultRate.present
           ? data.defaultRate.value
           : this.defaultRate,
+      customerType: data.customerType.present
+          ? data.customerType.value
+          : this.customerType,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      workNumber: data.workNumber.present
+          ? data.workNumber.value
+          : this.workNumber,
+      preferredCourier: data.preferredCourier.present
+          ? data.preferredCourier.value
+          : this.preferredCourier,
+      billingFlat: data.billingFlat.present
+          ? data.billingFlat.value
+          : this.billingFlat,
+      billingArea: data.billingArea.present
+          ? data.billingArea.value
+          : this.billingArea,
+      billingLandmark: data.billingLandmark.present
+          ? data.billingLandmark.value
+          : this.billingLandmark,
+      debitLimit: data.debitLimit.present
+          ? data.debitLimit.value
+          : this.debitLimit,
+      debitLimitCurrency: data.debitLimitCurrency.present
+          ? data.debitLimitCurrency.value
+          : this.debitLimitCurrency,
     );
   }
 
@@ -1846,7 +2197,16 @@ class Party extends DataClass implements Insertable<Party> {
           ..write('creditLimitCash: $creditLimitCash, ')
           ..write('createdAt: $createdAt, ')
           ..write('defaultWastage: $defaultWastage, ')
-          ..write('defaultRate: $defaultRate')
+          ..write('defaultRate: $defaultRate, ')
+          ..write('customerType: $customerType, ')
+          ..write('displayName: $displayName, ')
+          ..write('workNumber: $workNumber, ')
+          ..write('preferredCourier: $preferredCourier, ')
+          ..write('billingFlat: $billingFlat, ')
+          ..write('billingArea: $billingArea, ')
+          ..write('billingLandmark: $billingLandmark, ')
+          ..write('debitLimit: $debitLimit, ')
+          ..write('debitLimitCurrency: $debitLimitCurrency')
           ..write(')'))
         .toString();
   }
@@ -1900,6 +2260,15 @@ class Party extends DataClass implements Insertable<Party> {
     createdAt,
     defaultWastage,
     defaultRate,
+    customerType,
+    displayName,
+    workNumber,
+    preferredCourier,
+    billingFlat,
+    billingArea,
+    billingLandmark,
+    debitLimit,
+    debitLimitCurrency,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -1951,7 +2320,16 @@ class Party extends DataClass implements Insertable<Party> {
           other.creditLimitCash == this.creditLimitCash &&
           other.createdAt == this.createdAt &&
           other.defaultWastage == this.defaultWastage &&
-          other.defaultRate == this.defaultRate);
+          other.defaultRate == this.defaultRate &&
+          other.customerType == this.customerType &&
+          other.displayName == this.displayName &&
+          other.workNumber == this.workNumber &&
+          other.preferredCourier == this.preferredCourier &&
+          other.billingFlat == this.billingFlat &&
+          other.billingArea == this.billingArea &&
+          other.billingLandmark == this.billingLandmark &&
+          other.debitLimit == this.debitLimit &&
+          other.debitLimitCurrency == this.debitLimitCurrency);
 }
 
 class PartiesCompanion extends UpdateCompanion<Party> {
@@ -2002,6 +2380,15 @@ class PartiesCompanion extends UpdateCompanion<Party> {
   final Value<DateTime> createdAt;
   final Value<double?> defaultWastage;
   final Value<double?> defaultRate;
+  final Value<String> customerType;
+  final Value<String?> displayName;
+  final Value<String?> workNumber;
+  final Value<String?> preferredCourier;
+  final Value<String?> billingFlat;
+  final Value<String?> billingArea;
+  final Value<String?> billingLandmark;
+  final Value<double> debitLimit;
+  final Value<String> debitLimitCurrency;
   const PartiesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -2050,6 +2437,15 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     this.createdAt = const Value.absent(),
     this.defaultWastage = const Value.absent(),
     this.defaultRate = const Value.absent(),
+    this.customerType = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.workNumber = const Value.absent(),
+    this.preferredCourier = const Value.absent(),
+    this.billingFlat = const Value.absent(),
+    this.billingArea = const Value.absent(),
+    this.billingLandmark = const Value.absent(),
+    this.debitLimit = const Value.absent(),
+    this.debitLimitCurrency = const Value.absent(),
   });
   PartiesCompanion.insert({
     this.id = const Value.absent(),
@@ -2099,6 +2495,15 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     this.createdAt = const Value.absent(),
     this.defaultWastage = const Value.absent(),
     this.defaultRate = const Value.absent(),
+    this.customerType = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.workNumber = const Value.absent(),
+    this.preferredCourier = const Value.absent(),
+    this.billingFlat = const Value.absent(),
+    this.billingArea = const Value.absent(),
+    this.billingLandmark = const Value.absent(),
+    this.debitLimit = const Value.absent(),
+    this.debitLimitCurrency = const Value.absent(),
   }) : name = Value(name),
        mobile = Value(mobile),
        type = Value(type);
@@ -2150,6 +2555,15 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     Expression<DateTime>? createdAt,
     Expression<double>? defaultWastage,
     Expression<double>? defaultRate,
+    Expression<String>? customerType,
+    Expression<String>? displayName,
+    Expression<String>? workNumber,
+    Expression<String>? preferredCourier,
+    Expression<String>? billingFlat,
+    Expression<String>? billingArea,
+    Expression<String>? billingLandmark,
+    Expression<double>? debitLimit,
+    Expression<String>? debitLimitCurrency,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2202,6 +2616,16 @@ class PartiesCompanion extends UpdateCompanion<Party> {
       if (createdAt != null) 'created_at': createdAt,
       if (defaultWastage != null) 'default_wastage': defaultWastage,
       if (defaultRate != null) 'default_rate': defaultRate,
+      if (customerType != null) 'customer_type': customerType,
+      if (displayName != null) 'display_name': displayName,
+      if (workNumber != null) 'work_number': workNumber,
+      if (preferredCourier != null) 'preferred_courier': preferredCourier,
+      if (billingFlat != null) 'billing_flat': billingFlat,
+      if (billingArea != null) 'billing_area': billingArea,
+      if (billingLandmark != null) 'billing_landmark': billingLandmark,
+      if (debitLimit != null) 'debit_limit': debitLimit,
+      if (debitLimitCurrency != null)
+        'debit_limit_currency': debitLimitCurrency,
     });
   }
 
@@ -2253,6 +2677,15 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     Value<DateTime>? createdAt,
     Value<double?>? defaultWastage,
     Value<double?>? defaultRate,
+    Value<String>? customerType,
+    Value<String?>? displayName,
+    Value<String?>? workNumber,
+    Value<String?>? preferredCourier,
+    Value<String?>? billingFlat,
+    Value<String?>? billingArea,
+    Value<String?>? billingLandmark,
+    Value<double>? debitLimit,
+    Value<String>? debitLimitCurrency,
   }) {
     return PartiesCompanion(
       id: id ?? this.id,
@@ -2302,6 +2735,15 @@ class PartiesCompanion extends UpdateCompanion<Party> {
       createdAt: createdAt ?? this.createdAt,
       defaultWastage: defaultWastage ?? this.defaultWastage,
       defaultRate: defaultRate ?? this.defaultRate,
+      customerType: customerType ?? this.customerType,
+      displayName: displayName ?? this.displayName,
+      workNumber: workNumber ?? this.workNumber,
+      preferredCourier: preferredCourier ?? this.preferredCourier,
+      billingFlat: billingFlat ?? this.billingFlat,
+      billingArea: billingArea ?? this.billingArea,
+      billingLandmark: billingLandmark ?? this.billingLandmark,
+      debitLimit: debitLimit ?? this.debitLimit,
+      debitLimitCurrency: debitLimitCurrency ?? this.debitLimitCurrency,
     );
   }
 
@@ -2451,6 +2893,33 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     if (defaultRate.present) {
       map['default_rate'] = Variable<double>(defaultRate.value);
     }
+    if (customerType.present) {
+      map['customer_type'] = Variable<String>(customerType.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (workNumber.present) {
+      map['work_number'] = Variable<String>(workNumber.value);
+    }
+    if (preferredCourier.present) {
+      map['preferred_courier'] = Variable<String>(preferredCourier.value);
+    }
+    if (billingFlat.present) {
+      map['billing_flat'] = Variable<String>(billingFlat.value);
+    }
+    if (billingArea.present) {
+      map['billing_area'] = Variable<String>(billingArea.value);
+    }
+    if (billingLandmark.present) {
+      map['billing_landmark'] = Variable<String>(billingLandmark.value);
+    }
+    if (debitLimit.present) {
+      map['debit_limit'] = Variable<double>(debitLimit.value);
+    }
+    if (debitLimitCurrency.present) {
+      map['debit_limit_currency'] = Variable<String>(debitLimitCurrency.value);
+    }
     return map;
   }
 
@@ -2503,7 +2972,16 @@ class PartiesCompanion extends UpdateCompanion<Party> {
           ..write('creditLimitCash: $creditLimitCash, ')
           ..write('createdAt: $createdAt, ')
           ..write('defaultWastage: $defaultWastage, ')
-          ..write('defaultRate: $defaultRate')
+          ..write('defaultRate: $defaultRate, ')
+          ..write('customerType: $customerType, ')
+          ..write('displayName: $displayName, ')
+          ..write('workNumber: $workNumber, ')
+          ..write('preferredCourier: $preferredCourier, ')
+          ..write('billingFlat: $billingFlat, ')
+          ..write('billingArea: $billingArea, ')
+          ..write('billingLandmark: $billingLandmark, ')
+          ..write('debitLimit: $debitLimit, ')
+          ..write('debitLimitCurrency: $debitLimitCurrency')
           ..write(')'))
         .toString();
   }
@@ -2786,6 +3264,212 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _itemTypeMeta = const VerificationMeta(
+    'itemType',
+  );
+  @override
+  late final GeneratedColumn<String> itemType = GeneratedColumn<String>(
+    'item_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Goods'),
+  );
+  static const VerificationMeta _maintainStockInMeta = const VerificationMeta(
+    'maintainStockIn',
+  );
+  @override
+  late final GeneratedColumn<String> maintainStockIn = GeneratedColumn<String>(
+    'maintain_stock_in',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Grams'),
+  );
+  static const VerificationMeta _isStuddedMeta = const VerificationMeta(
+    'isStudded',
+  );
+  @override
+  late final GeneratedColumn<bool> isStudded = GeneratedColumn<bool>(
+    'is_studded',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_studded" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _fetchGoldRateMeta = const VerificationMeta(
+    'fetchGoldRate',
+  );
+  @override
+  late final GeneratedColumn<bool> fetchGoldRate = GeneratedColumn<bool>(
+    'fetch_gold_rate',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("fetch_gold_rate" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _defaultGoldRateMeta = const VerificationMeta(
+    'defaultGoldRate',
+  );
+  @override
+  late final GeneratedColumn<String> defaultGoldRate = GeneratedColumn<String>(
+    'default_gold_rate',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _defaultTouchMeta = const VerificationMeta(
+    'defaultTouch',
+  );
+  @override
+  late final GeneratedColumn<double> defaultTouch = GeneratedColumn<double>(
+    'default_touch',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _taxPreferenceMeta = const VerificationMeta(
+    'taxPreference',
+  );
+  @override
+  late final GeneratedColumn<String> taxPreference = GeneratedColumn<String>(
+    'tax_preference',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Taxable'),
+  );
+  static const VerificationMeta _purchaseWastageMeta = const VerificationMeta(
+    'purchaseWastage',
+  );
+  @override
+  late final GeneratedColumn<double> purchaseWastage = GeneratedColumn<double>(
+    'purchase_wastage',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _purchaseMakingChargesMeta =
+      const VerificationMeta('purchaseMakingCharges');
+  @override
+  late final GeneratedColumn<double> purchaseMakingCharges =
+      GeneratedColumn<double>(
+        'purchase_making_charges',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0.0),
+      );
+  static const VerificationMeta _jobworkRateMeta = const VerificationMeta(
+    'jobworkRate',
+  );
+  @override
+  late final GeneratedColumn<double> jobworkRate = GeneratedColumn<double>(
+    'jobwork_rate',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _discountLedgerMeta = const VerificationMeta(
+    'discountLedger',
+  );
+  @override
+  late final GeneratedColumn<String> discountLedger = GeneratedColumn<String>(
+    'discount_ledger',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stockMethodMeta = const VerificationMeta(
+    'stockMethod',
+  );
+  @override
+  late final GeneratedColumn<String> stockMethod = GeneratedColumn<String>(
+    'stock_method',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Loose'),
+  );
+  static const VerificationMeta _tagPrefixMeta = const VerificationMeta(
+    'tagPrefix',
+  );
+  @override
+  late final GeneratedColumn<String> tagPrefix = GeneratedColumn<String>(
+    'tag_prefix',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _minStockPcsMeta = const VerificationMeta(
+    'minStockPcs',
+  );
+  @override
+  late final GeneratedColumn<double> minStockPcs = GeneratedColumn<double>(
+    'min_stock_pcs',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _maxStockGmMeta = const VerificationMeta(
+    'maxStockGm',
+  );
+  @override
+  late final GeneratedColumn<double> maxStockGm = GeneratedColumn<double>(
+    'max_stock_gm',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _maxStockPcsMeta = const VerificationMeta(
+    'maxStockPcs',
+  );
+  @override
+  late final GeneratedColumn<double> maxStockPcs = GeneratedColumn<double>(
+    'max_stock_pcs',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _photoPathMeta = const VerificationMeta(
+    'photoPath',
+  );
+  @override
+  late final GeneratedColumn<String> photoPath = GeneratedColumn<String>(
+    'photo_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -2837,6 +3521,23 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
     stoneDetails,
     status,
     notes,
+    itemType,
+    maintainStockIn,
+    isStudded,
+    fetchGoldRate,
+    defaultGoldRate,
+    defaultTouch,
+    taxPreference,
+    purchaseWastage,
+    purchaseMakingCharges,
+    jobworkRate,
+    discountLedger,
+    stockMethod,
+    tagPrefix,
+    minStockPcs,
+    maxStockGm,
+    maxStockPcs,
+    photoPath,
     createdAt,
     updatedAt,
   ];
@@ -3033,6 +3734,147 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('item_type')) {
+      context.handle(
+        _itemTypeMeta,
+        itemType.isAcceptableOrUnknown(data['item_type']!, _itemTypeMeta),
+      );
+    }
+    if (data.containsKey('maintain_stock_in')) {
+      context.handle(
+        _maintainStockInMeta,
+        maintainStockIn.isAcceptableOrUnknown(
+          data['maintain_stock_in']!,
+          _maintainStockInMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_studded')) {
+      context.handle(
+        _isStuddedMeta,
+        isStudded.isAcceptableOrUnknown(data['is_studded']!, _isStuddedMeta),
+      );
+    }
+    if (data.containsKey('fetch_gold_rate')) {
+      context.handle(
+        _fetchGoldRateMeta,
+        fetchGoldRate.isAcceptableOrUnknown(
+          data['fetch_gold_rate']!,
+          _fetchGoldRateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('default_gold_rate')) {
+      context.handle(
+        _defaultGoldRateMeta,
+        defaultGoldRate.isAcceptableOrUnknown(
+          data['default_gold_rate']!,
+          _defaultGoldRateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('default_touch')) {
+      context.handle(
+        _defaultTouchMeta,
+        defaultTouch.isAcceptableOrUnknown(
+          data['default_touch']!,
+          _defaultTouchMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tax_preference')) {
+      context.handle(
+        _taxPreferenceMeta,
+        taxPreference.isAcceptableOrUnknown(
+          data['tax_preference']!,
+          _taxPreferenceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('purchase_wastage')) {
+      context.handle(
+        _purchaseWastageMeta,
+        purchaseWastage.isAcceptableOrUnknown(
+          data['purchase_wastage']!,
+          _purchaseWastageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('purchase_making_charges')) {
+      context.handle(
+        _purchaseMakingChargesMeta,
+        purchaseMakingCharges.isAcceptableOrUnknown(
+          data['purchase_making_charges']!,
+          _purchaseMakingChargesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('jobwork_rate')) {
+      context.handle(
+        _jobworkRateMeta,
+        jobworkRate.isAcceptableOrUnknown(
+          data['jobwork_rate']!,
+          _jobworkRateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('discount_ledger')) {
+      context.handle(
+        _discountLedgerMeta,
+        discountLedger.isAcceptableOrUnknown(
+          data['discount_ledger']!,
+          _discountLedgerMeta,
+        ),
+      );
+    }
+    if (data.containsKey('stock_method')) {
+      context.handle(
+        _stockMethodMeta,
+        stockMethod.isAcceptableOrUnknown(
+          data['stock_method']!,
+          _stockMethodMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tag_prefix')) {
+      context.handle(
+        _tagPrefixMeta,
+        tagPrefix.isAcceptableOrUnknown(data['tag_prefix']!, _tagPrefixMeta),
+      );
+    }
+    if (data.containsKey('min_stock_pcs')) {
+      context.handle(
+        _minStockPcsMeta,
+        minStockPcs.isAcceptableOrUnknown(
+          data['min_stock_pcs']!,
+          _minStockPcsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('max_stock_gm')) {
+      context.handle(
+        _maxStockGmMeta,
+        maxStockGm.isAcceptableOrUnknown(
+          data['max_stock_gm']!,
+          _maxStockGmMeta,
+        ),
+      );
+    }
+    if (data.containsKey('max_stock_pcs')) {
+      context.handle(
+        _maxStockPcsMeta,
+        maxStockPcs.isAcceptableOrUnknown(
+          data['max_stock_pcs']!,
+          _maxStockPcsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('photo_path')) {
+      context.handle(
+        _photoPathMeta,
+        photoPath.isAcceptableOrUnknown(data['photo_path']!, _photoPathMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3154,6 +3996,74 @@ class $ItemsTable extends Items with TableInfo<$ItemsTable, Item> {
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      itemType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}item_type'],
+      )!,
+      maintainStockIn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}maintain_stock_in'],
+      )!,
+      isStudded: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_studded'],
+      )!,
+      fetchGoldRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}fetch_gold_rate'],
+      )!,
+      defaultGoldRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}default_gold_rate'],
+      ),
+      defaultTouch: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}default_touch'],
+      )!,
+      taxPreference: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tax_preference'],
+      )!,
+      purchaseWastage: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}purchase_wastage'],
+      )!,
+      purchaseMakingCharges: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}purchase_making_charges'],
+      )!,
+      jobworkRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}jobwork_rate'],
+      )!,
+      discountLedger: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}discount_ledger'],
+      ),
+      stockMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stock_method'],
+      )!,
+      tagPrefix: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tag_prefix'],
+      ),
+      minStockPcs: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}min_stock_pcs'],
+      )!,
+      maxStockGm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}max_stock_gm'],
+      )!,
+      maxStockPcs: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}max_stock_pcs'],
+      )!,
+      photoPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photo_path'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -3197,6 +4107,23 @@ class Item extends DataClass implements Insertable<Item> {
   final String? stoneDetails;
   final String status;
   final String? notes;
+  final String itemType;
+  final String maintainStockIn;
+  final bool isStudded;
+  final bool fetchGoldRate;
+  final String? defaultGoldRate;
+  final double defaultTouch;
+  final String taxPreference;
+  final double purchaseWastage;
+  final double purchaseMakingCharges;
+  final double jobworkRate;
+  final String? discountLedger;
+  final String stockMethod;
+  final String? tagPrefix;
+  final double minStockPcs;
+  final double maxStockGm;
+  final double maxStockPcs;
+  final String? photoPath;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Item({
@@ -3225,6 +4152,23 @@ class Item extends DataClass implements Insertable<Item> {
     this.stoneDetails,
     required this.status,
     this.notes,
+    required this.itemType,
+    required this.maintainStockIn,
+    required this.isStudded,
+    required this.fetchGoldRate,
+    this.defaultGoldRate,
+    required this.defaultTouch,
+    required this.taxPreference,
+    required this.purchaseWastage,
+    required this.purchaseMakingCharges,
+    required this.jobworkRate,
+    this.discountLedger,
+    required this.stockMethod,
+    this.tagPrefix,
+    required this.minStockPcs,
+    required this.maxStockGm,
+    required this.maxStockPcs,
+    this.photoPath,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -3280,6 +4224,31 @@ class Item extends DataClass implements Insertable<Item> {
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
+    map['item_type'] = Variable<String>(itemType);
+    map['maintain_stock_in'] = Variable<String>(maintainStockIn);
+    map['is_studded'] = Variable<bool>(isStudded);
+    map['fetch_gold_rate'] = Variable<bool>(fetchGoldRate);
+    if (!nullToAbsent || defaultGoldRate != null) {
+      map['default_gold_rate'] = Variable<String>(defaultGoldRate);
+    }
+    map['default_touch'] = Variable<double>(defaultTouch);
+    map['tax_preference'] = Variable<String>(taxPreference);
+    map['purchase_wastage'] = Variable<double>(purchaseWastage);
+    map['purchase_making_charges'] = Variable<double>(purchaseMakingCharges);
+    map['jobwork_rate'] = Variable<double>(jobworkRate);
+    if (!nullToAbsent || discountLedger != null) {
+      map['discount_ledger'] = Variable<String>(discountLedger);
+    }
+    map['stock_method'] = Variable<String>(stockMethod);
+    if (!nullToAbsent || tagPrefix != null) {
+      map['tag_prefix'] = Variable<String>(tagPrefix);
+    }
+    map['min_stock_pcs'] = Variable<double>(minStockPcs);
+    map['max_stock_gm'] = Variable<double>(maxStockGm);
+    map['max_stock_pcs'] = Variable<double>(maxStockPcs);
+    if (!nullToAbsent || photoPath != null) {
+      map['photo_path'] = Variable<String>(photoPath);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -3332,6 +4301,31 @@ class Item extends DataClass implements Insertable<Item> {
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
+      itemType: Value(itemType),
+      maintainStockIn: Value(maintainStockIn),
+      isStudded: Value(isStudded),
+      fetchGoldRate: Value(fetchGoldRate),
+      defaultGoldRate: defaultGoldRate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(defaultGoldRate),
+      defaultTouch: Value(defaultTouch),
+      taxPreference: Value(taxPreference),
+      purchaseWastage: Value(purchaseWastage),
+      purchaseMakingCharges: Value(purchaseMakingCharges),
+      jobworkRate: Value(jobworkRate),
+      discountLedger: discountLedger == null && nullToAbsent
+          ? const Value.absent()
+          : Value(discountLedger),
+      stockMethod: Value(stockMethod),
+      tagPrefix: tagPrefix == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tagPrefix),
+      minStockPcs: Value(minStockPcs),
+      maxStockGm: Value(maxStockGm),
+      maxStockPcs: Value(maxStockPcs),
+      photoPath: photoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photoPath),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -3368,6 +4362,25 @@ class Item extends DataClass implements Insertable<Item> {
       stoneDetails: serializer.fromJson<String?>(json['stoneDetails']),
       status: serializer.fromJson<String>(json['status']),
       notes: serializer.fromJson<String?>(json['notes']),
+      itemType: serializer.fromJson<String>(json['itemType']),
+      maintainStockIn: serializer.fromJson<String>(json['maintainStockIn']),
+      isStudded: serializer.fromJson<bool>(json['isStudded']),
+      fetchGoldRate: serializer.fromJson<bool>(json['fetchGoldRate']),
+      defaultGoldRate: serializer.fromJson<String?>(json['defaultGoldRate']),
+      defaultTouch: serializer.fromJson<double>(json['defaultTouch']),
+      taxPreference: serializer.fromJson<String>(json['taxPreference']),
+      purchaseWastage: serializer.fromJson<double>(json['purchaseWastage']),
+      purchaseMakingCharges: serializer.fromJson<double>(
+        json['purchaseMakingCharges'],
+      ),
+      jobworkRate: serializer.fromJson<double>(json['jobworkRate']),
+      discountLedger: serializer.fromJson<String?>(json['discountLedger']),
+      stockMethod: serializer.fromJson<String>(json['stockMethod']),
+      tagPrefix: serializer.fromJson<String?>(json['tagPrefix']),
+      minStockPcs: serializer.fromJson<double>(json['minStockPcs']),
+      maxStockGm: serializer.fromJson<double>(json['maxStockGm']),
+      maxStockPcs: serializer.fromJson<double>(json['maxStockPcs']),
+      photoPath: serializer.fromJson<String?>(json['photoPath']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -3401,6 +4414,23 @@ class Item extends DataClass implements Insertable<Item> {
       'stoneDetails': serializer.toJson<String?>(stoneDetails),
       'status': serializer.toJson<String>(status),
       'notes': serializer.toJson<String?>(notes),
+      'itemType': serializer.toJson<String>(itemType),
+      'maintainStockIn': serializer.toJson<String>(maintainStockIn),
+      'isStudded': serializer.toJson<bool>(isStudded),
+      'fetchGoldRate': serializer.toJson<bool>(fetchGoldRate),
+      'defaultGoldRate': serializer.toJson<String?>(defaultGoldRate),
+      'defaultTouch': serializer.toJson<double>(defaultTouch),
+      'taxPreference': serializer.toJson<String>(taxPreference),
+      'purchaseWastage': serializer.toJson<double>(purchaseWastage),
+      'purchaseMakingCharges': serializer.toJson<double>(purchaseMakingCharges),
+      'jobworkRate': serializer.toJson<double>(jobworkRate),
+      'discountLedger': serializer.toJson<String?>(discountLedger),
+      'stockMethod': serializer.toJson<String>(stockMethod),
+      'tagPrefix': serializer.toJson<String?>(tagPrefix),
+      'minStockPcs': serializer.toJson<double>(minStockPcs),
+      'maxStockGm': serializer.toJson<double>(maxStockGm),
+      'maxStockPcs': serializer.toJson<double>(maxStockPcs),
+      'photoPath': serializer.toJson<String?>(photoPath),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -3432,6 +4462,23 @@ class Item extends DataClass implements Insertable<Item> {
     Value<String?> stoneDetails = const Value.absent(),
     String? status,
     Value<String?> notes = const Value.absent(),
+    String? itemType,
+    String? maintainStockIn,
+    bool? isStudded,
+    bool? fetchGoldRate,
+    Value<String?> defaultGoldRate = const Value.absent(),
+    double? defaultTouch,
+    String? taxPreference,
+    double? purchaseWastage,
+    double? purchaseMakingCharges,
+    double? jobworkRate,
+    Value<String?> discountLedger = const Value.absent(),
+    String? stockMethod,
+    Value<String?> tagPrefix = const Value.absent(),
+    double? minStockPcs,
+    double? maxStockGm,
+    double? maxStockPcs,
+    Value<String?> photoPath = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Item(
@@ -3460,6 +4507,27 @@ class Item extends DataClass implements Insertable<Item> {
     stoneDetails: stoneDetails.present ? stoneDetails.value : this.stoneDetails,
     status: status ?? this.status,
     notes: notes.present ? notes.value : this.notes,
+    itemType: itemType ?? this.itemType,
+    maintainStockIn: maintainStockIn ?? this.maintainStockIn,
+    isStudded: isStudded ?? this.isStudded,
+    fetchGoldRate: fetchGoldRate ?? this.fetchGoldRate,
+    defaultGoldRate: defaultGoldRate.present
+        ? defaultGoldRate.value
+        : this.defaultGoldRate,
+    defaultTouch: defaultTouch ?? this.defaultTouch,
+    taxPreference: taxPreference ?? this.taxPreference,
+    purchaseWastage: purchaseWastage ?? this.purchaseWastage,
+    purchaseMakingCharges: purchaseMakingCharges ?? this.purchaseMakingCharges,
+    jobworkRate: jobworkRate ?? this.jobworkRate,
+    discountLedger: discountLedger.present
+        ? discountLedger.value
+        : this.discountLedger,
+    stockMethod: stockMethod ?? this.stockMethod,
+    tagPrefix: tagPrefix.present ? tagPrefix.value : this.tagPrefix,
+    minStockPcs: minStockPcs ?? this.minStockPcs,
+    maxStockGm: maxStockGm ?? this.maxStockGm,
+    maxStockPcs: maxStockPcs ?? this.maxStockPcs,
+    photoPath: photoPath.present ? photoPath.value : this.photoPath,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -3510,6 +4578,49 @@ class Item extends DataClass implements Insertable<Item> {
           : this.stoneDetails,
       status: data.status.present ? data.status.value : this.status,
       notes: data.notes.present ? data.notes.value : this.notes,
+      itemType: data.itemType.present ? data.itemType.value : this.itemType,
+      maintainStockIn: data.maintainStockIn.present
+          ? data.maintainStockIn.value
+          : this.maintainStockIn,
+      isStudded: data.isStudded.present ? data.isStudded.value : this.isStudded,
+      fetchGoldRate: data.fetchGoldRate.present
+          ? data.fetchGoldRate.value
+          : this.fetchGoldRate,
+      defaultGoldRate: data.defaultGoldRate.present
+          ? data.defaultGoldRate.value
+          : this.defaultGoldRate,
+      defaultTouch: data.defaultTouch.present
+          ? data.defaultTouch.value
+          : this.defaultTouch,
+      taxPreference: data.taxPreference.present
+          ? data.taxPreference.value
+          : this.taxPreference,
+      purchaseWastage: data.purchaseWastage.present
+          ? data.purchaseWastage.value
+          : this.purchaseWastage,
+      purchaseMakingCharges: data.purchaseMakingCharges.present
+          ? data.purchaseMakingCharges.value
+          : this.purchaseMakingCharges,
+      jobworkRate: data.jobworkRate.present
+          ? data.jobworkRate.value
+          : this.jobworkRate,
+      discountLedger: data.discountLedger.present
+          ? data.discountLedger.value
+          : this.discountLedger,
+      stockMethod: data.stockMethod.present
+          ? data.stockMethod.value
+          : this.stockMethod,
+      tagPrefix: data.tagPrefix.present ? data.tagPrefix.value : this.tagPrefix,
+      minStockPcs: data.minStockPcs.present
+          ? data.minStockPcs.value
+          : this.minStockPcs,
+      maxStockGm: data.maxStockGm.present
+          ? data.maxStockGm.value
+          : this.maxStockGm,
+      maxStockPcs: data.maxStockPcs.present
+          ? data.maxStockPcs.value
+          : this.maxStockPcs,
+      photoPath: data.photoPath.present ? data.photoPath.value : this.photoPath,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -3543,6 +4654,23 @@ class Item extends DataClass implements Insertable<Item> {
           ..write('stoneDetails: $stoneDetails, ')
           ..write('status: $status, ')
           ..write('notes: $notes, ')
+          ..write('itemType: $itemType, ')
+          ..write('maintainStockIn: $maintainStockIn, ')
+          ..write('isStudded: $isStudded, ')
+          ..write('fetchGoldRate: $fetchGoldRate, ')
+          ..write('defaultGoldRate: $defaultGoldRate, ')
+          ..write('defaultTouch: $defaultTouch, ')
+          ..write('taxPreference: $taxPreference, ')
+          ..write('purchaseWastage: $purchaseWastage, ')
+          ..write('purchaseMakingCharges: $purchaseMakingCharges, ')
+          ..write('jobworkRate: $jobworkRate, ')
+          ..write('discountLedger: $discountLedger, ')
+          ..write('stockMethod: $stockMethod, ')
+          ..write('tagPrefix: $tagPrefix, ')
+          ..write('minStockPcs: $minStockPcs, ')
+          ..write('maxStockGm: $maxStockGm, ')
+          ..write('maxStockPcs: $maxStockPcs, ')
+          ..write('photoPath: $photoPath, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -3576,6 +4704,23 @@ class Item extends DataClass implements Insertable<Item> {
     stoneDetails,
     status,
     notes,
+    itemType,
+    maintainStockIn,
+    isStudded,
+    fetchGoldRate,
+    defaultGoldRate,
+    defaultTouch,
+    taxPreference,
+    purchaseWastage,
+    purchaseMakingCharges,
+    jobworkRate,
+    discountLedger,
+    stockMethod,
+    tagPrefix,
+    minStockPcs,
+    maxStockGm,
+    maxStockPcs,
+    photoPath,
     createdAt,
     updatedAt,
   ]);
@@ -3608,6 +4753,23 @@ class Item extends DataClass implements Insertable<Item> {
           other.stoneDetails == this.stoneDetails &&
           other.status == this.status &&
           other.notes == this.notes &&
+          other.itemType == this.itemType &&
+          other.maintainStockIn == this.maintainStockIn &&
+          other.isStudded == this.isStudded &&
+          other.fetchGoldRate == this.fetchGoldRate &&
+          other.defaultGoldRate == this.defaultGoldRate &&
+          other.defaultTouch == this.defaultTouch &&
+          other.taxPreference == this.taxPreference &&
+          other.purchaseWastage == this.purchaseWastage &&
+          other.purchaseMakingCharges == this.purchaseMakingCharges &&
+          other.jobworkRate == this.jobworkRate &&
+          other.discountLedger == this.discountLedger &&
+          other.stockMethod == this.stockMethod &&
+          other.tagPrefix == this.tagPrefix &&
+          other.minStockPcs == this.minStockPcs &&
+          other.maxStockGm == this.maxStockGm &&
+          other.maxStockPcs == this.maxStockPcs &&
+          other.photoPath == this.photoPath &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -3638,6 +4800,23 @@ class ItemsCompanion extends UpdateCompanion<Item> {
   final Value<String?> stoneDetails;
   final Value<String> status;
   final Value<String?> notes;
+  final Value<String> itemType;
+  final Value<String> maintainStockIn;
+  final Value<bool> isStudded;
+  final Value<bool> fetchGoldRate;
+  final Value<String?> defaultGoldRate;
+  final Value<double> defaultTouch;
+  final Value<String> taxPreference;
+  final Value<double> purchaseWastage;
+  final Value<double> purchaseMakingCharges;
+  final Value<double> jobworkRate;
+  final Value<String?> discountLedger;
+  final Value<String> stockMethod;
+  final Value<String?> tagPrefix;
+  final Value<double> minStockPcs;
+  final Value<double> maxStockGm;
+  final Value<double> maxStockPcs;
+  final Value<String?> photoPath;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const ItemsCompanion({
@@ -3666,6 +4845,23 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.stoneDetails = const Value.absent(),
     this.status = const Value.absent(),
     this.notes = const Value.absent(),
+    this.itemType = const Value.absent(),
+    this.maintainStockIn = const Value.absent(),
+    this.isStudded = const Value.absent(),
+    this.fetchGoldRate = const Value.absent(),
+    this.defaultGoldRate = const Value.absent(),
+    this.defaultTouch = const Value.absent(),
+    this.taxPreference = const Value.absent(),
+    this.purchaseWastage = const Value.absent(),
+    this.purchaseMakingCharges = const Value.absent(),
+    this.jobworkRate = const Value.absent(),
+    this.discountLedger = const Value.absent(),
+    this.stockMethod = const Value.absent(),
+    this.tagPrefix = const Value.absent(),
+    this.minStockPcs = const Value.absent(),
+    this.maxStockGm = const Value.absent(),
+    this.maxStockPcs = const Value.absent(),
+    this.photoPath = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -3695,6 +4891,23 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     this.stoneDetails = const Value.absent(),
     this.status = const Value.absent(),
     this.notes = const Value.absent(),
+    this.itemType = const Value.absent(),
+    this.maintainStockIn = const Value.absent(),
+    this.isStudded = const Value.absent(),
+    this.fetchGoldRate = const Value.absent(),
+    this.defaultGoldRate = const Value.absent(),
+    this.defaultTouch = const Value.absent(),
+    this.taxPreference = const Value.absent(),
+    this.purchaseWastage = const Value.absent(),
+    this.purchaseMakingCharges = const Value.absent(),
+    this.jobworkRate = const Value.absent(),
+    this.discountLedger = const Value.absent(),
+    this.stockMethod = const Value.absent(),
+    this.tagPrefix = const Value.absent(),
+    this.minStockPcs = const Value.absent(),
+    this.maxStockGm = const Value.absent(),
+    this.maxStockPcs = const Value.absent(),
+    this.photoPath = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : name = Value(name),
@@ -3725,6 +4938,23 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     Expression<String>? stoneDetails,
     Expression<String>? status,
     Expression<String>? notes,
+    Expression<String>? itemType,
+    Expression<String>? maintainStockIn,
+    Expression<bool>? isStudded,
+    Expression<bool>? fetchGoldRate,
+    Expression<String>? defaultGoldRate,
+    Expression<double>? defaultTouch,
+    Expression<String>? taxPreference,
+    Expression<double>? purchaseWastage,
+    Expression<double>? purchaseMakingCharges,
+    Expression<double>? jobworkRate,
+    Expression<String>? discountLedger,
+    Expression<String>? stockMethod,
+    Expression<String>? tagPrefix,
+    Expression<double>? minStockPcs,
+    Expression<double>? maxStockGm,
+    Expression<double>? maxStockPcs,
+    Expression<String>? photoPath,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -3754,6 +4984,24 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       if (stoneDetails != null) 'stone_details': stoneDetails,
       if (status != null) 'status': status,
       if (notes != null) 'notes': notes,
+      if (itemType != null) 'item_type': itemType,
+      if (maintainStockIn != null) 'maintain_stock_in': maintainStockIn,
+      if (isStudded != null) 'is_studded': isStudded,
+      if (fetchGoldRate != null) 'fetch_gold_rate': fetchGoldRate,
+      if (defaultGoldRate != null) 'default_gold_rate': defaultGoldRate,
+      if (defaultTouch != null) 'default_touch': defaultTouch,
+      if (taxPreference != null) 'tax_preference': taxPreference,
+      if (purchaseWastage != null) 'purchase_wastage': purchaseWastage,
+      if (purchaseMakingCharges != null)
+        'purchase_making_charges': purchaseMakingCharges,
+      if (jobworkRate != null) 'jobwork_rate': jobworkRate,
+      if (discountLedger != null) 'discount_ledger': discountLedger,
+      if (stockMethod != null) 'stock_method': stockMethod,
+      if (tagPrefix != null) 'tag_prefix': tagPrefix,
+      if (minStockPcs != null) 'min_stock_pcs': minStockPcs,
+      if (maxStockGm != null) 'max_stock_gm': maxStockGm,
+      if (maxStockPcs != null) 'max_stock_pcs': maxStockPcs,
+      if (photoPath != null) 'photo_path': photoPath,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -3785,6 +5033,23 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     Value<String?>? stoneDetails,
     Value<String>? status,
     Value<String?>? notes,
+    Value<String>? itemType,
+    Value<String>? maintainStockIn,
+    Value<bool>? isStudded,
+    Value<bool>? fetchGoldRate,
+    Value<String?>? defaultGoldRate,
+    Value<double>? defaultTouch,
+    Value<String>? taxPreference,
+    Value<double>? purchaseWastage,
+    Value<double>? purchaseMakingCharges,
+    Value<double>? jobworkRate,
+    Value<String?>? discountLedger,
+    Value<String>? stockMethod,
+    Value<String?>? tagPrefix,
+    Value<double>? minStockPcs,
+    Value<double>? maxStockGm,
+    Value<double>? maxStockPcs,
+    Value<String?>? photoPath,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -3814,6 +5079,24 @@ class ItemsCompanion extends UpdateCompanion<Item> {
       stoneDetails: stoneDetails ?? this.stoneDetails,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      itemType: itemType ?? this.itemType,
+      maintainStockIn: maintainStockIn ?? this.maintainStockIn,
+      isStudded: isStudded ?? this.isStudded,
+      fetchGoldRate: fetchGoldRate ?? this.fetchGoldRate,
+      defaultGoldRate: defaultGoldRate ?? this.defaultGoldRate,
+      defaultTouch: defaultTouch ?? this.defaultTouch,
+      taxPreference: taxPreference ?? this.taxPreference,
+      purchaseWastage: purchaseWastage ?? this.purchaseWastage,
+      purchaseMakingCharges:
+          purchaseMakingCharges ?? this.purchaseMakingCharges,
+      jobworkRate: jobworkRate ?? this.jobworkRate,
+      discountLedger: discountLedger ?? this.discountLedger,
+      stockMethod: stockMethod ?? this.stockMethod,
+      tagPrefix: tagPrefix ?? this.tagPrefix,
+      minStockPcs: minStockPcs ?? this.minStockPcs,
+      maxStockGm: maxStockGm ?? this.maxStockGm,
+      maxStockPcs: maxStockPcs ?? this.maxStockPcs,
+      photoPath: photoPath ?? this.photoPath,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -3897,6 +5180,59 @@ class ItemsCompanion extends UpdateCompanion<Item> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (itemType.present) {
+      map['item_type'] = Variable<String>(itemType.value);
+    }
+    if (maintainStockIn.present) {
+      map['maintain_stock_in'] = Variable<String>(maintainStockIn.value);
+    }
+    if (isStudded.present) {
+      map['is_studded'] = Variable<bool>(isStudded.value);
+    }
+    if (fetchGoldRate.present) {
+      map['fetch_gold_rate'] = Variable<bool>(fetchGoldRate.value);
+    }
+    if (defaultGoldRate.present) {
+      map['default_gold_rate'] = Variable<String>(defaultGoldRate.value);
+    }
+    if (defaultTouch.present) {
+      map['default_touch'] = Variable<double>(defaultTouch.value);
+    }
+    if (taxPreference.present) {
+      map['tax_preference'] = Variable<String>(taxPreference.value);
+    }
+    if (purchaseWastage.present) {
+      map['purchase_wastage'] = Variable<double>(purchaseWastage.value);
+    }
+    if (purchaseMakingCharges.present) {
+      map['purchase_making_charges'] = Variable<double>(
+        purchaseMakingCharges.value,
+      );
+    }
+    if (jobworkRate.present) {
+      map['jobwork_rate'] = Variable<double>(jobworkRate.value);
+    }
+    if (discountLedger.present) {
+      map['discount_ledger'] = Variable<String>(discountLedger.value);
+    }
+    if (stockMethod.present) {
+      map['stock_method'] = Variable<String>(stockMethod.value);
+    }
+    if (tagPrefix.present) {
+      map['tag_prefix'] = Variable<String>(tagPrefix.value);
+    }
+    if (minStockPcs.present) {
+      map['min_stock_pcs'] = Variable<double>(minStockPcs.value);
+    }
+    if (maxStockGm.present) {
+      map['max_stock_gm'] = Variable<double>(maxStockGm.value);
+    }
+    if (maxStockPcs.present) {
+      map['max_stock_pcs'] = Variable<double>(maxStockPcs.value);
+    }
+    if (photoPath.present) {
+      map['photo_path'] = Variable<String>(photoPath.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3934,6 +5270,23 @@ class ItemsCompanion extends UpdateCompanion<Item> {
           ..write('stoneDetails: $stoneDetails, ')
           ..write('status: $status, ')
           ..write('notes: $notes, ')
+          ..write('itemType: $itemType, ')
+          ..write('maintainStockIn: $maintainStockIn, ')
+          ..write('isStudded: $isStudded, ')
+          ..write('fetchGoldRate: $fetchGoldRate, ')
+          ..write('defaultGoldRate: $defaultGoldRate, ')
+          ..write('defaultTouch: $defaultTouch, ')
+          ..write('taxPreference: $taxPreference, ')
+          ..write('purchaseWastage: $purchaseWastage, ')
+          ..write('purchaseMakingCharges: $purchaseMakingCharges, ')
+          ..write('jobworkRate: $jobworkRate, ')
+          ..write('discountLedger: $discountLedger, ')
+          ..write('stockMethod: $stockMethod, ')
+          ..write('tagPrefix: $tagPrefix, ')
+          ..write('minStockPcs: $minStockPcs, ')
+          ..write('maxStockGm: $maxStockGm, ')
+          ..write('maxStockPcs: $maxStockPcs, ')
+          ..write('photoPath: $photoPath, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -5262,6 +6615,27 @@ class $TransactionLinesTable extends TransactionLines
     requiredDuringInsert: false,
     defaultValue: const Constant(0.0),
   );
+  static const VerificationMeta _qtyMeta = const VerificationMeta('qty');
+  @override
+  late final GeneratedColumn<double> qty = GeneratedColumn<double>(
+    'qty',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _lineTypeMeta = const VerificationMeta(
+    'lineType',
+  );
+  @override
+  late final GeneratedColumn<String> lineType = GeneratedColumn<String>(
+    'line_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -5281,6 +6655,8 @@ class $TransactionLinesTable extends TransactionLines
     color,
     rateOn,
     ghatWeight,
+    qty,
+    lineType,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5410,6 +6786,18 @@ class $TransactionLinesTable extends TransactionLines
         ghatWeight.isAcceptableOrUnknown(data['ghat_weight']!, _ghatWeightMeta),
       );
     }
+    if (data.containsKey('qty')) {
+      context.handle(
+        _qtyMeta,
+        qty.isAcceptableOrUnknown(data['qty']!, _qtyMeta),
+      );
+    }
+    if (data.containsKey('line_type')) {
+      context.handle(
+        _lineTypeMeta,
+        lineType.isAcceptableOrUnknown(data['line_type']!, _lineTypeMeta),
+      );
+    }
     return context;
   }
 
@@ -5487,6 +6875,14 @@ class $TransactionLinesTable extends TransactionLines
         DriftSqlType.double,
         data['${effectivePrefix}ghat_weight'],
       )!,
+      qty: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}qty'],
+      )!,
+      lineType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}line_type'],
+      ),
     );
   }
 
@@ -5514,6 +6910,8 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
   final String? color;
   final String? rateOn;
   final double ghatWeight;
+  final double qty;
+  final String? lineType;
   const TransactionLine({
     required this.id,
     required this.transactionId,
@@ -5532,6 +6930,8 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
     this.color,
     this.rateOn,
     required this.ghatWeight,
+    required this.qty,
+    this.lineType,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5567,6 +6967,10 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
       map['rate_on'] = Variable<String>(rateOn);
     }
     map['ghat_weight'] = Variable<double>(ghatWeight);
+    map['qty'] = Variable<double>(qty);
+    if (!nullToAbsent || lineType != null) {
+      map['line_type'] = Variable<String>(lineType);
+    }
     return map;
   }
 
@@ -5601,6 +7005,10 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
           ? const Value.absent()
           : Value(rateOn),
       ghatWeight: Value(ghatWeight),
+      qty: Value(qty),
+      lineType: lineType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lineType),
     );
   }
 
@@ -5627,6 +7035,8 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
       color: serializer.fromJson<String?>(json['color']),
       rateOn: serializer.fromJson<String?>(json['rateOn']),
       ghatWeight: serializer.fromJson<double>(json['ghatWeight']),
+      qty: serializer.fromJson<double>(json['qty']),
+      lineType: serializer.fromJson<String?>(json['lineType']),
     );
   }
   @override
@@ -5650,6 +7060,8 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
       'color': serializer.toJson<String?>(color),
       'rateOn': serializer.toJson<String?>(rateOn),
       'ghatWeight': serializer.toJson<double>(ghatWeight),
+      'qty': serializer.toJson<double>(qty),
+      'lineType': serializer.toJson<String?>(lineType),
     };
   }
 
@@ -5671,6 +7083,8 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
     Value<String?> color = const Value.absent(),
     Value<String?> rateOn = const Value.absent(),
     double? ghatWeight,
+    double? qty,
+    Value<String?> lineType = const Value.absent(),
   }) => TransactionLine(
     id: id ?? this.id,
     transactionId: transactionId ?? this.transactionId,
@@ -5689,6 +7103,8 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
     color: color.present ? color.value : this.color,
     rateOn: rateOn.present ? rateOn.value : this.rateOn,
     ghatWeight: ghatWeight ?? this.ghatWeight,
+    qty: qty ?? this.qty,
+    lineType: lineType.present ? lineType.value : this.lineType,
   );
   TransactionLine copyWithCompanion(TransactionLinesCompanion data) {
     return TransactionLine(
@@ -5721,6 +7137,8 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
       ghatWeight: data.ghatWeight.present
           ? data.ghatWeight.value
           : this.ghatWeight,
+      qty: data.qty.present ? data.qty.value : this.qty,
+      lineType: data.lineType.present ? data.lineType.value : this.lineType,
     );
   }
 
@@ -5743,7 +7161,9 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
           ..write('size: $size, ')
           ..write('color: $color, ')
           ..write('rateOn: $rateOn, ')
-          ..write('ghatWeight: $ghatWeight')
+          ..write('ghatWeight: $ghatWeight, ')
+          ..write('qty: $qty, ')
+          ..write('lineType: $lineType')
           ..write(')'))
         .toString();
   }
@@ -5767,6 +7187,8 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
     color,
     rateOn,
     ghatWeight,
+    qty,
+    lineType,
   );
   @override
   bool operator ==(Object other) =>
@@ -5788,7 +7210,9 @@ class TransactionLine extends DataClass implements Insertable<TransactionLine> {
           other.size == this.size &&
           other.color == this.color &&
           other.rateOn == this.rateOn &&
-          other.ghatWeight == this.ghatWeight);
+          other.ghatWeight == this.ghatWeight &&
+          other.qty == this.qty &&
+          other.lineType == this.lineType);
 }
 
 class TransactionLinesCompanion extends UpdateCompanion<TransactionLine> {
@@ -5809,6 +7233,8 @@ class TransactionLinesCompanion extends UpdateCompanion<TransactionLine> {
   final Value<String?> color;
   final Value<String?> rateOn;
   final Value<double> ghatWeight;
+  final Value<double> qty;
+  final Value<String?> lineType;
   const TransactionLinesCompanion({
     this.id = const Value.absent(),
     this.transactionId = const Value.absent(),
@@ -5827,6 +7253,8 @@ class TransactionLinesCompanion extends UpdateCompanion<TransactionLine> {
     this.color = const Value.absent(),
     this.rateOn = const Value.absent(),
     this.ghatWeight = const Value.absent(),
+    this.qty = const Value.absent(),
+    this.lineType = const Value.absent(),
   });
   TransactionLinesCompanion.insert({
     this.id = const Value.absent(),
@@ -5846,6 +7274,8 @@ class TransactionLinesCompanion extends UpdateCompanion<TransactionLine> {
     this.color = const Value.absent(),
     this.rateOn = const Value.absent(),
     this.ghatWeight = const Value.absent(),
+    this.qty = const Value.absent(),
+    this.lineType = const Value.absent(),
   }) : transactionId = Value(transactionId);
   static Insertable<TransactionLine> custom({
     Expression<int>? id,
@@ -5865,6 +7295,8 @@ class TransactionLinesCompanion extends UpdateCompanion<TransactionLine> {
     Expression<String>? color,
     Expression<String>? rateOn,
     Expression<double>? ghatWeight,
+    Expression<double>? qty,
+    Expression<String>? lineType,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -5884,6 +7316,8 @@ class TransactionLinesCompanion extends UpdateCompanion<TransactionLine> {
       if (color != null) 'color': color,
       if (rateOn != null) 'rate_on': rateOn,
       if (ghatWeight != null) 'ghat_weight': ghatWeight,
+      if (qty != null) 'qty': qty,
+      if (lineType != null) 'line_type': lineType,
     });
   }
 
@@ -5905,6 +7339,8 @@ class TransactionLinesCompanion extends UpdateCompanion<TransactionLine> {
     Value<String?>? color,
     Value<String?>? rateOn,
     Value<double>? ghatWeight,
+    Value<double>? qty,
+    Value<String?>? lineType,
   }) {
     return TransactionLinesCompanion(
       id: id ?? this.id,
@@ -5924,6 +7360,8 @@ class TransactionLinesCompanion extends UpdateCompanion<TransactionLine> {
       color: color ?? this.color,
       rateOn: rateOn ?? this.rateOn,
       ghatWeight: ghatWeight ?? this.ghatWeight,
+      qty: qty ?? this.qty,
+      lineType: lineType ?? this.lineType,
     );
   }
 
@@ -5981,6 +7419,12 @@ class TransactionLinesCompanion extends UpdateCompanion<TransactionLine> {
     if (ghatWeight.present) {
       map['ghat_weight'] = Variable<double>(ghatWeight.value);
     }
+    if (qty.present) {
+      map['qty'] = Variable<double>(qty.value);
+    }
+    if (lineType.present) {
+      map['line_type'] = Variable<String>(lineType.value);
+    }
     return map;
   }
 
@@ -6003,7 +7447,9 @@ class TransactionLinesCompanion extends UpdateCompanion<TransactionLine> {
           ..write('size: $size, ')
           ..write('color: $color, ')
           ..write('rateOn: $rateOn, ')
-          ..write('ghatWeight: $ghatWeight')
+          ..write('ghatWeight: $ghatWeight, ')
+          ..write('qty: $qty, ')
+          ..write('lineType: $lineType')
           ..write(')'))
         .toString();
   }
@@ -6079,6 +7525,15 @@ typedef $$PartiesTableCreateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<double?> defaultWastage,
       Value<double?> defaultRate,
+      Value<String> customerType,
+      Value<String?> displayName,
+      Value<String?> workNumber,
+      Value<String?> preferredCourier,
+      Value<String?> billingFlat,
+      Value<String?> billingArea,
+      Value<String?> billingLandmark,
+      Value<double> debitLimit,
+      Value<String> debitLimitCurrency,
     });
 typedef $$PartiesTableUpdateCompanionBuilder =
     PartiesCompanion Function({
@@ -6129,6 +7584,15 @@ typedef $$PartiesTableUpdateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<double?> defaultWastage,
       Value<double?> defaultRate,
+      Value<String> customerType,
+      Value<String?> displayName,
+      Value<String?> workNumber,
+      Value<String?> preferredCourier,
+      Value<String?> billingFlat,
+      Value<String?> billingArea,
+      Value<String?> billingLandmark,
+      Value<double> debitLimit,
+      Value<String> debitLimitCurrency,
     });
 
 final class $$PartiesTableReferences
@@ -6395,6 +7859,51 @@ class $$PartiesTableFilterComposer
 
   ColumnFilters<double> get defaultRate => $composableBuilder(
     column: $table.defaultRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customerType => $composableBuilder(
+    column: $table.customerType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get workNumber => $composableBuilder(
+    column: $table.workNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get preferredCourier => $composableBuilder(
+    column: $table.preferredCourier,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get billingFlat => $composableBuilder(
+    column: $table.billingFlat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get billingArea => $composableBuilder(
+    column: $table.billingArea,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get billingLandmark => $composableBuilder(
+    column: $table.billingLandmark,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get debitLimit => $composableBuilder(
+    column: $table.debitLimit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get debitLimitCurrency => $composableBuilder(
+    column: $table.debitLimitCurrency,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6667,6 +8176,51 @@ class $$PartiesTableOrderingComposer
     column: $table.defaultRate,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get customerType => $composableBuilder(
+    column: $table.customerType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get workNumber => $composableBuilder(
+    column: $table.workNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get preferredCourier => $composableBuilder(
+    column: $table.preferredCourier,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get billingFlat => $composableBuilder(
+    column: $table.billingFlat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get billingArea => $composableBuilder(
+    column: $table.billingArea,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get billingLandmark => $composableBuilder(
+    column: $table.billingLandmark,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get debitLimit => $composableBuilder(
+    column: $table.debitLimit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get debitLimitCurrency => $composableBuilder(
+    column: $table.debitLimitCurrency,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$PartiesTableAnnotationComposer
@@ -6867,6 +8421,51 @@ class $$PartiesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get customerType => $composableBuilder(
+    column: $table.customerType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+    column: $table.displayName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get workNumber => $composableBuilder(
+    column: $table.workNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get preferredCourier => $composableBuilder(
+    column: $table.preferredCourier,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get billingFlat => $composableBuilder(
+    column: $table.billingFlat,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get billingArea => $composableBuilder(
+    column: $table.billingArea,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get billingLandmark => $composableBuilder(
+    column: $table.billingLandmark,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get debitLimit => $composableBuilder(
+    column: $table.debitLimit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get debitLimitCurrency => $composableBuilder(
+    column: $table.debitLimitCurrency,
+    builder: (column) => column,
+  );
+
   Expression<T> transactionsRefs<T extends Object>(
     Expression<T> Function($$TransactionsTableAnnotationComposer a) f,
   ) {
@@ -6968,6 +8567,15 @@ class $$PartiesTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<double?> defaultWastage = const Value.absent(),
                 Value<double?> defaultRate = const Value.absent(),
+                Value<String> customerType = const Value.absent(),
+                Value<String?> displayName = const Value.absent(),
+                Value<String?> workNumber = const Value.absent(),
+                Value<String?> preferredCourier = const Value.absent(),
+                Value<String?> billingFlat = const Value.absent(),
+                Value<String?> billingArea = const Value.absent(),
+                Value<String?> billingLandmark = const Value.absent(),
+                Value<double> debitLimit = const Value.absent(),
+                Value<String> debitLimitCurrency = const Value.absent(),
               }) => PartiesCompanion(
                 id: id,
                 name: name,
@@ -7016,6 +8624,15 @@ class $$PartiesTableTableManager
                 createdAt: createdAt,
                 defaultWastage: defaultWastage,
                 defaultRate: defaultRate,
+                customerType: customerType,
+                displayName: displayName,
+                workNumber: workNumber,
+                preferredCourier: preferredCourier,
+                billingFlat: billingFlat,
+                billingArea: billingArea,
+                billingLandmark: billingLandmark,
+                debitLimit: debitLimit,
+                debitLimitCurrency: debitLimitCurrency,
               ),
           createCompanionCallback:
               ({
@@ -7066,6 +8683,15 @@ class $$PartiesTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<double?> defaultWastage = const Value.absent(),
                 Value<double?> defaultRate = const Value.absent(),
+                Value<String> customerType = const Value.absent(),
+                Value<String?> displayName = const Value.absent(),
+                Value<String?> workNumber = const Value.absent(),
+                Value<String?> preferredCourier = const Value.absent(),
+                Value<String?> billingFlat = const Value.absent(),
+                Value<String?> billingArea = const Value.absent(),
+                Value<String?> billingLandmark = const Value.absent(),
+                Value<double> debitLimit = const Value.absent(),
+                Value<String> debitLimitCurrency = const Value.absent(),
               }) => PartiesCompanion.insert(
                 id: id,
                 name: name,
@@ -7114,6 +8740,15 @@ class $$PartiesTableTableManager
                 createdAt: createdAt,
                 defaultWastage: defaultWastage,
                 defaultRate: defaultRate,
+                customerType: customerType,
+                displayName: displayName,
+                workNumber: workNumber,
+                preferredCourier: preferredCourier,
+                billingFlat: billingFlat,
+                billingArea: billingArea,
+                billingLandmark: billingLandmark,
+                debitLimit: debitLimit,
+                debitLimitCurrency: debitLimitCurrency,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -7197,6 +8832,23 @@ typedef $$ItemsTableCreateCompanionBuilder =
       Value<String?> stoneDetails,
       Value<String> status,
       Value<String?> notes,
+      Value<String> itemType,
+      Value<String> maintainStockIn,
+      Value<bool> isStudded,
+      Value<bool> fetchGoldRate,
+      Value<String?> defaultGoldRate,
+      Value<double> defaultTouch,
+      Value<String> taxPreference,
+      Value<double> purchaseWastage,
+      Value<double> purchaseMakingCharges,
+      Value<double> jobworkRate,
+      Value<String?> discountLedger,
+      Value<String> stockMethod,
+      Value<String?> tagPrefix,
+      Value<double> minStockPcs,
+      Value<double> maxStockGm,
+      Value<double> maxStockPcs,
+      Value<String?> photoPath,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -7227,6 +8879,23 @@ typedef $$ItemsTableUpdateCompanionBuilder =
       Value<String?> stoneDetails,
       Value<String> status,
       Value<String?> notes,
+      Value<String> itemType,
+      Value<String> maintainStockIn,
+      Value<bool> isStudded,
+      Value<bool> fetchGoldRate,
+      Value<String?> defaultGoldRate,
+      Value<double> defaultTouch,
+      Value<String> taxPreference,
+      Value<double> purchaseWastage,
+      Value<double> purchaseMakingCharges,
+      Value<double> jobworkRate,
+      Value<String?> discountLedger,
+      Value<String> stockMethod,
+      Value<String?> tagPrefix,
+      Value<double> minStockPcs,
+      Value<double> maxStockGm,
+      Value<double> maxStockPcs,
+      Value<String?> photoPath,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -7386,6 +9055,91 @@ class $$ItemsTableFilterComposer extends Composer<_$AppDatabase, $ItemsTable> {
 
   ColumnFilters<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get itemType => $composableBuilder(
+    column: $table.itemType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get maintainStockIn => $composableBuilder(
+    column: $table.maintainStockIn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isStudded => $composableBuilder(
+    column: $table.isStudded,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get fetchGoldRate => $composableBuilder(
+    column: $table.fetchGoldRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get defaultGoldRate => $composableBuilder(
+    column: $table.defaultGoldRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get defaultTouch => $composableBuilder(
+    column: $table.defaultTouch,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get taxPreference => $composableBuilder(
+    column: $table.taxPreference,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get purchaseWastage => $composableBuilder(
+    column: $table.purchaseWastage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get purchaseMakingCharges => $composableBuilder(
+    column: $table.purchaseMakingCharges,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get jobworkRate => $composableBuilder(
+    column: $table.jobworkRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get discountLedger => $composableBuilder(
+    column: $table.discountLedger,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get stockMethod => $composableBuilder(
+    column: $table.stockMethod,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get tagPrefix => $composableBuilder(
+    column: $table.tagPrefix,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get minStockPcs => $composableBuilder(
+    column: $table.minStockPcs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get maxStockGm => $composableBuilder(
+    column: $table.maxStockGm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get maxStockPcs => $composableBuilder(
+    column: $table.maxStockPcs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get photoPath => $composableBuilder(
+    column: $table.photoPath,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7559,6 +9313,91 @@ class $$ItemsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get itemType => $composableBuilder(
+    column: $table.itemType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get maintainStockIn => $composableBuilder(
+    column: $table.maintainStockIn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isStudded => $composableBuilder(
+    column: $table.isStudded,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get fetchGoldRate => $composableBuilder(
+    column: $table.fetchGoldRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get defaultGoldRate => $composableBuilder(
+    column: $table.defaultGoldRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get defaultTouch => $composableBuilder(
+    column: $table.defaultTouch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get taxPreference => $composableBuilder(
+    column: $table.taxPreference,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get purchaseWastage => $composableBuilder(
+    column: $table.purchaseWastage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get purchaseMakingCharges => $composableBuilder(
+    column: $table.purchaseMakingCharges,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get jobworkRate => $composableBuilder(
+    column: $table.jobworkRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get discountLedger => $composableBuilder(
+    column: $table.discountLedger,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get stockMethod => $composableBuilder(
+    column: $table.stockMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tagPrefix => $composableBuilder(
+    column: $table.tagPrefix,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get minStockPcs => $composableBuilder(
+    column: $table.minStockPcs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get maxStockGm => $composableBuilder(
+    column: $table.maxStockGm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get maxStockPcs => $composableBuilder(
+    column: $table.maxStockPcs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get photoPath => $composableBuilder(
+    column: $table.photoPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -7674,6 +9513,83 @@ class $$ItemsTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
+  GeneratedColumn<String> get itemType =>
+      $composableBuilder(column: $table.itemType, builder: (column) => column);
+
+  GeneratedColumn<String> get maintainStockIn => $composableBuilder(
+    column: $table.maintainStockIn,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isStudded =>
+      $composableBuilder(column: $table.isStudded, builder: (column) => column);
+
+  GeneratedColumn<bool> get fetchGoldRate => $composableBuilder(
+    column: $table.fetchGoldRate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get defaultGoldRate => $composableBuilder(
+    column: $table.defaultGoldRate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get defaultTouch => $composableBuilder(
+    column: $table.defaultTouch,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get taxPreference => $composableBuilder(
+    column: $table.taxPreference,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get purchaseWastage => $composableBuilder(
+    column: $table.purchaseWastage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get purchaseMakingCharges => $composableBuilder(
+    column: $table.purchaseMakingCharges,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get jobworkRate => $composableBuilder(
+    column: $table.jobworkRate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get discountLedger => $composableBuilder(
+    column: $table.discountLedger,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get stockMethod => $composableBuilder(
+    column: $table.stockMethod,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get tagPrefix =>
+      $composableBuilder(column: $table.tagPrefix, builder: (column) => column);
+
+  GeneratedColumn<double> get minStockPcs => $composableBuilder(
+    column: $table.minStockPcs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get maxStockGm => $composableBuilder(
+    column: $table.maxStockGm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get maxStockPcs => $composableBuilder(
+    column: $table.maxStockPcs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get photoPath =>
+      $composableBuilder(column: $table.photoPath, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -7759,6 +9675,23 @@ class $$ItemsTableTableManager
                 Value<String?> stoneDetails = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String> itemType = const Value.absent(),
+                Value<String> maintainStockIn = const Value.absent(),
+                Value<bool> isStudded = const Value.absent(),
+                Value<bool> fetchGoldRate = const Value.absent(),
+                Value<String?> defaultGoldRate = const Value.absent(),
+                Value<double> defaultTouch = const Value.absent(),
+                Value<String> taxPreference = const Value.absent(),
+                Value<double> purchaseWastage = const Value.absent(),
+                Value<double> purchaseMakingCharges = const Value.absent(),
+                Value<double> jobworkRate = const Value.absent(),
+                Value<String?> discountLedger = const Value.absent(),
+                Value<String> stockMethod = const Value.absent(),
+                Value<String?> tagPrefix = const Value.absent(),
+                Value<double> minStockPcs = const Value.absent(),
+                Value<double> maxStockGm = const Value.absent(),
+                Value<double> maxStockPcs = const Value.absent(),
+                Value<String?> photoPath = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => ItemsCompanion(
@@ -7787,6 +9720,23 @@ class $$ItemsTableTableManager
                 stoneDetails: stoneDetails,
                 status: status,
                 notes: notes,
+                itemType: itemType,
+                maintainStockIn: maintainStockIn,
+                isStudded: isStudded,
+                fetchGoldRate: fetchGoldRate,
+                defaultGoldRate: defaultGoldRate,
+                defaultTouch: defaultTouch,
+                taxPreference: taxPreference,
+                purchaseWastage: purchaseWastage,
+                purchaseMakingCharges: purchaseMakingCharges,
+                jobworkRate: jobworkRate,
+                discountLedger: discountLedger,
+                stockMethod: stockMethod,
+                tagPrefix: tagPrefix,
+                minStockPcs: minStockPcs,
+                maxStockGm: maxStockGm,
+                maxStockPcs: maxStockPcs,
+                photoPath: photoPath,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -7817,6 +9767,23 @@ class $$ItemsTableTableManager
                 Value<String?> stoneDetails = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String> itemType = const Value.absent(),
+                Value<String> maintainStockIn = const Value.absent(),
+                Value<bool> isStudded = const Value.absent(),
+                Value<bool> fetchGoldRate = const Value.absent(),
+                Value<String?> defaultGoldRate = const Value.absent(),
+                Value<double> defaultTouch = const Value.absent(),
+                Value<String> taxPreference = const Value.absent(),
+                Value<double> purchaseWastage = const Value.absent(),
+                Value<double> purchaseMakingCharges = const Value.absent(),
+                Value<double> jobworkRate = const Value.absent(),
+                Value<String?> discountLedger = const Value.absent(),
+                Value<String> stockMethod = const Value.absent(),
+                Value<String?> tagPrefix = const Value.absent(),
+                Value<double> minStockPcs = const Value.absent(),
+                Value<double> maxStockGm = const Value.absent(),
+                Value<double> maxStockPcs = const Value.absent(),
+                Value<String?> photoPath = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => ItemsCompanion.insert(
@@ -7845,6 +9812,23 @@ class $$ItemsTableTableManager
                 stoneDetails: stoneDetails,
                 status: status,
                 notes: notes,
+                itemType: itemType,
+                maintainStockIn: maintainStockIn,
+                isStudded: isStudded,
+                fetchGoldRate: fetchGoldRate,
+                defaultGoldRate: defaultGoldRate,
+                defaultTouch: defaultTouch,
+                taxPreference: taxPreference,
+                purchaseWastage: purchaseWastage,
+                purchaseMakingCharges: purchaseMakingCharges,
+                jobworkRate: jobworkRate,
+                discountLedger: discountLedger,
+                stockMethod: stockMethod,
+                tagPrefix: tagPrefix,
+                minStockPcs: minStockPcs,
+                maxStockGm: maxStockGm,
+                maxStockPcs: maxStockPcs,
+                photoPath: photoPath,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -8640,6 +10624,8 @@ typedef $$TransactionLinesTableCreateCompanionBuilder =
       Value<String?> color,
       Value<String?> rateOn,
       Value<double> ghatWeight,
+      Value<double> qty,
+      Value<String?> lineType,
     });
 typedef $$TransactionLinesTableUpdateCompanionBuilder =
     TransactionLinesCompanion Function({
@@ -8660,6 +10646,8 @@ typedef $$TransactionLinesTableUpdateCompanionBuilder =
       Value<String?> color,
       Value<String?> rateOn,
       Value<double> ghatWeight,
+      Value<double> qty,
+      Value<String?> lineType,
     });
 
 final class $$TransactionLinesTableReferences
@@ -8796,6 +10784,16 @@ class $$TransactionLinesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<double> get qty => $composableBuilder(
+    column: $table.qty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lineType => $composableBuilder(
+    column: $table.lineType,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$TransactionsTableFilterComposer get transactionId {
     final $$TransactionsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -8927,6 +10925,16 @@ class $$TransactionLinesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<double> get qty => $composableBuilder(
+    column: $table.qty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lineType => $composableBuilder(
+    column: $table.lineType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$TransactionsTableOrderingComposer get transactionId {
     final $$TransactionsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -9038,6 +11046,12 @@ class $$TransactionLinesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<double> get qty =>
+      $composableBuilder(column: $table.qty, builder: (column) => column);
+
+  GeneratedColumn<String> get lineType =>
+      $composableBuilder(column: $table.lineType, builder: (column) => column);
+
   $$TransactionsTableAnnotationComposer get transactionId {
     final $$TransactionsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -9132,6 +11146,8 @@ class $$TransactionLinesTableTableManager
                 Value<String?> color = const Value.absent(),
                 Value<String?> rateOn = const Value.absent(),
                 Value<double> ghatWeight = const Value.absent(),
+                Value<double> qty = const Value.absent(),
+                Value<String?> lineType = const Value.absent(),
               }) => TransactionLinesCompanion(
                 id: id,
                 transactionId: transactionId,
@@ -9150,6 +11166,8 @@ class $$TransactionLinesTableTableManager
                 color: color,
                 rateOn: rateOn,
                 ghatWeight: ghatWeight,
+                qty: qty,
+                lineType: lineType,
               ),
           createCompanionCallback:
               ({
@@ -9170,6 +11188,8 @@ class $$TransactionLinesTableTableManager
                 Value<String?> color = const Value.absent(),
                 Value<String?> rateOn = const Value.absent(),
                 Value<double> ghatWeight = const Value.absent(),
+                Value<double> qty = const Value.absent(),
+                Value<String?> lineType = const Value.absent(),
               }) => TransactionLinesCompanion.insert(
                 id: id,
                 transactionId: transactionId,
@@ -9188,6 +11208,8 @@ class $$TransactionLinesTableTableManager
                 color: color,
                 rateOn: rateOn,
                 ghatWeight: ghatWeight,
+                qty: qty,
+                lineType: lineType,
               ),
           withReferenceMapper: (p0) => p0
               .map(

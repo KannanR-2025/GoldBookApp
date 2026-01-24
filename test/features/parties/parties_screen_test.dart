@@ -19,9 +19,7 @@ void main() {
               return Stream<List<Party>>.empty();
             }),
           ],
-          child: const MaterialApp(
-            home: PartiesScreen(partyType: 'Customer'),
-          ),
+          child: const MaterialApp(home: PartiesScreen(partyType: 'Customer')),
         ),
       );
 
@@ -36,15 +34,16 @@ void main() {
               return Stream.value(<Party>[]);
             }),
           ],
-          child: const MaterialApp(
-            home: PartiesScreen(partyType: 'Customer'),
-          ),
+          child: const MaterialApp(home: PartiesScreen(partyType: 'Customer')),
         ),
       );
 
       await tester.pumpAndSettle();
 
-      expect(find.text('No customers found. Add one to get started.'), findsOneWidget);
+      expect(
+        find.text('No customers found. Add one to get started.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('displays correct title for Customer type', (tester) async {
@@ -55,9 +54,7 @@ void main() {
               return Stream.value(<Party>[]);
             }),
           ],
-          child: const MaterialApp(
-            home: PartiesScreen(partyType: 'Customer'),
-          ),
+          child: const MaterialApp(home: PartiesScreen(partyType: 'Customer')),
         ),
       );
 
@@ -75,9 +72,7 @@ void main() {
               return Stream.value(<Party>[]);
             }),
           ],
-          child: const MaterialApp(
-            home: PartiesScreen(partyType: 'Supplier'),
-          ),
+          child: const MaterialApp(home: PartiesScreen(partyType: 'Supplier')),
         ),
       );
 
@@ -95,9 +90,7 @@ void main() {
               return Stream.value(<Party>[]);
             }),
           ],
-          child: const MaterialApp(
-            home: PartiesScreen(partyType: 'Customer'),
-          ),
+          child: const MaterialApp(home: PartiesScreen(partyType: 'Customer')),
         ),
       );
 
@@ -108,7 +101,9 @@ void main() {
       expect(find.text('New Customer'), findsOneWidget);
     });
 
-    testWidgets('displays data table headers when parties exist', (tester) async {
+    testWidgets('displays data table headers when parties exist', (
+      tester,
+    ) async {
       // Set desktop screen size to avoid overflow
       tester.view.physicalSize = const Size(1920, 1080);
       tester.view.devicePixelRatio = 1.0;
@@ -132,6 +127,9 @@ void main() {
         taxPreference: 'Taxable',
         country: 'India',
         createdAt: DateTime.now(),
+        customerType: '',
+        debitLimit: 0,
+        debitLimitCurrency: 'INR',
       );
 
       await tester.pumpWidget(
@@ -141,9 +139,7 @@ void main() {
               return Stream.value([testParty]);
             }),
           ],
-          child: const MaterialApp(
-            home: PartiesScreen(partyType: 'Customer'),
-          ),
+          child: const MaterialApp(home: PartiesScreen(partyType: 'Customer')),
         ),
       );
 
@@ -185,6 +181,9 @@ void main() {
         taxPreference: 'Taxable',
         country: 'India',
         createdAt: DateTime.now(),
+        customerType: '',
+        debitLimit: 0,
+        debitLimitCurrency: 'INR',
       );
 
       await tester.pumpWidget(
@@ -194,9 +193,7 @@ void main() {
               return Stream.value([testParty]);
             }),
           ],
-          child: const MaterialApp(
-            home: PartiesScreen(partyType: 'Customer'),
-          ),
+          child: const MaterialApp(home: PartiesScreen(partyType: 'Customer')),
         ),
       );
 
@@ -235,6 +232,9 @@ void main() {
         taxPreference: 'Taxable',
         country: 'India',
         createdAt: DateTime.now(),
+        customerType: '',
+        debitLimit: 0,
+        debitLimitCurrency: 'INR',
       );
 
       await tester.pumpWidget(
@@ -244,9 +244,7 @@ void main() {
               return Stream.value([testParty]);
             }),
           ],
-          child: const MaterialApp(
-            home: PartiesScreen(partyType: 'Customer'),
-          ),
+          child: const MaterialApp(home: PartiesScreen(partyType: 'Customer')),
         ),
       );
 
@@ -263,9 +261,7 @@ void main() {
               return Stream<List<Party>>.error('Test error');
             }),
           ],
-          child: const MaterialApp(
-            home: PartiesScreen(partyType: 'Customer'),
-          ),
+          child: const MaterialApp(home: PartiesScreen(partyType: 'Customer')),
         ),
       );
 
@@ -282,9 +278,7 @@ void main() {
     testWidgets('displays correct title for new customer', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: PartyEntryScreen(type: 'Customer'),
-          ),
+          child: MaterialApp(home: PartyEntryScreen(type: 'Customer')),
         ),
       );
 
@@ -297,9 +291,7 @@ void main() {
     testWidgets('displays correct title for new supplier', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: PartyEntryScreen(type: 'Supplier'),
-          ),
+          child: MaterialApp(home: PartyEntryScreen(type: 'Supplier')),
         ),
       );
 
@@ -311,9 +303,7 @@ void main() {
     testWidgets('displays all tabs', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: PartyEntryScreen(type: 'Customer'),
-          ),
+          child: MaterialApp(home: PartyEntryScreen(type: 'Customer')),
         ),
       );
 
@@ -329,9 +319,7 @@ void main() {
     testWidgets('displays Save and Cancel buttons', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: PartyEntryScreen(type: 'Customer'),
-          ),
+          child: MaterialApp(home: PartyEntryScreen(type: 'Customer')),
         ),
       );
 

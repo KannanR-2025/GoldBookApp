@@ -427,6 +427,11 @@ class _TransactionEntryScreenState
                                           creditLimitCash: 0,
                                           discountPercentage: 0,
                                           taxPreference: 'Taxable',
+                                          customerType: '',
+                                          debitLimit: 0,
+                                          debitLimitCurrency: 'INR',
+                                          defaultWastage: null,
+                                          defaultRate: null,
                                         ), // Dummy
                                       );
                                       if (party.id == -1) {

@@ -63,138 +63,145 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Card(
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(AppTheme.backgroundGrey),
-          headingRowHeight: 56,
-          dataRowMinHeight: 56,
-          dataRowMaxHeight: 72,
-          columns: const [
-            DataColumn(
-              label: Text(
-                'Name',
-                style: TextStyle(fontWeight: FontWeight.bold),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowColor: WidgetStateProperty.all(AppTheme.backgroundGrey),
+            headingRowHeight: 56,
+            dataRowMinHeight: 56,
+            dataRowMaxHeight: 72,
+            columns: const [
+              DataColumn(
+                label: Text(
+                  'Name',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            DataColumn(
-              label: Text(
-                'Mobile',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              DataColumn(
+                label: Text(
+                  'Mobile',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            DataColumn(
-              label: Text(
-                'WhatsApp',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              DataColumn(
+                label: Text(
+                  'WhatsApp',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            DataColumn(
-              label: Text(
-                'City',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              DataColumn(
+                label: Text(
+                  'City',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            DataColumn(
-              label: Text(
-                'Status',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              DataColumn(
+                label: Text(
+                  'Status',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            DataColumn(
-              label: Text(
-                'Gold Bal (g)',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              DataColumn(
+                label: Text(
+                  'Gold Bal (g)',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            DataColumn(
-              label: Text(
-                'Cash Bal (₹)',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              DataColumn(
+                label: Text(
+                  'Cash Bal (₹)',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            DataColumn(
-              label: Text(
-                'Actions',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              DataColumn(
+                label: Text(
+                  'Actions',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-          ],
-          rows: parties.map((party) {
-            return DataRow(
-              cells: [
-                DataCell(
-                  Row(
-                    children: [
-                      if (party.title != null && party.title!.isNotEmpty)
+            ],
+            rows: parties.map((party) {
+              return DataRow(
+                cells: [
+                  DataCell(
+                    Row(
+                      children: [
+                        if (party.title != null && party.title!.isNotEmpty)
+                          Text(
+                            '${party.title} ',
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
                         Text(
-                          '${party.title} ',
+                          party.name,
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
-                      Text(
-                        party.name,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                DataCell(Text(party.mobile)),
-                DataCell(Text(party.whatsappNumber ?? '-')),
-                DataCell(Text(party.city ?? '-')),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: party.status == 'Active'
-                          ? Colors.green.shade100
-                          : Colors.red.shade100,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      party.status,
-                      style: TextStyle(
+                  DataCell(Text(party.mobile)),
+                  DataCell(Text(party.whatsappNumber ?? '-')),
+                  DataCell(Text(party.city ?? '-')),
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
                         color: party.status == 'Active'
-                            ? Colors.green.shade900
-                            : Colors.red.shade900,
-                        fontSize: 12,
+                            ? Colors.green.shade100
+                            : Colors.red.shade100,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        party.status,
+                        style: TextStyle(
+                          color: party.status == 'Active'
+                              ? Colors.green.shade900
+                              : Colors.red.shade900,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      party.goldBalance.toStringAsFixed(3),
+                      style: TextStyle(
+                        color: party.goldBalance > 0
+                            ? Colors.green
+                            : (party.goldBalance < 0
+                                  ? Colors.red
+                                  : Colors.black),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                ),
-                DataCell(
-                  Text(
-                    party.goldBalance.toStringAsFixed(3),
-                    style: TextStyle(
-                      color: party.goldBalance > 0
-                          ? Colors.green
-                          : (party.goldBalance < 0 ? Colors.red : Colors.black),
-                      fontWeight: FontWeight.bold,
+                  DataCell(
+                    Text(
+                      party.cashBalance.toStringAsFixed(2),
+                      style: TextStyle(
+                        color: party.cashBalance > 0
+                            ? Colors.green
+                            : (party.cashBalance < 0
+                                  ? Colors.red
+                                  : Colors.black),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                DataCell(
-                  Text(
-                    party.cashBalance.toStringAsFixed(2),
-                    style: TextStyle(
-                      color: party.cashBalance > 0
-                          ? Colors.green
-                          : (party.cashBalance < 0 ? Colors.red : Colors.black),
-                      fontWeight: FontWeight.bold,
+                  DataCell(
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: AppTheme.primaryGold),
+                      onPressed: () => _showAddDialog(context, party: party),
+                      tooltip: 'Edit',
                     ),
                   ),
-                ),
-                DataCell(
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: AppTheme.primaryGold),
-                    onPressed: () => _showAddDialog(context, party: party),
-                    tooltip: 'Edit',
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
+                ],
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

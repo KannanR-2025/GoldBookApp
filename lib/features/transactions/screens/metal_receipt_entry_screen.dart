@@ -16,10 +16,12 @@ class MetalReceiptEntryScreen extends ConsumerStatefulWidget {
   const MetalReceiptEntryScreen({super.key, this.transactionId});
 
   @override
-  ConsumerState<MetalReceiptEntryScreen> createState() => _MetalReceiptEntryScreenState();
+  ConsumerState<MetalReceiptEntryScreen> createState() =>
+      _MetalReceiptEntryScreenState();
 }
 
-class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScreen>
+class _MetalReceiptEntryScreenState
+    extends ConsumerState<MetalReceiptEntryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _formKey = GlobalKey<FormState>();
@@ -311,7 +313,11 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
-        title: Text(widget.transactionId != null ? 'Edit MetalReceipt' : 'New MetalReceipt'),
+        title: Text(
+          widget.transactionId != null
+              ? 'Edit MetalReceipt'
+              : 'New MetalReceipt',
+        ),
         elevation: 0,
       ),
       body: _isLoading
@@ -392,25 +398,18 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Party Section
-          Text(
-            'Party & Date',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('Party & Date', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
                   initialValue: _selectedPartyId,
-                  decoration: InputDecoration(
-                    labelText: '$partyType *',
-                  ),
+                  decoration: InputDecoration(labelText: '$partyType *'),
                   items: parties
                       .map(
-                        (p) => DropdownMenuItem(
-                          value: p.id,
-                          child: Text(p.name),
-                        ),
+                        (p) =>
+                            DropdownMenuItem(value: p.id, child: Text(p.name)),
                       )
                       .toList(),
                   onChanged: (v) => setState(() => _selectedPartyId = v),
@@ -430,6 +429,9 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
                         mobile: '',
                         createdAt: DateTime.now(),
                         addressLine1: '',
+                        customerType: '',
+                        debitLimit: 0,
+                        debitLimitCurrency: 'INR',
                         city: '',
                         state: '',
                         pinCode: '',
@@ -445,6 +447,8 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
                         creditLimitCash: 0,
                         discountPercentage: 0,
                         taxPreference: 'Taxable',
+                        defaultWastage: null,
+                        defaultRate: null,
                       ),
                     );
                     if (party.id == -1) {
@@ -512,12 +516,8 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
                     if (d != null) setState(() => _date = d);
                   },
                   child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Date *',
-                    ),
-                    child: Text(
-                      DateFormat('dd/MM/yyyy').format(_date),
-                    ),
+                    decoration: const InputDecoration(labelText: 'Date *'),
+                    child: Text(DateFormat('dd/MM/yyyy').format(_date)),
                   ),
                 ),
               ),
@@ -535,10 +535,7 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
           ),
           const SizedBox(height: 32),
           // Rates Section
-          Text(
-            'Metal Rates',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('Metal Rates', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -576,9 +573,7 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             initialValue: _paymentMethod,
-            decoration: const InputDecoration(
-              labelText: 'Payment Method',
-            ),
+            decoration: const InputDecoration(labelText: 'Payment Method'),
             items: const [
               DropdownMenuItem(value: 'Cash', child: Text('Cash')),
               DropdownMenuItem(value: 'Card', child: Text('Card')),
@@ -600,8 +595,7 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
               child: TextFormField(
                 controller: _paymentRefCtrl,
                 decoration: const InputDecoration(
-                  labelText:
-                      'Payment Reference (Cheque No / Transaction ID)',
+                  labelText: 'Payment Reference (Cheque No / Transaction ID)',
                   hintText: 'Enter details...',
                 ),
               ),
@@ -701,10 +695,7 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Discount Section
-          Text(
-            'Discount',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('Discount', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -736,10 +727,7 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
           ),
           const SizedBox(height: 32),
           // Tax Section
-          Text(
-            'Tax / GST',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('Tax / GST', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -795,8 +783,7 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
                   const Divider(height: 20),
                 _TotalRow(
                   label: 'Subtotal:',
-                  value: NumberFormat.currency(symbol: '₹')
-                      .format(_subtotal),
+                  value: NumberFormat.currency(symbol: '₹').format(_subtotal),
                   isSubtotal: true,
                 ),
                 if ((double.tryParse(_discountAmountCtrl.text) ?? 0) > 0)
@@ -822,11 +809,8 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     Text(
-                      NumberFormat.currency(symbol: '₹')
-                          .format(_totalCash),
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
+                      NumberFormat.currency(symbol: '₹').format(_totalCash),
+                      style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primaryGoldDark,
@@ -892,6 +876,19 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
                           reorderLevel: 0,
                           unitOfMeasurement: 'g',
                           status: 'Active',
+                          itemType: 'Goods',
+                          maintainStockIn: 'Grams',
+                          isStudded: false,
+                          fetchGoldRate: false,
+                          defaultTouch: 0,
+                          taxPreference: 'Taxable',
+                          purchaseWastage: 0,
+                          purchaseMakingCharges: 0,
+                          jobworkRate: 0,
+                          stockMethod: 'Loose',
+                          minStockPcs: 0,
+                          maxStockGm: 0,
+                          maxStockPcs: 0,
                           createdAt: DateTime.now(),
                           updatedAt: DateTime.now(),
                         ),
@@ -940,7 +937,9 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
                     double gross = double.tryParse(v) ?? 0;
                     double stone =
                         double.tryParse(line.stoneWeightCtrl.text) ?? 0;
-                    line.netWeightCtrl.text = (gross - stone).toStringAsFixed(3);
+                    line.netWeightCtrl.text = (gross - stone).toStringAsFixed(
+                      3,
+                    );
                     _calculateTotals();
                   },
                 ),
@@ -959,7 +958,9 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
                     double gross =
                         double.tryParse(line.grossWeightCtrl.text) ?? 0;
                     double stone = double.tryParse(v) ?? 0;
-                    line.netWeightCtrl.text = (gross - stone).toStringAsFixed(3);
+                    line.netWeightCtrl.text = (gross - stone).toStringAsFixed(
+                      3,
+                    );
                     _calculateTotals();
                   },
                 ),
@@ -1041,10 +1042,7 @@ class _MetalReceiptEntryScreenState extends ConsumerState<MetalReceiptEntryScree
                       value: 'Fine Weight',
                       child: Text('Fine Wt'),
                     ),
-                    DropdownMenuItem(
-                      value: 'Fixed',
-                      child: Text('Fixed Amt'),
-                    ),
+                    DropdownMenuItem(value: 'Fixed', child: Text('Fixed Amt')),
                   ],
                   onChanged: (v) {
                     setState(() => line.rateOn = v!);

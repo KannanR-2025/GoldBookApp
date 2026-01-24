@@ -31,6 +31,24 @@ class TransactionsRepository {
     });
   }
 
+  Future<int> getOrCreateSystemParty() async {
+    final party = await (_db.select(
+      _db.parties,
+    )..where((t) => t.name.equals('Stock Adjustments'))).getSingleOrNull();
+    if (party != null) return party.id;
+
+    return _db
+        .into(_db.parties)
+        .insert(
+          PartiesCompanion(
+            name: const Value('Stock Adjustments'),
+            type: const Value('System'), // Tag as System
+            city: const Value('Internal'),
+            mobile: const Value(''),
+          ),
+        );
+  }
+
   Future<void> createTransaction({
     required TransactionsCompanion header,
     required List<TransactionLinesCompanion> lines,
@@ -47,7 +65,52 @@ class TransactionsRepository {
 
         // Update Item Stock if applicable
         if (line.itemId.value != null) {
-          // Logic to deduce stock would go here
+          final item = await (_db.select(
+            _db.items,
+          )..where((t) => t.id.equals(line.itemId.value!))).getSingle();
+
+          double qtyChange = 0;
+          double weightChange = 0;
+
+          if (header.type.value == 'Inventory Adjustment') {
+            // Positive Qty = Stock Increase (e.g. Found)
+            // Negative Qty = Stock Decrease (e.g. Loss)
+            qtyChange = line.qty.value;
+            weightChange = line.netWeight.value;
+          } else if (header.type.value == 'Stock Transfer') {
+            // Journal Style
+            final type = line.lineType.value;
+            if (type == 'Debit') {
+              // Outward / Issue -> Stock Decrease
+              qtyChange = -(line.qty.value);
+              weightChange = -line.netWeight.value;
+            } else if (type == 'Credit') {
+              // Inward / Receipt -> Stock Increase
+              qtyChange = line.qty.value;
+              weightChange = line.netWeight.value;
+            }
+          } else if (header.type.value == 'Sale' ||
+              header.type.value == 'Metal Issue') {
+            // Deduct stock
+            qtyChange = -(line.qty.value);
+            weightChange = -line.netWeight.value;
+          } else if (header.type.value == 'Purchase' ||
+              header.type.value == 'Metal Receipt') {
+            // Add stock
+            qtyChange = line.qty.value;
+            weightChange = line.netWeight.value;
+          }
+
+          if (qtyChange != 0 || weightChange != 0) {
+            await _db
+                .update(_db.items)
+                .replace(
+                  item.copyWith(
+                    stockQty: item.stockQty + qtyChange,
+                    stockWeight: item.stockWeight + weightChange,
+                  ),
+                );
+          }
         }
       }
 
@@ -93,6 +156,27 @@ class TransactionsRepository {
         goldImpact = totalGold; // Increases his debt / reduces our payable
         silverImpact = totalSilver;
         cashImpact = totalAmount;
+      } else if (type == 'Stock Transfer') {
+        // Mixed usage: Sum up lines based on type
+        // This is tricky because calculateImpact is based on Header Totals usually.
+        // But for Stock Transfer, the Header Totals might be "Net Difference" or meaningless.
+        // We should traverse lines to get exact impact.
+        // HOWEVER, to be efficient, let's assume the UI calculates a Net Difference and stores it in Header.
+        // OR better: We simply re-query lines here? No, 'lines' argument is the list of companions.
+
+        for (var line in lines) {
+          final lType = line.lineType.value;
+          if (lType == 'Debit') {
+            goldImpact += line.netWeight.value; // Add to Receivable
+          } else if (lType == 'Credit') {
+            goldImpact -= line.netWeight.value; // Reduce Receivable
+          }
+        }
+      } else if (type == 'Inventory Adjustment') {
+        // No Party Impact for Internal Adjustment
+        goldImpact = 0;
+        silverImpact = 0;
+        cashImpact = 0;
       }
 
       await _db
@@ -155,6 +239,22 @@ class TransactionsRepository {
         revGold = -oldTxn.totalGoldWeight;
         revSilver = -oldTxn.totalSilverWeight;
         revCash = -oldTxn.totalAmount;
+      } else if (oldType == 'Stock Transfer') {
+        // Fetch old lines to reverse mixed impact
+        final oldLines = await (_db.select(
+          _db.transactionLines,
+        )..where((t) => t.transactionId.equals(id))).get();
+
+        for (var line in oldLines) {
+          final lType = line.lineType;
+          if (lType == 'Debit') {
+            // Was +Receivable, so Reversal is -Receivable
+            revGold -= line.netWeight;
+          } else if (lType == 'Credit') {
+            // Was -Receivable, so Reversal is +Receivable
+            revGold += line.netWeight;
+          }
+        }
       }
 
       await _db

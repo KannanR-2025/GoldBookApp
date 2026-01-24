@@ -29,6 +29,10 @@ class TransactionsListScreen extends ConsumerWidget {
                     ? '/purchases/new'
                     : type == 'Receipt'
                     ? '/receipts/new'
+                    : type == 'Stock Transfer'
+                    ? '/stock-transfer/new'
+                    : type == 'Inventory Adjustment'
+                    ? '/inventory-adjustment/new'
                     : '/payments/new';
                 context.push(route);
               },
@@ -77,6 +81,8 @@ class TransactionsListScreen extends ConsumerWidget {
                     ? Icons.sell
                     : (txn.type == 'Purchase'
                           ? Icons.shopping_bag
+                          : txn.type == 'Stock Transfer'
+                          ? Icons.inventory_2
                           : Icons.payment),
                 color: AppTheme.primaryGoldDark,
                 size: 20,
@@ -123,6 +129,10 @@ class TransactionsListScreen extends ConsumerWidget {
                         ? '/purchases/edit/${txn.id}'
                         : txn.type == 'Receipt'
                         ? '/receipts/edit/${txn.id}'
+                        : txn.type == 'Stock Transfer'
+                        ? '/stock-transfer/edit/${txn.id}'
+                        : txn.type == 'Inventory Adjustment'
+                        ? '/inventory-adjustment/edit/${txn.id}'
                         : '/payments/edit/${txn.id}';
                     context.push(route);
                   },

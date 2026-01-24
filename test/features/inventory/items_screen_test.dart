@@ -15,9 +15,7 @@ void main() {
               return Stream<List<Item>>.empty();
             }),
           ],
-          child: const MaterialApp(
-            home: ItemsScreen(),
-          ),
+          child: const MaterialApp(home: ItemsScreen()),
         ),
       );
 
@@ -32,15 +30,16 @@ void main() {
               return Stream.value(<Item>[]);
             }),
           ],
-          child: const MaterialApp(
-            home: ItemsScreen(),
-          ),
+          child: const MaterialApp(home: ItemsScreen()),
         ),
       );
 
       await tester.pumpAndSettle();
 
-      expect(find.text('No items found. Add one to get started.'), findsOneWidget);
+      expect(
+        find.text('No items found. Add one to get started.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('displays correct title and add button', (tester) async {
@@ -51,9 +50,7 @@ void main() {
               return Stream.value(<Item>[]);
             }),
           ],
-          child: const MaterialApp(
-            home: ItemsScreen(),
-          ),
+          child: const MaterialApp(home: ItemsScreen()),
         ),
       );
 
@@ -84,6 +81,19 @@ void main() {
         minimumStockLevel: 2,
         reorderLevel: 3,
         unitOfMeasurement: 'g',
+        itemType: 'Goods',
+        maintainStockIn: 'Grams',
+        isStudded: false,
+        fetchGoldRate: false,
+        defaultTouch: 0,
+        taxPreference: 'Taxable',
+        purchaseWastage: 0,
+        purchaseMakingCharges: 0,
+        jobworkRate: 0,
+        stockMethod: 'Loose',
+        minStockPcs: 0,
+        maxStockGm: 0,
+        maxStockPcs: 0,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -95,9 +105,7 @@ void main() {
               return Stream.value([testItem]);
             }),
           ],
-          child: const MaterialApp(
-            home: ItemsScreen(),
-          ),
+          child: const MaterialApp(home: ItemsScreen()),
         ),
       );
 
@@ -139,6 +147,19 @@ void main() {
         minimumStockLevel: 1,
         reorderLevel: 2,
         unitOfMeasurement: 'g',
+        itemType: 'Goods',
+        maintainStockIn: 'Grams',
+        isStudded: false,
+        fetchGoldRate: false,
+        defaultTouch: 0,
+        taxPreference: 'Taxable',
+        purchaseWastage: 0,
+        purchaseMakingCharges: 0,
+        jobworkRate: 0,
+        stockMethod: 'Loose',
+        minStockPcs: 0,
+        maxStockGm: 0,
+        maxStockPcs: 0,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -150,9 +171,7 @@ void main() {
               return Stream.value([testItem]);
             }),
           ],
-          child: const MaterialApp(
-            home: ItemsScreen(),
-          ),
+          child: const MaterialApp(home: ItemsScreen()),
         ),
       );
 
@@ -189,6 +208,19 @@ void main() {
         minimumStockLevel: 0,
         reorderLevel: 0,
         unitOfMeasurement: 'g',
+        itemType: 'Goods',
+        maintainStockIn: 'Grams',
+        isStudded: false,
+        fetchGoldRate: false,
+        defaultTouch: 0,
+        taxPreference: 'Taxable',
+        purchaseWastage: 0,
+        purchaseMakingCharges: 0,
+        jobworkRate: 0,
+        stockMethod: 'Loose',
+        minStockPcs: 0,
+        maxStockGm: 0,
+        maxStockPcs: 0,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -200,9 +232,7 @@ void main() {
               return Stream.value([testItem]);
             }),
           ],
-          child: const MaterialApp(
-            home: ItemsScreen(),
-          ),
+          child: const MaterialApp(home: ItemsScreen()),
         ),
       );
 
@@ -219,9 +249,7 @@ void main() {
               return Stream<List<Item>>.error('Database error');
             }),
           ],
-          child: const MaterialApp(
-            home: ItemsScreen(),
-          ),
+          child: const MaterialApp(home: ItemsScreen()),
         ),
       );
 
@@ -237,11 +265,7 @@ void main() {
   group('ItemEntryScreen', () {
     testWidgets('displays correct title for new item', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: ItemEntryScreen(),
-          ),
-        ),
+        const ProviderScope(child: MaterialApp(home: ItemEntryScreen())),
       );
 
       await tester.pump();
@@ -251,11 +275,7 @@ void main() {
 
     testWidgets('displays all tabs', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: ItemEntryScreen(),
-          ),
-        ),
+        const ProviderScope(child: MaterialApp(home: ItemEntryScreen())),
       );
 
       await tester.pump();
@@ -268,11 +288,7 @@ void main() {
 
     testWidgets('displays Save and Cancel buttons', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: ItemEntryScreen(),
-          ),
-        ),
+        const ProviderScope(child: MaterialApp(home: ItemEntryScreen())),
       );
 
       await tester.pump();

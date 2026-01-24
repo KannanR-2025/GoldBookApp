@@ -135,6 +135,38 @@ class Items extends Table {
       text().withDefault(const Constant('Active'))(); // Active, Inactive
   TextColumn get notes => text().nullable()();
 
+  // Web Parity Fields
+  TextColumn get itemType =>
+      text().withDefault(const Constant('Goods'))(); // Goods, Service
+  TextColumn get maintainStockIn =>
+      text().withDefault(const Constant('Grams'))(); // Grams, Pcs, etc.
+  BoolColumn get isStudded =>
+      boolean().withDefault(const Constant(false))(); // Yes/No
+  BoolColumn get fetchGoldRate =>
+      boolean().withDefault(const Constant(false))(); // Yes/No
+  TextColumn get defaultGoldRate => text().nullable()(); // 22k, 18k, etc.
+  RealColumn get defaultTouch => real().withDefault(const Constant(0.0))();
+
+  // Tax & Accounting
+  TextColumn get taxPreference =>
+      text().withDefault(const Constant('Taxable'))(); // Taxable, Exempt
+  RealColumn get purchaseWastage => real().withDefault(const Constant(0.0))();
+  RealColumn get purchaseMakingCharges =>
+      real().withDefault(const Constant(0.0))();
+  RealColumn get jobworkRate => real().withDefault(const Constant(0.0))();
+  TextColumn get discountLedger => text().nullable()();
+
+  // Inventory Control
+  TextColumn get stockMethod =>
+      text().withDefault(const Constant('Loose'))(); // Loose, Tag
+  TextColumn get tagPrefix => text().nullable()();
+
+  // Detailed Stock Limits
+  RealColumn get minStockPcs => real().withDefault(const Constant(0.0))();
+  RealColumn get maxStockGm => real().withDefault(const Constant(0.0))();
+  RealColumn get maxStockPcs => real().withDefault(const Constant(0.0))();
+  TextColumn get photoPath => text().nullable()(); // For image path
+
   // Metadata
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
@@ -202,6 +234,12 @@ class TransactionLines extends Table {
   TextColumn get rateOn =>
       text().nullable()(); // 'Net Weight', 'Fine Weight', 'Fixed'
   RealColumn get ghatWeight => real().withDefault(const Constant(0.0))();
+
+  // Stock
+  RealColumn get qty => real().withDefault(const Constant(0.0))();
+
+  // Journal/Transfer
+  TextColumn get lineType => text().nullable()(); // 'Debit', 'Credit'
 }
 
 // --- Database ---
@@ -214,7 +252,8 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  @override
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration {
@@ -241,8 +280,35 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 9) {
           // Add color and stamp columns to Items table
-          await m.addColumn(items, items.color);
           await m.addColumn(items, items.stamp);
+        }
+        if (from < 10) {
+          // Version 10: Sync with Web App Fields
+          await m.addColumn(items, items.itemType);
+          await m.addColumn(items, items.maintainStockIn);
+          await m.addColumn(items, items.isStudded);
+          await m.addColumn(items, items.fetchGoldRate);
+          await m.addColumn(items, items.defaultGoldRate);
+          await m.addColumn(items, items.defaultTouch);
+          await m.addColumn(items, items.taxPreference);
+          await m.addColumn(items, items.purchaseWastage);
+          await m.addColumn(items, items.purchaseMakingCharges);
+          await m.addColumn(items, items.jobworkRate);
+          await m.addColumn(items, items.discountLedger);
+          await m.addColumn(items, items.stockMethod);
+          await m.addColumn(items, items.tagPrefix);
+          await m.addColumn(items, items.minStockPcs);
+          await m.addColumn(items, items.maxStockGm);
+          await m.addColumn(items, items.maxStockPcs);
+          await m.addColumn(items, items.photoPath);
+        }
+        if (from < 11) {
+          // Version 11: Transaction Lines Quantity
+          await m.addColumn(transactionLines, transactionLines.qty);
+        }
+        if (from < 13) {
+          // Version 13: Transaction Lines Line Type (Debit/Credit)
+          await m.addColumn(transactionLines, transactionLines.lineType);
         }
       },
     );
