@@ -45,152 +45,180 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: AppTheme.backgroundWhite,
       body: Row(
         children: [
-          // Left Side - Branding / Image
+          // Left Side - Branding / Image (Web app style)
           Expanded(
             flex: 5,
             child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppTheme.primaryGold.withValues(alpha: 0.15),
-                    AppTheme.primaryGoldDark.withValues(alpha: 0.1),
-                  ],
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppTheme.backgroundWhite,
-                      boxShadow: AppTheme.cardShadowHover,
-                    ),
-                    child: const Icon(
-                      Icons.verified_user_outlined,
-                      size: 80,
-                      color: AppTheme.primaryGold,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  Text(
-                    'GoldBook',
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: AppTheme.primaryGoldDark,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Jewellery Accounting & Management',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppTheme.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Column(
-                      children: [
-                        _FeatureItem(
-                          icon: Icons.inventory_2,
-                          text: 'Complete Inventory Management',
-                        ),
-                        const SizedBox(height: 16),
-                        _FeatureItem(
-                          icon: Icons.account_balance_wallet,
-                          text: 'Real-time Balance Tracking',
-                        ),
-                        const SizedBox(height: 16),
-                        _FeatureItem(
-                          icon: Icons.assessment,
-                          text: 'Comprehensive Reports',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Right Side - Login Form
-          Expanded(
-            flex: 4,
-            child: Center(
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 420),
-                padding: const EdgeInsets.all(48),
-                child: Form(
-                  key: _formKey,
+              color: AppTheme.backgroundLight,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(60),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Welcome Back',
-                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
+                      // Logo placeholder - would be image in web
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppTheme.backgroundWhite,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Please sign in to continue',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppTheme.textSecondary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 48),
-                      TextFormField(
-                        controller: _usernameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Username',
-                          prefixIcon: Icon(Icons.person_outline),
-                        ),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Password',
-                          prefixIcon: Icon(Icons.lock_outline),
-                        ),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 32),
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _login,
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Text('LOGIN'),
-                      ),
-                      const SizedBox(height: 24),
-                      TextButton(
-                        onPressed: () {},
                         child: Text(
-                          'Forgot Password?',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppTheme.primaryGold,
+                          'Goldbook',
+                          style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                            color: AppTheme.primaryGoldDark,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
+                      const SizedBox(height: 60),
+                      Text(
+                        'Not just another ERP!',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'GoldBook provides you best-in-class security & privacy.',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Text(
+                        'With GoldBook you get:',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      _FeatureItem(
+                        icon: Icons.security,
+                        title: 'Best-in-class security',
+                        description:
+                            'So you don\'t have to worry about your data\'s security & privacy',
+                      ),
+                      const SizedBox(height: 32),
+                      _FeatureItem(
+                        icon: Icons.cloud,
+                        title: 'Access anywhere',
+                        description:
+                            'Cloud-based architecture gives you freedom of using GoldBook from anywhere',
+                      ),
                     ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Right Side - Login Form (Web app style)
+          Expanded(
+            flex: 4,
+            child: Container(
+              color: AppTheme.backgroundWhite,
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 40),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Welcome!',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Enter your credentials below',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 40),
+                        TextFormField(
+                          controller: _usernameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Username',
+                            hintText: 'Enter your username',
+                          ),
+                          validator: (value) =>
+                              value!.isEmpty ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 24),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Password',
+                            hintText: 'Enter your password',
+                          ),
+                          validator: (value) =>
+                              value!.isEmpty ? 'Required' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {},
+                            child: Text(
+                              'Forgot password?',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppTheme.primaryAction,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryAction,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Login',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'By clicking log-in you agree to our Privacy Policy and Terms of Service',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -204,32 +232,49 @@ class _LoginScreenState extends State<LoginScreen> {
 
 class _FeatureItem extends StatelessWidget {
   final IconData icon;
-  final String text;
+  final String title;
+  final String description;
 
   const _FeatureItem({
     required this.icon,
-    required this.text,
+    required this.title,
+    required this.description,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppTheme.primaryGold.withValues(alpha: 0.1),
+            color: AppTheme.backgroundWhite,
             borderRadius: BorderRadius.circular(8),
+            boxShadow: AppTheme.cardShadow,
           ),
-          child: Icon(icon, color: AppTheme.primaryGoldDark, size: 20),
+          child: Icon(icon, color: AppTheme.primaryAction, size: 32),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 20),
         Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.textSecondary,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ],
           ),
         ),
       ],
