@@ -400,7 +400,7 @@ class _ReceiptEntryScreenState extends ConsumerState<ReceiptEntryScreen>
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  initialValue: _selectedPartyId,
+                  value: _selectedPartyId,
                   decoration: InputDecoration(labelText: '$partyType *'),
                   items: parties
                       .map(
@@ -425,9 +425,6 @@ class _ReceiptEntryScreenState extends ConsumerState<ReceiptEntryScreen>
                         mobile: '',
                         createdAt: DateTime.now(),
                         addressLine1: '',
-                        customerType: '',
-                        debitLimit: 0,
-                        debitLimitCurrency: 'INR',
                         city: '',
                         state: '',
                         pinCode: '',

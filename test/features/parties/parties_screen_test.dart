@@ -127,9 +127,6 @@ void main() {
         taxPreference: 'Taxable',
         country: 'India',
         createdAt: DateTime.now(),
-        customerType: '',
-        debitLimit: 0,
-        debitLimitCurrency: 'INR',
       );
 
       await tester.pumpWidget(
@@ -181,9 +178,6 @@ void main() {
         taxPreference: 'Taxable',
         country: 'India',
         createdAt: DateTime.now(),
-        customerType: '',
-        debitLimit: 0,
-        debitLimitCurrency: 'INR',
       );
 
       await tester.pumpWidget(
@@ -232,9 +226,6 @@ void main() {
         taxPreference: 'Taxable',
         country: 'India',
         createdAt: DateTime.now(),
-        customerType: '',
-        debitLimit: 0,
-        debitLimitCurrency: 'INR',
       );
 
       await tester.pumpWidget(

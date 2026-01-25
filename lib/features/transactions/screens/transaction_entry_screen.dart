@@ -379,7 +379,7 @@ class _TransactionEntryScreenState
                               children: [
                                 Expanded(
                                   child: DropdownButtonFormField<int>(
-                                    initialValue: _selectedPartyId,
+                                    value: _selectedPartyId,
                                     decoration: InputDecoration(
                                       labelText: '$partyType *',
                                     ),
@@ -427,9 +427,6 @@ class _TransactionEntryScreenState
                                           creditLimitCash: 0,
                                           discountPercentage: 0,
                                           taxPreference: 'Taxable',
-                                          customerType: '',
-                                          debitLimit: 0,
-                                          debitLimitCurrency: 'INR',
                                           defaultWastage: null,
                                           defaultRate: null,
                                         ), // Dummy

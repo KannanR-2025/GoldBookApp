@@ -203,6 +203,37 @@ class TransactionsRepository {
     )..where((t) => t.transactionId.equals(id))).get();
   }
 
+  Future<List<TransactionLine>> getTransactionLinesByItemId(int itemId) {
+    return (_db.select(
+      _db.transactionLines,
+    )..where((t) => t.itemId.equals(itemId))).get();
+  }
+
+  Future<String?> getLastTransactionNumberForDate(DateTime date) async {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    
+    final transactions = await (_db.select(
+      _db.transactions,
+    )
+      ..where((t) => t.date.isBiggerOrEqualValue(startOfDay))
+      ..where((t) => t.date.isSmallerThanValue(endOfDay))
+      ..where((t) => t.type.equals('Sale'))
+      ..orderBy([(t) => OrderingTerm.desc(t.id)]))
+        .get();
+    
+    if (transactions.isEmpty) return null;
+    
+    // Find the last transaction with a number
+    for (var txn in transactions) {
+      if (txn.transactionNumber != null && txn.transactionNumber!.isNotEmpty) {
+        return txn.transactionNumber;
+      }
+    }
+    
+    return null;
+  }
+
   Future<void> updateTransaction({
     required int id,
     required TransactionsCompanion header,

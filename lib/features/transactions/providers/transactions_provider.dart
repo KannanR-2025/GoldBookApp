@@ -22,11 +22,15 @@ class TransactionsController extends AsyncNotifier<void> {
     required List<TransactionLinesCompanion> lines,
   }) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    try {
       await ref
           .read(transactionsRepositoryProvider)
           .createTransaction(header: header, lines: lines);
-    });
+      state = const AsyncValue.data(null);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
+      rethrow;
+    }
   }
 
   Future<void> updateTransaction({
@@ -35,11 +39,15 @@ class TransactionsController extends AsyncNotifier<void> {
     required List<TransactionLinesCompanion> lines,
   }) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
+    try {
       await ref
           .read(transactionsRepositoryProvider)
           .updateTransaction(id: id, header: header, lines: lines);
-    });
+      state = const AsyncValue.data(null);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
+      rethrow;
+    }
   }
 }
 

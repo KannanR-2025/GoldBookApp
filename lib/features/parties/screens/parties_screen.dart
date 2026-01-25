@@ -382,21 +382,29 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen>
         id: isEdit ? drift.Value(widget.partyId!) : const drift.Value.absent(),
         // General
         type: drift.Value(widget.type),
-        code: drift.Value(_codeCtrl.text),
+        code: drift.Value(_codeCtrl.text.isEmpty ? null : _codeCtrl.text),
         title: drift.Value(_titleCtrl.text.isEmpty ? null : _titleCtrl.text),
         name: drift.Value(_nameCtrl.text),
-        contactPerson: drift.Value(_contactPersonCtrl.text),
+        contactPerson: drift.Value(
+          _contactPersonCtrl.text.isEmpty ? null : _contactPersonCtrl.text,
+        ),
         mobile: drift.Value(_mobileCtrl.text),
-        workPhone: drift.Value(_workPhoneCtrl.text),
+        workPhone: drift.Value(
+          _workPhoneCtrl.text.isEmpty ? null : _workPhoneCtrl.text,
+        ),
         whatsappNumber: drift.Value(
           _whatsappCtrl.text.isEmpty ? null : _whatsappCtrl.text,
         ),
         alternatePhone: drift.Value(
           _alternatePhoneCtrl.text.isEmpty ? null : _alternatePhoneCtrl.text,
         ),
-        email: drift.Value(_emailCtrl.text),
-        companyName: drift.Value(_companyNameCtrl.text),
-        courier: drift.Value(_courierCtrl.text),
+        email: drift.Value(_emailCtrl.text.isEmpty ? null : _emailCtrl.text),
+        companyName: drift.Value(
+          _companyNameCtrl.text.isEmpty ? null : _companyNameCtrl.text,
+        ),
+        courier: drift.Value(
+          _courierCtrl.text.isEmpty ? null : _courierCtrl.text,
+        ),
 
         // Personal Details
         gender: drift.Value(_gender),
@@ -425,19 +433,29 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen>
         ifscCode: drift.Value(_ifscCtrl.text.isEmpty ? null : _ifscCtrl.text),
 
         // Address
-        addressLine1: drift.Value(_addr1Ctrl.text),
-        addressLine2: drift.Value(_addr2Ctrl.text),
-        landmark: drift.Value(_landmarkCtrl.text),
-        city: drift.Value(_cityCtrl.text),
-        state: drift.Value(_stateCtrl.text),
-        country: drift.Value(_countryCtrl.text),
-        pinCode: drift.Value(_pinCtrl.text),
+        addressLine1: drift.Value(
+          _addr1Ctrl.text.isEmpty ? null : _addr1Ctrl.text,
+        ),
+        addressLine2: drift.Value(
+          _addr2Ctrl.text.isEmpty ? null : _addr2Ctrl.text,
+        ),
+        landmark: drift.Value(
+          _landmarkCtrl.text.isEmpty ? null : _landmarkCtrl.text,
+        ),
+        city: drift.Value(_cityCtrl.text.isEmpty ? null : _cityCtrl.text),
+        state: drift.Value(_stateCtrl.text.isEmpty ? null : _stateCtrl.text),
+        country: drift.Value(
+          _countryCtrl.text.isEmpty || _countryCtrl.text.trim().isEmpty
+              ? 'India'
+              : _countryCtrl.text.trim(),
+        ),
+        pinCode: drift.Value(_pinCtrl.text.isEmpty ? null : _pinCtrl.text),
 
         // Financials
-        gstin: drift.Value(_gstinCtrl.text),
-        panNumber: drift.Value(_panCtrl.text),
+        gstin: drift.Value(_gstinCtrl.text.isEmpty ? null : _gstinCtrl.text),
+        panNumber: drift.Value(_panCtrl.text.isEmpty ? null : _panCtrl.text),
         taxPreference: drift.Value(_taxPreference),
-        notes: drift.Value(_notesCtrl.text),
+        notes: drift.Value(_notesCtrl.text.isEmpty ? null : _notesCtrl.text),
 
         openingGoldBalance: drift.Value(double.tryParse(_opGoldCtrl.text) ?? 0),
         openingSilverBalance: drift.Value(
@@ -469,6 +487,20 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen>
           await ref
               .read(partiesControllerProvider.notifier)
               .addParty(companion);
+        }
+
+        // Check if the operation was successful
+        final controllerState = ref.read(partiesControllerProvider);
+        if (controllerState.hasError) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${controllerState.error}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
         }
 
         if (mounted) {

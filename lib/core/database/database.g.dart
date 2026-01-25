@@ -527,108 +527,6 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _customerTypeMeta = const VerificationMeta(
-    'customerType',
-  );
-  @override
-  late final GeneratedColumn<String> customerType = GeneratedColumn<String>(
-    'customer_type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('Individual'),
-  );
-  static const VerificationMeta _displayNameMeta = const VerificationMeta(
-    'displayName',
-  );
-  @override
-  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
-    'display_name',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _workNumberMeta = const VerificationMeta(
-    'workNumber',
-  );
-  @override
-  late final GeneratedColumn<String> workNumber = GeneratedColumn<String>(
-    'work_number',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _preferredCourierMeta = const VerificationMeta(
-    'preferredCourier',
-  );
-  @override
-  late final GeneratedColumn<String> preferredCourier = GeneratedColumn<String>(
-    'preferred_courier',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _billingFlatMeta = const VerificationMeta(
-    'billingFlat',
-  );
-  @override
-  late final GeneratedColumn<String> billingFlat = GeneratedColumn<String>(
-    'billing_flat',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _billingAreaMeta = const VerificationMeta(
-    'billingArea',
-  );
-  @override
-  late final GeneratedColumn<String> billingArea = GeneratedColumn<String>(
-    'billing_area',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _billingLandmarkMeta = const VerificationMeta(
-    'billingLandmark',
-  );
-  @override
-  late final GeneratedColumn<String> billingLandmark = GeneratedColumn<String>(
-    'billing_landmark',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _debitLimitMeta = const VerificationMeta(
-    'debitLimit',
-  );
-  @override
-  late final GeneratedColumn<double> debitLimit = GeneratedColumn<double>(
-    'debit_limit',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0.0),
-  );
-  static const VerificationMeta _debitLimitCurrencyMeta =
-      const VerificationMeta('debitLimitCurrency');
-  @override
-  late final GeneratedColumn<String> debitLimitCurrency =
-      GeneratedColumn<String>(
-        'debit_limit_currency',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-        defaultValue: const Constant('INR'),
-      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -678,15 +576,6 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
     createdAt,
     defaultWastage,
     defaultRate,
-    customerType,
-    displayName,
-    workNumber,
-    preferredCourier,
-    billingFlat,
-    billingArea,
-    billingLandmark,
-    debitLimit,
-    debitLimitCurrency,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1054,81 +943,6 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
         ),
       );
     }
-    if (data.containsKey('customer_type')) {
-      context.handle(
-        _customerTypeMeta,
-        customerType.isAcceptableOrUnknown(
-          data['customer_type']!,
-          _customerTypeMeta,
-        ),
-      );
-    }
-    if (data.containsKey('display_name')) {
-      context.handle(
-        _displayNameMeta,
-        displayName.isAcceptableOrUnknown(
-          data['display_name']!,
-          _displayNameMeta,
-        ),
-      );
-    }
-    if (data.containsKey('work_number')) {
-      context.handle(
-        _workNumberMeta,
-        workNumber.isAcceptableOrUnknown(data['work_number']!, _workNumberMeta),
-      );
-    }
-    if (data.containsKey('preferred_courier')) {
-      context.handle(
-        _preferredCourierMeta,
-        preferredCourier.isAcceptableOrUnknown(
-          data['preferred_courier']!,
-          _preferredCourierMeta,
-        ),
-      );
-    }
-    if (data.containsKey('billing_flat')) {
-      context.handle(
-        _billingFlatMeta,
-        billingFlat.isAcceptableOrUnknown(
-          data['billing_flat']!,
-          _billingFlatMeta,
-        ),
-      );
-    }
-    if (data.containsKey('billing_area')) {
-      context.handle(
-        _billingAreaMeta,
-        billingArea.isAcceptableOrUnknown(
-          data['billing_area']!,
-          _billingAreaMeta,
-        ),
-      );
-    }
-    if (data.containsKey('billing_landmark')) {
-      context.handle(
-        _billingLandmarkMeta,
-        billingLandmark.isAcceptableOrUnknown(
-          data['billing_landmark']!,
-          _billingLandmarkMeta,
-        ),
-      );
-    }
-    if (data.containsKey('debit_limit')) {
-      context.handle(
-        _debitLimitMeta,
-        debitLimit.isAcceptableOrUnknown(data['debit_limit']!, _debitLimitMeta),
-      );
-    }
-    if (data.containsKey('debit_limit_currency')) {
-      context.handle(
-        _debitLimitCurrencyMeta,
-        debitLimitCurrency.isAcceptableOrUnknown(
-          data['debit_limit_currency']!,
-          _debitLimitCurrencyMeta,
-        ),
-      );
-    }
     return context;
   }
 
@@ -1326,42 +1140,6 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
         DriftSqlType.double,
         data['${effectivePrefix}default_rate'],
       ),
-      customerType: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}customer_type'],
-      )!,
-      displayName: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}display_name'],
-      ),
-      workNumber: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}work_number'],
-      ),
-      preferredCourier: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}preferred_courier'],
-      ),
-      billingFlat: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}billing_flat'],
-      ),
-      billingArea: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}billing_area'],
-      ),
-      billingLandmark: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}billing_landmark'],
-      ),
-      debitLimit: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}debit_limit'],
-      )!,
-      debitLimitCurrency: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}debit_limit_currency'],
-      )!,
     );
   }
 
@@ -1419,15 +1197,6 @@ class Party extends DataClass implements Insertable<Party> {
   final DateTime createdAt;
   final double? defaultWastage;
   final double? defaultRate;
-  final String customerType;
-  final String? displayName;
-  final String? workNumber;
-  final String? preferredCourier;
-  final String? billingFlat;
-  final String? billingArea;
-  final String? billingLandmark;
-  final double debitLimit;
-  final String debitLimitCurrency;
   const Party({
     required this.id,
     required this.name,
@@ -1476,15 +1245,6 @@ class Party extends DataClass implements Insertable<Party> {
     required this.createdAt,
     this.defaultWastage,
     this.defaultRate,
-    required this.customerType,
-    this.displayName,
-    this.workNumber,
-    this.preferredCourier,
-    this.billingFlat,
-    this.billingArea,
-    this.billingLandmark,
-    required this.debitLimit,
-    required this.debitLimitCurrency,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1596,27 +1356,6 @@ class Party extends DataClass implements Insertable<Party> {
     if (!nullToAbsent || defaultRate != null) {
       map['default_rate'] = Variable<double>(defaultRate);
     }
-    map['customer_type'] = Variable<String>(customerType);
-    if (!nullToAbsent || displayName != null) {
-      map['display_name'] = Variable<String>(displayName);
-    }
-    if (!nullToAbsent || workNumber != null) {
-      map['work_number'] = Variable<String>(workNumber);
-    }
-    if (!nullToAbsent || preferredCourier != null) {
-      map['preferred_courier'] = Variable<String>(preferredCourier);
-    }
-    if (!nullToAbsent || billingFlat != null) {
-      map['billing_flat'] = Variable<String>(billingFlat);
-    }
-    if (!nullToAbsent || billingArea != null) {
-      map['billing_area'] = Variable<String>(billingArea);
-    }
-    if (!nullToAbsent || billingLandmark != null) {
-      map['billing_landmark'] = Variable<String>(billingLandmark);
-    }
-    map['debit_limit'] = Variable<double>(debitLimit);
-    map['debit_limit_currency'] = Variable<String>(debitLimitCurrency);
     return map;
   }
 
@@ -1725,27 +1464,6 @@ class Party extends DataClass implements Insertable<Party> {
       defaultRate: defaultRate == null && nullToAbsent
           ? const Value.absent()
           : Value(defaultRate),
-      customerType: Value(customerType),
-      displayName: displayName == null && nullToAbsent
-          ? const Value.absent()
-          : Value(displayName),
-      workNumber: workNumber == null && nullToAbsent
-          ? const Value.absent()
-          : Value(workNumber),
-      preferredCourier: preferredCourier == null && nullToAbsent
-          ? const Value.absent()
-          : Value(preferredCourier),
-      billingFlat: billingFlat == null && nullToAbsent
-          ? const Value.absent()
-          : Value(billingFlat),
-      billingArea: billingArea == null && nullToAbsent
-          ? const Value.absent()
-          : Value(billingArea),
-      billingLandmark: billingLandmark == null && nullToAbsent
-          ? const Value.absent()
-          : Value(billingLandmark),
-      debitLimit: Value(debitLimit),
-      debitLimitCurrency: Value(debitLimitCurrency),
     );
   }
 
@@ -1812,17 +1530,6 @@ class Party extends DataClass implements Insertable<Party> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       defaultWastage: serializer.fromJson<double?>(json['defaultWastage']),
       defaultRate: serializer.fromJson<double?>(json['defaultRate']),
-      customerType: serializer.fromJson<String>(json['customerType']),
-      displayName: serializer.fromJson<String?>(json['displayName']),
-      workNumber: serializer.fromJson<String?>(json['workNumber']),
-      preferredCourier: serializer.fromJson<String?>(json['preferredCourier']),
-      billingFlat: serializer.fromJson<String?>(json['billingFlat']),
-      billingArea: serializer.fromJson<String?>(json['billingArea']),
-      billingLandmark: serializer.fromJson<String?>(json['billingLandmark']),
-      debitLimit: serializer.fromJson<double>(json['debitLimit']),
-      debitLimitCurrency: serializer.fromJson<String>(
-        json['debitLimitCurrency'],
-      ),
     );
   }
   @override
@@ -1876,15 +1583,6 @@ class Party extends DataClass implements Insertable<Party> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'defaultWastage': serializer.toJson<double?>(defaultWastage),
       'defaultRate': serializer.toJson<double?>(defaultRate),
-      'customerType': serializer.toJson<String>(customerType),
-      'displayName': serializer.toJson<String?>(displayName),
-      'workNumber': serializer.toJson<String?>(workNumber),
-      'preferredCourier': serializer.toJson<String?>(preferredCourier),
-      'billingFlat': serializer.toJson<String?>(billingFlat),
-      'billingArea': serializer.toJson<String?>(billingArea),
-      'billingLandmark': serializer.toJson<String?>(billingLandmark),
-      'debitLimit': serializer.toJson<double>(debitLimit),
-      'debitLimitCurrency': serializer.toJson<String>(debitLimitCurrency),
     };
   }
 
@@ -1936,15 +1634,6 @@ class Party extends DataClass implements Insertable<Party> {
     DateTime? createdAt,
     Value<double?> defaultWastage = const Value.absent(),
     Value<double?> defaultRate = const Value.absent(),
-    String? customerType,
-    Value<String?> displayName = const Value.absent(),
-    Value<String?> workNumber = const Value.absent(),
-    Value<String?> preferredCourier = const Value.absent(),
-    Value<String?> billingFlat = const Value.absent(),
-    Value<String?> billingArea = const Value.absent(),
-    Value<String?> billingLandmark = const Value.absent(),
-    double? debitLimit,
-    String? debitLimitCurrency,
   }) => Party(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -2007,19 +1696,6 @@ class Party extends DataClass implements Insertable<Party> {
         ? defaultWastage.value
         : this.defaultWastage,
     defaultRate: defaultRate.present ? defaultRate.value : this.defaultRate,
-    customerType: customerType ?? this.customerType,
-    displayName: displayName.present ? displayName.value : this.displayName,
-    workNumber: workNumber.present ? workNumber.value : this.workNumber,
-    preferredCourier: preferredCourier.present
-        ? preferredCourier.value
-        : this.preferredCourier,
-    billingFlat: billingFlat.present ? billingFlat.value : this.billingFlat,
-    billingArea: billingArea.present ? billingArea.value : this.billingArea,
-    billingLandmark: billingLandmark.present
-        ? billingLandmark.value
-        : this.billingLandmark,
-    debitLimit: debitLimit ?? this.debitLimit,
-    debitLimitCurrency: debitLimitCurrency ?? this.debitLimitCurrency,
   );
   Party copyWithCompanion(PartiesCompanion data) {
     return Party(
@@ -2118,33 +1794,6 @@ class Party extends DataClass implements Insertable<Party> {
       defaultRate: data.defaultRate.present
           ? data.defaultRate.value
           : this.defaultRate,
-      customerType: data.customerType.present
-          ? data.customerType.value
-          : this.customerType,
-      displayName: data.displayName.present
-          ? data.displayName.value
-          : this.displayName,
-      workNumber: data.workNumber.present
-          ? data.workNumber.value
-          : this.workNumber,
-      preferredCourier: data.preferredCourier.present
-          ? data.preferredCourier.value
-          : this.preferredCourier,
-      billingFlat: data.billingFlat.present
-          ? data.billingFlat.value
-          : this.billingFlat,
-      billingArea: data.billingArea.present
-          ? data.billingArea.value
-          : this.billingArea,
-      billingLandmark: data.billingLandmark.present
-          ? data.billingLandmark.value
-          : this.billingLandmark,
-      debitLimit: data.debitLimit.present
-          ? data.debitLimit.value
-          : this.debitLimit,
-      debitLimitCurrency: data.debitLimitCurrency.present
-          ? data.debitLimitCurrency.value
-          : this.debitLimitCurrency,
     );
   }
 
@@ -2197,16 +1846,7 @@ class Party extends DataClass implements Insertable<Party> {
           ..write('creditLimitCash: $creditLimitCash, ')
           ..write('createdAt: $createdAt, ')
           ..write('defaultWastage: $defaultWastage, ')
-          ..write('defaultRate: $defaultRate, ')
-          ..write('customerType: $customerType, ')
-          ..write('displayName: $displayName, ')
-          ..write('workNumber: $workNumber, ')
-          ..write('preferredCourier: $preferredCourier, ')
-          ..write('billingFlat: $billingFlat, ')
-          ..write('billingArea: $billingArea, ')
-          ..write('billingLandmark: $billingLandmark, ')
-          ..write('debitLimit: $debitLimit, ')
-          ..write('debitLimitCurrency: $debitLimitCurrency')
+          ..write('defaultRate: $defaultRate')
           ..write(')'))
         .toString();
   }
@@ -2260,15 +1900,6 @@ class Party extends DataClass implements Insertable<Party> {
     createdAt,
     defaultWastage,
     defaultRate,
-    customerType,
-    displayName,
-    workNumber,
-    preferredCourier,
-    billingFlat,
-    billingArea,
-    billingLandmark,
-    debitLimit,
-    debitLimitCurrency,
   ]);
   @override
   bool operator ==(Object other) =>
@@ -2320,16 +1951,7 @@ class Party extends DataClass implements Insertable<Party> {
           other.creditLimitCash == this.creditLimitCash &&
           other.createdAt == this.createdAt &&
           other.defaultWastage == this.defaultWastage &&
-          other.defaultRate == this.defaultRate &&
-          other.customerType == this.customerType &&
-          other.displayName == this.displayName &&
-          other.workNumber == this.workNumber &&
-          other.preferredCourier == this.preferredCourier &&
-          other.billingFlat == this.billingFlat &&
-          other.billingArea == this.billingArea &&
-          other.billingLandmark == this.billingLandmark &&
-          other.debitLimit == this.debitLimit &&
-          other.debitLimitCurrency == this.debitLimitCurrency);
+          other.defaultRate == this.defaultRate);
 }
 
 class PartiesCompanion extends UpdateCompanion<Party> {
@@ -2380,15 +2002,6 @@ class PartiesCompanion extends UpdateCompanion<Party> {
   final Value<DateTime> createdAt;
   final Value<double?> defaultWastage;
   final Value<double?> defaultRate;
-  final Value<String> customerType;
-  final Value<String?> displayName;
-  final Value<String?> workNumber;
-  final Value<String?> preferredCourier;
-  final Value<String?> billingFlat;
-  final Value<String?> billingArea;
-  final Value<String?> billingLandmark;
-  final Value<double> debitLimit;
-  final Value<String> debitLimitCurrency;
   const PartiesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -2437,15 +2050,6 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     this.createdAt = const Value.absent(),
     this.defaultWastage = const Value.absent(),
     this.defaultRate = const Value.absent(),
-    this.customerType = const Value.absent(),
-    this.displayName = const Value.absent(),
-    this.workNumber = const Value.absent(),
-    this.preferredCourier = const Value.absent(),
-    this.billingFlat = const Value.absent(),
-    this.billingArea = const Value.absent(),
-    this.billingLandmark = const Value.absent(),
-    this.debitLimit = const Value.absent(),
-    this.debitLimitCurrency = const Value.absent(),
   });
   PartiesCompanion.insert({
     this.id = const Value.absent(),
@@ -2495,15 +2099,6 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     this.createdAt = const Value.absent(),
     this.defaultWastage = const Value.absent(),
     this.defaultRate = const Value.absent(),
-    this.customerType = const Value.absent(),
-    this.displayName = const Value.absent(),
-    this.workNumber = const Value.absent(),
-    this.preferredCourier = const Value.absent(),
-    this.billingFlat = const Value.absent(),
-    this.billingArea = const Value.absent(),
-    this.billingLandmark = const Value.absent(),
-    this.debitLimit = const Value.absent(),
-    this.debitLimitCurrency = const Value.absent(),
   }) : name = Value(name),
        mobile = Value(mobile),
        type = Value(type);
@@ -2555,15 +2150,6 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     Expression<DateTime>? createdAt,
     Expression<double>? defaultWastage,
     Expression<double>? defaultRate,
-    Expression<String>? customerType,
-    Expression<String>? displayName,
-    Expression<String>? workNumber,
-    Expression<String>? preferredCourier,
-    Expression<String>? billingFlat,
-    Expression<String>? billingArea,
-    Expression<String>? billingLandmark,
-    Expression<double>? debitLimit,
-    Expression<String>? debitLimitCurrency,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2616,16 +2202,6 @@ class PartiesCompanion extends UpdateCompanion<Party> {
       if (createdAt != null) 'created_at': createdAt,
       if (defaultWastage != null) 'default_wastage': defaultWastage,
       if (defaultRate != null) 'default_rate': defaultRate,
-      if (customerType != null) 'customer_type': customerType,
-      if (displayName != null) 'display_name': displayName,
-      if (workNumber != null) 'work_number': workNumber,
-      if (preferredCourier != null) 'preferred_courier': preferredCourier,
-      if (billingFlat != null) 'billing_flat': billingFlat,
-      if (billingArea != null) 'billing_area': billingArea,
-      if (billingLandmark != null) 'billing_landmark': billingLandmark,
-      if (debitLimit != null) 'debit_limit': debitLimit,
-      if (debitLimitCurrency != null)
-        'debit_limit_currency': debitLimitCurrency,
     });
   }
 
@@ -2677,15 +2253,6 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     Value<DateTime>? createdAt,
     Value<double?>? defaultWastage,
     Value<double?>? defaultRate,
-    Value<String>? customerType,
-    Value<String?>? displayName,
-    Value<String?>? workNumber,
-    Value<String?>? preferredCourier,
-    Value<String?>? billingFlat,
-    Value<String?>? billingArea,
-    Value<String?>? billingLandmark,
-    Value<double>? debitLimit,
-    Value<String>? debitLimitCurrency,
   }) {
     return PartiesCompanion(
       id: id ?? this.id,
@@ -2735,15 +2302,6 @@ class PartiesCompanion extends UpdateCompanion<Party> {
       createdAt: createdAt ?? this.createdAt,
       defaultWastage: defaultWastage ?? this.defaultWastage,
       defaultRate: defaultRate ?? this.defaultRate,
-      customerType: customerType ?? this.customerType,
-      displayName: displayName ?? this.displayName,
-      workNumber: workNumber ?? this.workNumber,
-      preferredCourier: preferredCourier ?? this.preferredCourier,
-      billingFlat: billingFlat ?? this.billingFlat,
-      billingArea: billingArea ?? this.billingArea,
-      billingLandmark: billingLandmark ?? this.billingLandmark,
-      debitLimit: debitLimit ?? this.debitLimit,
-      debitLimitCurrency: debitLimitCurrency ?? this.debitLimitCurrency,
     );
   }
 
@@ -2893,33 +2451,6 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     if (defaultRate.present) {
       map['default_rate'] = Variable<double>(defaultRate.value);
     }
-    if (customerType.present) {
-      map['customer_type'] = Variable<String>(customerType.value);
-    }
-    if (displayName.present) {
-      map['display_name'] = Variable<String>(displayName.value);
-    }
-    if (workNumber.present) {
-      map['work_number'] = Variable<String>(workNumber.value);
-    }
-    if (preferredCourier.present) {
-      map['preferred_courier'] = Variable<String>(preferredCourier.value);
-    }
-    if (billingFlat.present) {
-      map['billing_flat'] = Variable<String>(billingFlat.value);
-    }
-    if (billingArea.present) {
-      map['billing_area'] = Variable<String>(billingArea.value);
-    }
-    if (billingLandmark.present) {
-      map['billing_landmark'] = Variable<String>(billingLandmark.value);
-    }
-    if (debitLimit.present) {
-      map['debit_limit'] = Variable<double>(debitLimit.value);
-    }
-    if (debitLimitCurrency.present) {
-      map['debit_limit_currency'] = Variable<String>(debitLimitCurrency.value);
-    }
     return map;
   }
 
@@ -2972,16 +2503,7 @@ class PartiesCompanion extends UpdateCompanion<Party> {
           ..write('creditLimitCash: $creditLimitCash, ')
           ..write('createdAt: $createdAt, ')
           ..write('defaultWastage: $defaultWastage, ')
-          ..write('defaultRate: $defaultRate, ')
-          ..write('customerType: $customerType, ')
-          ..write('displayName: $displayName, ')
-          ..write('workNumber: $workNumber, ')
-          ..write('preferredCourier: $preferredCourier, ')
-          ..write('billingFlat: $billingFlat, ')
-          ..write('billingArea: $billingArea, ')
-          ..write('billingLandmark: $billingLandmark, ')
-          ..write('debitLimit: $debitLimit, ')
-          ..write('debitLimitCurrency: $debitLimitCurrency')
+          ..write('defaultRate: $defaultRate')
           ..write(')'))
         .toString();
   }
@@ -7525,15 +7047,6 @@ typedef $$PartiesTableCreateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<double?> defaultWastage,
       Value<double?> defaultRate,
-      Value<String> customerType,
-      Value<String?> displayName,
-      Value<String?> workNumber,
-      Value<String?> preferredCourier,
-      Value<String?> billingFlat,
-      Value<String?> billingArea,
-      Value<String?> billingLandmark,
-      Value<double> debitLimit,
-      Value<String> debitLimitCurrency,
     });
 typedef $$PartiesTableUpdateCompanionBuilder =
     PartiesCompanion Function({
@@ -7584,15 +7097,6 @@ typedef $$PartiesTableUpdateCompanionBuilder =
       Value<DateTime> createdAt,
       Value<double?> defaultWastage,
       Value<double?> defaultRate,
-      Value<String> customerType,
-      Value<String?> displayName,
-      Value<String?> workNumber,
-      Value<String?> preferredCourier,
-      Value<String?> billingFlat,
-      Value<String?> billingArea,
-      Value<String?> billingLandmark,
-      Value<double> debitLimit,
-      Value<String> debitLimitCurrency,
     });
 
 final class $$PartiesTableReferences
@@ -7859,51 +7363,6 @@ class $$PartiesTableFilterComposer
 
   ColumnFilters<double> get defaultRate => $composableBuilder(
     column: $table.defaultRate,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get customerType => $composableBuilder(
-    column: $table.customerType,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get displayName => $composableBuilder(
-    column: $table.displayName,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get workNumber => $composableBuilder(
-    column: $table.workNumber,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get preferredCourier => $composableBuilder(
-    column: $table.preferredCourier,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get billingFlat => $composableBuilder(
-    column: $table.billingFlat,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get billingArea => $composableBuilder(
-    column: $table.billingArea,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get billingLandmark => $composableBuilder(
-    column: $table.billingLandmark,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get debitLimit => $composableBuilder(
-    column: $table.debitLimit,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get debitLimitCurrency => $composableBuilder(
-    column: $table.debitLimitCurrency,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -8176,51 +7635,6 @@ class $$PartiesTableOrderingComposer
     column: $table.defaultRate,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<String> get customerType => $composableBuilder(
-    column: $table.customerType,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get displayName => $composableBuilder(
-    column: $table.displayName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get workNumber => $composableBuilder(
-    column: $table.workNumber,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get preferredCourier => $composableBuilder(
-    column: $table.preferredCourier,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get billingFlat => $composableBuilder(
-    column: $table.billingFlat,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get billingArea => $composableBuilder(
-    column: $table.billingArea,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get billingLandmark => $composableBuilder(
-    column: $table.billingLandmark,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get debitLimit => $composableBuilder(
-    column: $table.debitLimit,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get debitLimitCurrency => $composableBuilder(
-    column: $table.debitLimitCurrency,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$PartiesTableAnnotationComposer
@@ -8421,51 +7835,6 @@ class $$PartiesTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get customerType => $composableBuilder(
-    column: $table.customerType,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get displayName => $composableBuilder(
-    column: $table.displayName,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get workNumber => $composableBuilder(
-    column: $table.workNumber,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get preferredCourier => $composableBuilder(
-    column: $table.preferredCourier,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get billingFlat => $composableBuilder(
-    column: $table.billingFlat,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get billingArea => $composableBuilder(
-    column: $table.billingArea,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get billingLandmark => $composableBuilder(
-    column: $table.billingLandmark,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get debitLimit => $composableBuilder(
-    column: $table.debitLimit,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get debitLimitCurrency => $composableBuilder(
-    column: $table.debitLimitCurrency,
-    builder: (column) => column,
-  );
-
   Expression<T> transactionsRefs<T extends Object>(
     Expression<T> Function($$TransactionsTableAnnotationComposer a) f,
   ) {
@@ -8567,15 +7936,6 @@ class $$PartiesTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<double?> defaultWastage = const Value.absent(),
                 Value<double?> defaultRate = const Value.absent(),
-                Value<String> customerType = const Value.absent(),
-                Value<String?> displayName = const Value.absent(),
-                Value<String?> workNumber = const Value.absent(),
-                Value<String?> preferredCourier = const Value.absent(),
-                Value<String?> billingFlat = const Value.absent(),
-                Value<String?> billingArea = const Value.absent(),
-                Value<String?> billingLandmark = const Value.absent(),
-                Value<double> debitLimit = const Value.absent(),
-                Value<String> debitLimitCurrency = const Value.absent(),
               }) => PartiesCompanion(
                 id: id,
                 name: name,
@@ -8624,15 +7984,6 @@ class $$PartiesTableTableManager
                 createdAt: createdAt,
                 defaultWastage: defaultWastage,
                 defaultRate: defaultRate,
-                customerType: customerType,
-                displayName: displayName,
-                workNumber: workNumber,
-                preferredCourier: preferredCourier,
-                billingFlat: billingFlat,
-                billingArea: billingArea,
-                billingLandmark: billingLandmark,
-                debitLimit: debitLimit,
-                debitLimitCurrency: debitLimitCurrency,
               ),
           createCompanionCallback:
               ({
@@ -8683,15 +8034,6 @@ class $$PartiesTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<double?> defaultWastage = const Value.absent(),
                 Value<double?> defaultRate = const Value.absent(),
-                Value<String> customerType = const Value.absent(),
-                Value<String?> displayName = const Value.absent(),
-                Value<String?> workNumber = const Value.absent(),
-                Value<String?> preferredCourier = const Value.absent(),
-                Value<String?> billingFlat = const Value.absent(),
-                Value<String?> billingArea = const Value.absent(),
-                Value<String?> billingLandmark = const Value.absent(),
-                Value<double> debitLimit = const Value.absent(),
-                Value<String> debitLimitCurrency = const Value.absent(),
               }) => PartiesCompanion.insert(
                 id: id,
                 name: name,
@@ -8740,15 +8082,6 @@ class $$PartiesTableTableManager
                 createdAt: createdAt,
                 defaultWastage: defaultWastage,
                 defaultRate: defaultRate,
-                customerType: customerType,
-                displayName: displayName,
-                workNumber: workNumber,
-                preferredCourier: preferredCourier,
-                billingFlat: billingFlat,
-                billingArea: billingArea,
-                billingLandmark: billingLandmark,
-                debitLimit: debitLimit,
-                debitLimitCurrency: debitLimitCurrency,
               ),
           withReferenceMapper: (p0) => p0
               .map(

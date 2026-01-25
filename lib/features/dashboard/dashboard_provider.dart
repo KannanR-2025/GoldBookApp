@@ -49,7 +49,14 @@ final dashboardSummaryProvider = FutureProvider<DashboardSummary>((ref) async {
   }
 
   // Get all items
-  final items = await ref.read(itemsListProvider.future);
+  List<Item> items;
+  try {
+    items = await ref
+        .read(itemsListProvider.future)
+        .timeout(const Duration(seconds: 5), onTimeout: () => <Item>[]);
+  } catch (e) {
+    items = <Item>[];
+  }
   double totalGoldStock = 0;
   double totalSilverStock = 0;
   for (var item in items) {
@@ -81,7 +88,25 @@ final dashboardSummaryProvider = FutureProvider<DashboardSummary>((ref) async {
 
 // Sales chart data provider
 final salesChartDataProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
-  final transactions = await ref.read(transactionsRepositoryProvider).watchTransactions().first;
+  List<TransactionWithParty> transactions;
+  try {
+    // Add timeout to prevent infinite loading if stream never emits
+    transactions = await ref
+        .read(transactionsRepositoryProvider)
+        .watchTransactions()
+        .first
+        .timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            // Return empty list if timeout occurs
+            return <TransactionWithParty>[];
+          },
+        );
+  } catch (e) {
+    // If any error occurs (timeout, database error, etc.), return empty list
+    transactions = <TransactionWithParty>[];
+  }
+  
   final sales = transactions.where((t) => t.transaction.type == 'Sale').toList();
 
   // Group by day for last 7 days
@@ -102,14 +127,22 @@ final salesChartDataProvider = FutureProvider<List<Map<String, dynamic>>>((ref) 
     }
   }
 
+  // Get day names for the last 7 days
   final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  return dailySales.entries.map((entry) {
-    final index = dailySales.keys.toList().indexOf(entry.key);
-    return {
-      'day': index < days.length ? days[index] : entry.key,
-      'amount': entry.value,
-    };
-  }).toList();
+  final result = <Map<String, dynamic>>[];
+  
+  // Iterate through the last 7 days in order
+  for (var i = 6; i >= 0; i--) {
+    final date = now.subtract(Duration(days: i));
+    final dayKey = '${date.day}/${date.month}';
+    final dayName = days[6 - i]; // Get corresponding day name
+    result.add({
+      'day': dayName,
+      'amount': dailySales[dayKey] ?? 0.0,
+    });
+  }
+  
+  return result;
 });
 
 // Top customers provider

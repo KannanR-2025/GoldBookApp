@@ -400,7 +400,7 @@ class _PaymentEntryScreenState extends ConsumerState<PaymentEntryScreen>
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  initialValue: _selectedPartyId,
+                  value: _selectedPartyId,
                   decoration: InputDecoration(labelText: '$partyType *'),
                   items: parties
                       .map(
@@ -425,9 +425,6 @@ class _PaymentEntryScreenState extends ConsumerState<PaymentEntryScreen>
                         mobile: '',
                         createdAt: DateTime.now(),
                         addressLine1: '',
-                        customerType: '',
-                        debitLimit: 0,
-                        debitLimitCurrency: 'INR',
                         city: '',
                         state: '',
                         pinCode: '',

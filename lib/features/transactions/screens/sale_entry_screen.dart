@@ -52,16 +52,12 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   // Search controllers for item dropdowns
   final Map<int, TextEditingController> _itemSearchControllers = {};
 
-  // Gold Rate
-  final _goldRateCtrl = TextEditingController(text: '6450.00');
-  final _silverRateCtrl = TextEditingController(text: '78.50');
-
   // Totals
   double _totalGold = 0;
   double _totalSilver = 0;
   double _subtotal = 0;
   double _totalCash = 0;
-  double _metalReceiptGold = 0; // M-Rec:Fine Gold
+  final double _metalReceiptGold = 0; // M-Rec:Fine Gold
 
   bool _isLoading = false;
 
@@ -72,19 +68,79 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
     if (widget.transactionId != null) {
       _loadTransaction();
+    } else {
+      // Generate invoice number after first frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _generateInvoiceNumber();
+      });
+    }
+  }
+
+  Future<void> _generateInvoiceNumber() async {
+    try {
+      final repo = ref.read(transactionsRepositoryProvider);
+      // Get the last invoice number for today's date
+      final today = DateTime.now();
+      final dateStr = DateFormat('yyyyMMdd').format(today);
+      
+      // Query for the last transaction number that starts with today's date
+      final lastTxn = await repo.getLastTransactionNumberForDate(today);
+      
+      int nextNumber = 1;
+      if (lastTxn != null && lastTxn.isNotEmpty) {
+        // Extract number from format like INV-20250125-001 or similar
+        final parts = lastTxn.split('-');
+        if (parts.length >= 3) {
+          final lastNumStr = parts.last;
+          final lastNum = int.tryParse(lastNumStr);
+          if (lastNum != null) {
+            nextNumber = lastNum + 1;
+          }
+        } else {
+          // Try to extract number from end of string
+          final match = RegExp(r'(\d+)$').firstMatch(lastTxn);
+          if (match != null) {
+            final lastNum = int.tryParse(match.group(1)!);
+            if (lastNum != null) {
+              nextNumber = lastNum + 1;
+            }
+          }
+        }
+      }
+      
+      // Format: INV-YYYYMMDD-XXX
+      final invoiceNumber = 'INV-$dateStr-${nextNumber.toString().padLeft(3, '0')}';
+      if (mounted) {
+        setState(() {
+          _transactionNumberCtrl.text = invoiceNumber;
+        });
+      }
+    } catch (e) {
+      // Fallback to timestamp-based format if query fails
+      if (mounted) {
+        setState(() {
+          _transactionNumberCtrl.text =
+              'INV-${DateFormat('yyyyMMdd-HHmmss').format(DateTime.now())}';
+        });
+      }
     }
   }
 
   Future<void> _loadTransaction() async {
     setState(() => _isLoading = true);
     final repo = ref.read(transactionsRepositoryProvider);
+    final partiesRepo = ref.read(partiesRepositoryProvider);
     final txn = await repo.getTransaction(widget.transactionId!);
     if (txn != null) {
       final lines = await repo.getTransactionLines(widget.transactionId!);
+      
+      // Load party to get code
+      final party = await partiesRepo.getPartyById(txn.partyId);
 
       setState(() {
         _date = txn.date;
         _selectedPartyId = txn.partyId;
+        _partyCodeCtrl.text = party?.code ?? '';
         _transactionNumberCtrl.text = txn.transactionNumber ?? '';
         _paymentMethod = txn.paymentMethod;
         _paymentRefCtrl.text = txn.paymentReference ?? '';
@@ -115,7 +171,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           lineState.sizeCtrl.text = l.size ?? '';
           lineState.colorCtrl.text = l.color ?? '';
           lineState.ghatWeightCtrl.text = l.ghatWeight.toString();
-          lineState.rateOn = l.rateOn ?? 'Net Weight';
           _lines.add(lineState);
         }
         if (_lines.isEmpty) _lines.add(TransactionLineState());
@@ -151,25 +206,23 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
     for (var line in _lines) {
       double purity = double.tryParse(line.purityCtrl.text) ?? 0;
+      double wastage = double.tryParse(line.wastageCtrl.text) ?? 0;
       double net = double.tryParse(line.netWeightCtrl.text) ?? 0;
       double rate = double.tryParse(line.rateCtrl.text) ?? 0;
-      double makingCharges = double.tryParse(line.makingChargesCtrl.text) ?? 0;
 
       String metalType = line.metalType ?? 'Gold';
 
-      double fine = net * (purity / 100);
+      // Fine wt = net wt * (touch + Wast) / 100
+      double fine = net * ((purity + wastage) / 100);
 
-      double amountBeforeCharges = 0;
-      if (line.rateOn == 'Fine Weight') {
-        amountBeforeCharges = fine * rate;
-      } else if (line.rateOn == 'Fixed') {
-        amountBeforeCharges = rate;
-      } else {
-        amountBeforeCharges = net * rate;
-      }
+      // Charges = unit * rate
+      double unit = double.tryParse(line.unitCtrl.text) ?? 0;
+      double makingCharges = unit * rate;
+      line.makingChargesCtrl.text = makingCharges.toStringAsFixed(2);
 
+      // Amount = fine weight * rate (charges)
+      double calculatedAmount = makingCharges;
       if (rate > 0) {
-        double calculatedAmount = amountBeforeCharges + makingCharges;
         line.amountCtrl.text = calculatedAmount.toStringAsFixed(2);
       }
 
@@ -208,6 +261,18 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   }
 
   void _save() async {
+    // Validate that at least one line has an item selected
+    final hasValidLines = _lines.any((l) => l.selectedItemId != null);
+    if (!hasValidLines) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please add at least one item to the sale'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate() && _selectedPartyId != null) {
       final header = TransactionsCompanion(
         transactionNumber: drift.Value(
@@ -243,7 +308,10 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
         status: drift.Value('Completed'),
       );
 
-      final lines = _lines.map((l) {
+      // Filter out lines without items
+      final validLines = _lines.where((l) => l.selectedItemId != null).toList();
+      
+      final lines = validLines.map((l) {
         return TransactionLinesCompanion(
           itemId: drift.Value(l.selectedItemId),
           description: drift.Value(l.descCtrl.text),
@@ -268,30 +336,56 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           color: drift.Value(
             l.colorCtrl.text.isEmpty ? null : l.colorCtrl.text,
           ),
-          rateOn: drift.Value(l.rateOn),
+          rateOn: const drift.Value(null), // Removed field, set to null
           ghatWeight: drift.Value(double.tryParse(l.ghatWeightCtrl.text) ?? 0),
+          qty: drift.Value(1.0), // Each line item is 1 piece for sales
         );
       }).toList();
 
-      if (widget.transactionId != null) {
-        await ref
-            .read(transactionsControllerProvider.notifier)
-            .updateTransaction(
-              id: widget.transactionId!,
-              header: header,
-              lines: lines,
-            );
-      } else {
-        await ref
-            .read(transactionsControllerProvider.notifier)
-            .createTransaction(header: header, lines: lines);
-      }
+      try {
+        print('=== Sale Save Started ===');
+        print('Transaction ID: ${widget.transactionId}');
+        print('Party ID: $_selectedPartyId');
+        print('Number of lines: ${_lines.length}');
+        print('Valid lines: ${validLines.length}');
+        
+        if (widget.transactionId != null) {
+          print('Updating transaction ${widget.transactionId}');
+          await ref
+              .read(transactionsControllerProvider.notifier)
+              .updateTransaction(
+                id: widget.transactionId!,
+                header: header,
+                lines: lines,
+              );
+        } else {
+          print('Creating new transaction');
+          await ref
+              .read(transactionsControllerProvider.notifier)
+              .createTransaction(header: header, lines: lines);
+        }
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Sale Saved')));
-        context.pop();
+        print('=== Sale Save Successful ===');
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Sale Saved')));
+          context.pop();
+        }
+      } catch (e, stackTrace) {
+        print('=== Save Exception ===');
+        print('Error: $e');
+        print('Stack trace: $stackTrace');
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error saving sale: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -455,7 +549,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   }
 
   Widget _buildPartyInformation(List<Party> parties) {
-    const String partyType = 'Customer';
     Party? selectedParty;
     if (_selectedPartyId != null) {
       selectedParty = parties.firstWhere(
@@ -467,9 +560,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           mobile: '',
           createdAt: DateTime.now(),
           addressLine1: '',
-          customerType: '',
-          debitLimit: 0,
-          debitLimitCurrency: 'INR',
           city: '',
           state: '',
           pinCode: '',
@@ -509,27 +599,176 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          TextFormField(
-            controller: _partyCodeCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Code',
-              isDense: true,
-            ),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<int>(
-            value: _selectedPartyId,
-            decoration: InputDecoration(
-              labelText: 'Party Name *',
-              isDense: true,
-            ),
-            items: parties
-                .map(
-                  (p) => DropdownMenuItem(value: p.id, child: Text(p.name)),
-                )
-                .toList(),
-            onChanged: (v) => setState(() => _selectedPartyId = v),
-            validator: (v) => v == null ? 'Required' : null,
+          Row(
+            children: [
+              Expanded(
+                child: Autocomplete<Party>(
+                  key: ValueKey('customer_code_${_selectedPartyId ?? 'none'}'),
+                  displayStringForOption: (Party party) {
+                    if (party.code != null && party.code!.isNotEmpty) {
+                      return '${party.code} - ${party.name}';
+                    }
+                    return party.name;
+                  },
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      // Show only parties with codes when empty
+                      return parties.where(
+                        (p) => p.code != null && p.code!.isNotEmpty,
+                      );
+                    }
+                    final query = textEditingValue.text.toLowerCase();
+                    // When searching, show all parties that match (code or name)
+                    // but prioritize those with codes
+                    return parties.where((party) {
+                      final codeMatch = party.code != null &&
+                          party.code!.toLowerCase().contains(query);
+                      final nameMatch = party.name.toLowerCase().contains(query);
+                      return codeMatch || nameMatch;
+                    });
+                  },
+                  onSelected: (Party party) {
+                    setState(() {
+                      _selectedPartyId = party.id;
+                      _partyCodeCtrl.text = party.code ?? '';
+                    });
+                  },
+                  fieldViewBuilder: (
+                    BuildContext context,
+                    TextEditingController textEditingController,
+                    FocusNode focusNode,
+                    VoidCallback onFieldSubmitted,
+                  ) {
+                    // Initialize field with selected party info if available
+                    // Defer text update to avoid setState during build
+                    if (_selectedPartyId != null && !focusNode.hasFocus) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted) return;
+                        try {
+                          final selectedParty = parties.firstWhere(
+                            (p) => p.id == _selectedPartyId,
+                          );
+                          final displayText = selectedParty.code != null &&
+                                  selectedParty.code!.isNotEmpty
+                              ? '${selectedParty.code} - ${selectedParty.name}'
+                              : selectedParty.name;
+                          if (textEditingController.text != displayText) {
+                            textEditingController.text = displayText;
+                            _partyCodeCtrl.text = selectedParty.code ?? '';
+                          }
+                        } catch (e) {
+                          // Party not found in list
+                        }
+                      });
+                    }
+                    return TextFormField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        labelText: 'Customer Code',
+                        isDense: true,
+                        hintText: 'Search by code or name...',
+                        suffixIcon: Icon(Icons.search, size: 18),
+                      ),
+                      onChanged: (value) {
+                        _partyCodeCtrl.text = value;
+                      },
+                      onFieldSubmitted: (String value) {
+                        onFieldSubmitted();
+                      },
+                    );
+                  },
+                  optionsViewBuilder: (
+                    BuildContext context,
+                    AutocompleteOnSelected<Party> onSelected,
+                    Iterable<Party> options,
+                  ) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4.0,
+                        borderRadius: BorderRadius.circular(8),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: options.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final party = options.elementAt(index);
+                              return InkWell(
+                                onTap: () => onSelected(party),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              party.code != null &&
+                                                      party.code!.isNotEmpty
+                                                  ? '${party.code} - ${party.name}'
+                                                  : party.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            if (party.mobile.isNotEmpty)
+                                              Text(
+                                                party.mobile,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: DropdownButtonFormField<int>(
+                  value: _selectedPartyId,
+                  decoration: const InputDecoration(
+                    labelText: 'Party Name *',
+                    isDense: true,
+                  ),
+                  items: parties
+                      .map(
+                        (p) => DropdownMenuItem(
+                          value: p.id,
+                          child: Text(p.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      final party = parties.firstWhere((p) => p.id == v);
+                      setState(() {
+                        _selectedPartyId = v;
+                        _partyCodeCtrl.text = party.code ?? '';
+                      });
+                    }
+                  },
+                  validator: (v) => v == null ? 'Required' : null,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Row(
@@ -591,17 +830,17 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                   const SizedBox(height: 8),
                   _buildBalanceRow(
                     'Gold:',
-                    '${selectedParty.goldBalance.toStringAsFixed(3)}',
+                    selectedParty.goldBalance.toStringAsFixed(3),
                     selectedParty.goldBalance < 0 ? 'Dr' : 'Cr',
                   ),
                   _buildBalanceRow(
                     'Silver:',
-                    '${selectedParty.silverBalance.toStringAsFixed(3)}',
+                    selectedParty.silverBalance.toStringAsFixed(3),
                     selectedParty.silverBalance < 0 ? 'Dr' : 'Cr',
                   ),
                   _buildBalanceRow(
                     'Cash:',
-                    '${selectedParty.cashBalance.toStringAsFixed(2)}',
+                    selectedParty.cashBalance.toStringAsFixed(2),
                     selectedParty.cashBalance < 0 ? 'Dr' : 'Cr',
                   ),
                 ],
@@ -670,6 +909,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
             controller: _transactionNumberCtrl,
             decoration: const InputDecoration(
               labelText: 'Invoice No.',
+              hintText: 'Auto-generated',
               isDense: true,
             ),
           ),
@@ -871,6 +1111,16 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           ),
           DataColumn(
             label: Text(
+              'Stock',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
               'Remarks',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
@@ -991,16 +1241,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           ),
           DataColumn(
             label: Text(
-              'Rate On?',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-          ),
-          DataColumn(
-            label: Text(
               'Rate',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
@@ -1079,12 +1319,34 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
               ),
               DataCell(
                 SizedBox(
-                  width: 150,
+                  width: 250,
                   child: _buildSearchableItemDropdown(
                     line: line,
                     index: index,
                     inventoryItems: inventoryItems,
                   ),
+                ),
+              ),
+              DataCell(
+                Center(
+                  child: line.selectedItemId != null
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.info_outline,
+                            size: 18,
+                            color: AppTheme.primaryAction,
+                          ),
+                          onPressed: () => _showStockDetails(
+                            context,
+                            line.selectedItemId!,
+                            inventoryItems,
+                            index,
+                          ),
+                          tooltip: 'View stock details',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        )
+                      : const SizedBox.shrink(),
                 ),
               ),
               DataCell(
@@ -1123,7 +1385,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                     decoration: const InputDecoration(
                       isDense: true,
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                     ),
                   ),
                 ),
@@ -1137,7 +1399,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                     decoration: const InputDecoration(
                       isDense: true,
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                     ),
                   ),
                 ),
@@ -1146,6 +1408,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                 SizedBox(
                   width: 60,
                   child: TextFormField(
+                    controller: line.unitCtrl,
                     style: const TextStyle(fontSize: 12),
                     decoration: InputDecoration(
                       isDense: true,
@@ -1166,6 +1429,8 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                       hintText: '0',
                       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                     ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => _calculateTotals(),
                   ),
                 ),
               ),
@@ -1178,7 +1443,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                     decoration: const InputDecoration(
                       isDense: true,
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                     ),
                   ),
                 ),
@@ -1386,65 +1651,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
               ),
               DataCell(
                 SizedBox(
-                  width: 100,
-                  child: DropdownButtonFormField<String>(
-                    value: line.rateOn,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    ),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textPrimary,
-                    ),
-                    dropdownColor: AppTheme.backgroundWhite,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'Net Weight',
-                        child: Text(
-                          'Net Wt',
-                          style: TextStyle(fontSize: 13, color: AppTheme.textPrimary),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Fine Weight',
-                        child: Text(
-                          'Fine Wt',
-                          style: TextStyle(fontSize: 13, color: AppTheme.textPrimary),
-                        ),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Fixed',
-                        child: Text(
-                          'Fixed',
-                          style: TextStyle(fontSize: 13, color: AppTheme.textPrimary),
-                        ),
-                      ),
-                    ],
-                    onChanged: (v) {
-                      setState(() => line.rateOn = v!);
-                      _calculateTotals();
-                    },
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
                   width: 80,
                   child: TextFormField(
                     controller: line.rateCtrl,
@@ -1482,7 +1688,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                         child: TextFormField(
                           controller: line.makingChargesCtrl,
                           style: const TextStyle(fontSize: 12),
-                            decoration: InputDecoration(
+                          decoration: InputDecoration(
                             isDense: true,
                             filled: true,
                             fillColor: AppTheme.backgroundWhite,
@@ -1501,8 +1707,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                             hintText: '0.00',
                             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                           ),
-                          keyboardType: TextInputType.number,
-                          onChanged: (_) => _calculateTotals(),
+                          readOnly: true,
                         ),
                       ),
                       IconButton(
@@ -1571,7 +1776,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
               ),
             ],
           );
-        }).toList(),
+        }),
         // Gold Totals Row
         DataRow(
           color: WidgetStateProperty.all(
@@ -1589,6 +1794,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                 ),
               ),
             ),
+            const DataCell(Text('')), // Stock column
             const DataCell(Text('')),
             const DataCell(Text('')),
             const DataCell(Text('')),
@@ -1653,7 +1859,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
               ),
             ),
             const DataCell(Text('')),
-            const DataCell(Text('')),
             DataCell(
               Center(
                 child: Text(
@@ -1689,7 +1894,9 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   double _calculateFineWeight(TransactionLineState line) {
     double net = double.tryParse(line.netWeightCtrl.text) ?? 0;
     double purity = double.tryParse(line.purityCtrl.text) ?? 0;
-    return net * (purity / 100);
+    double wastage = double.tryParse(line.wastageCtrl.text) ?? 0;
+    // Fine wt = net wt * (touch + Wast) / 100
+    return net * ((purity + wastage) / 100);
   }
 
   double _calculateTotalUnits() {
@@ -1713,24 +1920,14 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   }
 
   double _calculateLineTotal(TransactionLineState line) {
-    double net = double.tryParse(line.netWeightCtrl.text) ?? 0;
-    double purity = double.tryParse(line.purityCtrl.text) ?? 0;
     double rate = double.tryParse(line.rateCtrl.text) ?? 0;
-    double charges = double.tryParse(line.makingChargesCtrl.text) ?? 0;
     double discount = double.tryParse(line.discountCtrl.text) ?? 0;
     
-    double fineWeight = net * (purity / 100);
-    double amountBeforeCharges = 0;
+    // Charges = unit * rate
+    double unit = double.tryParse(line.unitCtrl.text) ?? 0;
+    double charges = unit * rate;
     
-    if (line.rateOn == 'Fine Weight') {
-      amountBeforeCharges = fineWeight * rate;
-    } else if (line.rateOn == 'Fixed') {
-      amountBeforeCharges = rate;
-    } else {
-      amountBeforeCharges = net * rate;
-    }
-    
-    return amountBeforeCharges + charges - discount;
+    return charges - discount;
   }
 
   double _calculateTotalAmount() {
@@ -2035,9 +2232,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           mobile: '',
           createdAt: DateTime.now(),
           addressLine1: '',
-          customerType: '',
-          debitLimit: 0,
-          debitLimitCurrency: 'INR',
           city: '',
           state: '',
           pinCode: '',
@@ -2200,516 +2394,343 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     );
   }
 
-  Widget _buildTotalsTab() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-          // Discount Section - Web app style with card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.backgroundWhite,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.borderLight),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Discount',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _discountPercentCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Discount (%)',
-                    hintText: '0',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _discountAmountCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Discount Amount (₹)',
-                    prefixText: '₹ ',
-                    hintText: '0',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-            ],
-          ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Tax Section - Web app style with card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.backgroundWhite,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.borderLight),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Tax / GST',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _taxPercentCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Tax/GST (%)',
-                    hintText: '0',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _taxAmountCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Tax Amount (₹)',
-                    prefixText: '₹ ',
-                    hintText: '0',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-            ],
-          ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Totals Summary - Web app style
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppTheme.backgroundWhite,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.borderLight),
-              boxShadow: AppTheme.cardShadow,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_totalGold > 0)
-                  _TotalRow(
-                    label: 'Total Fine Gold:',
-                    value: '${_totalGold.toStringAsFixed(3)} g',
-                  ),
-                if (_totalSilver > 0)
-                  _TotalRow(
-                    label: 'Total Fine Silver:',
-                    value: '${_totalSilver.toStringAsFixed(3)} g',
-                  ),
-                if (_totalGold > 0 || _totalSilver > 0)
-                  const Divider(height: 20),
-                _TotalRow(
-                  label: 'Subtotal:',
-                  value: NumberFormat.currency(symbol: '₹').format(_subtotal),
-                  isSubtotal: true,
-                ),
-                if ((double.tryParse(_discountAmountCtrl.text) ?? 0) > 0)
-                  _TotalRow(
-                    label: 'Discount:',
-                    value:
-                        '- ${NumberFormat.currency(symbol: '₹').format(double.tryParse(_discountAmountCtrl.text) ?? 0)}',
-                    isDiscount: true,
-                  ),
-                if ((double.tryParse(_taxAmountCtrl.text) ?? 0) > 0)
-                  _TotalRow(
-                    label: 'Tax/GST:',
-                    value:
-                        '+ ${NumberFormat.currency(symbol: '₹').format(double.tryParse(_taxAmountCtrl.text) ?? 0)}',
-                    isTax: true,
-                  ),
-                const Divider(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Grand Total',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Text(
-                      NumberFormat.currency(symbol: '₹').format(_totalCash),
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryGoldDark,
-                          ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-      ],
+  Future<void> _showStockDetails(
+    BuildContext context,
+    int itemId,
+    List<Item> inventoryItems,
+    int lineIndex,
+  ) async {
+    // Find the item from the inventory list
+    final item = inventoryItems.firstWhere(
+      (i) => i.id == itemId,
+      orElse: () => throw Exception('Item not found'),
+    );
+
+    // Fetch transaction lines for this item
+    final repository = ref.read(transactionsRepositoryProvider);
+    final transactionLines = await repository.getTransactionLinesByItemId(itemId);
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StockDetailsDialog(
+          item: item,
+          transactionLines: transactionLines,
+          onSelect: (selectedLine) {
+            // Dialog will be closed by InkWell onTap, just update the line
+            _updateLineFromStock(lineIndex, selectedLine, item);
+          },
+        );
+      },
     );
   }
 
-  Widget _buildLineItem(int index, List<Item> inventoryItems) {
-    final line = _lines[index];
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.backgroundWhite,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: DropdownButtonFormField<int>(
-                  initialValue: line.selectedItemId,
-                  decoration: const InputDecoration(
-                    labelText: 'Item *',
-                    isDense: true,
-                  ),
-                  items: inventoryItems
-                      .map(
-                        (i) => DropdownMenuItem(
-                          value: i.id,
-                          child: Text(i.name, overflow: TextOverflow.ellipsis),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (v) {
-                    setState(() {
-                      line.selectedItemId = v;
-                      final item = inventoryItems.firstWhere(
-                        (i) => i.id == v,
-                        orElse: () => Item(
-                          id: -1,
-                          name: '',
-                          metalType: 'Gold',
-                          costPrice: 0,
-                          sellingPrice: 0,
-                          makingCharges: 0,
-                          wastagePercentage: 0,
-                          stockQty: 0,
-                          stockWeight: 0,
-                          minimumStockLevel: 0,
-                          reorderLevel: 0,
-                          unitOfMeasurement: 'g',
-                          status: 'Active',
-                          itemType: 'Goods',
-                          maintainStockIn: 'Grams',
-                          isStudded: false,
-                          fetchGoldRate: false,
-                          defaultTouch: 0,
-                          taxPreference: 'Taxable',
-                          purchaseWastage: 0,
-                          purchaseMakingCharges: 0,
-                          jobworkRate: 0,
-                          stockMethod: 'Loose',
-                          minStockPcs: 0,
-                          maxStockGm: 0,
-                          maxStockPcs: 0,
-                          createdAt: DateTime.now(),
-                          updatedAt: DateTime.now(),
-                        ),
-                      );
-                      if (item.id != -1) {
-                        line.descCtrl.text = item.description ?? '';
-                        line.metalType = item.metalType;
-                        line.purityCtrl.text = item.purity ?? '91.6';
-                      }
-                    });
-                  },
-                  validator: (v) => v == null ? 'Required' : null,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  controller: line.descCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    isDense: true,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: () => _removeLine(index),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: line.grossWeightCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Gross Wt',
-                    isDense: true,
-                    suffixText: 'g',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) {
-                    double gross = double.tryParse(v) ?? 0;
-                    double stone =
-                        double.tryParse(line.stoneWeightCtrl.text) ?? 0;
-                    line.netWeightCtrl.text = (gross - stone).toStringAsFixed(
-                      3,
-                    );
-                    _calculateTotals();
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: line.stoneWeightCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Stone Wt',
-                    isDense: true,
-                    suffixText: 'g',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) {
-                    double gross =
-                        double.tryParse(line.grossWeightCtrl.text) ?? 0;
-                    double stone = double.tryParse(v) ?? 0;
-                    line.netWeightCtrl.text = (gross - stone).toStringAsFixed(
-                      3,
-                    );
-                    _calculateTotals();
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: line.netWeightCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Net Wt *',
-                    isDense: true,
-                    suffixText: 'g',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                  validator: (v) =>
-                      (double.tryParse(v ?? '') ?? 0) <= 0 ? 'Invalid' : null,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: line.purityCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Purity %',
-                    isDense: true,
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: line.makingChargesCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'MC (Rs)',
-                    isDense: true,
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: line.rateCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Rate',
-                    isDense: true,
-                    prefixText: '₹',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: line.rateOn,
-                  decoration: const InputDecoration(
-                    labelText: 'Rate On',
-                    isDense: true,
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Net Weight',
-                      child: Text('Net Wt'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Fine Weight',
-                      child: Text('Fine Wt'),
-                    ),
-                    DropdownMenuItem(value: 'Fixed', child: Text('Fixed Amt')),
-                  ],
-                  onChanged: (v) {
-                    setState(() => line.rateOn = v!);
-                    _calculateTotals();
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: line.amountCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Amount',
-                    isDense: true,
-                    prefixText: '₹',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ExpansionTile(
-            title: const Text(
-              'More Details (Stamp, Size, Color, Ghat)',
-              style: TextStyle(fontSize: 12),
-            ),
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: line.stampCtrl,
-                      decoration: const InputDecoration(labelText: 'Stamp'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: line.sizeCtrl,
-                      decoration: const InputDecoration(labelText: 'Size'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: line.colorCtrl,
-                      decoration: const InputDecoration(labelText: 'Color'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextFormField(
-                      controller: line.ghatWeightCtrl,
-                      decoration: const InputDecoration(labelText: 'Ghat Wt'),
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+  void _updateLineFromStock(int lineIndex, TransactionLine stockLine, Item item) {
+    if (lineIndex >= _lines.length) {
+      print('Error: lineIndex $lineIndex is out of bounds. _lines.length = ${_lines.length}');
+      return;
+    }
+    
+    print('Updating line $lineIndex with stock item: ${stockLine.description ?? item.name}');
+    
+    setState(() {
+      final line = _lines[lineIndex];
+      line.selectedItemId = item.id;
+      line.descCtrl.text = stockLine.description ?? item.name;
+      line.grossWeightCtrl.text = stockLine.grossWeight.toStringAsFixed(3);
+      line.netWeightCtrl.text = stockLine.netWeight.toStringAsFixed(3);
+      line.purityCtrl.text = (stockLine.purity ?? 0).toStringAsFixed(2);
+      line.stoneWeightCtrl.text = stockLine.stoneWeight.toStringAsFixed(3);
+      line.wastageCtrl.text = stockLine.wastage.toStringAsFixed(2);
+      line.makingChargesCtrl.text = stockLine.makingCharges.toStringAsFixed(2);
+      line.rateCtrl.text = stockLine.rate.toStringAsFixed(2);
+      line.stampCtrl.text = stockLine.stamp ?? '';
+      line.colorCtrl.text = stockLine.color ?? '';
+      line.sizeCtrl.text = stockLine.size ?? '';
+      line.ghatWeightCtrl.text = stockLine.ghatWeight.toStringAsFixed(3);
+      line.unitCtrl.text = stockLine.qty.toStringAsFixed(0);
+      _calculateTotals();
+    });
+    
+    print('Line updated successfully');
   }
 }
 
-class _TotalRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isSubtotal;
-  final bool isDiscount;
-  final bool isTax;
+class StockDetailsDialog extends StatelessWidget {
+  final Item item;
+  final List<TransactionLine> transactionLines;
+  final Function(TransactionLine) onSelect;
 
-  const _TotalRow({
-    required this.label,
-    required this.value,
-    this.isSubtotal = false,
-    this.isDiscount = false,
-    this.isTax = false,
+  const StockDetailsDialog({
+    required this.item,
+    required this.transactionLines,
+    required this.onSelect,
   });
 
   @override
   Widget build(BuildContext context) {
-    Color color = AppTheme.textPrimary;
-    FontWeight weight = FontWeight.normal;
-
-    if (isSubtotal) {
-      weight = FontWeight.bold;
-    } else if (isDiscount) {
-      color = AppTheme.success;
-    } else if (isTax) {
-      color = AppTheme.error;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: weight,
-              color: AppTheme.textSecondary,
+    return Dialog(
+      child: Container(
+        width: 1000,
+        constraints: const BoxConstraints(maxHeight: 600),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundLight,
+                border: Border(
+                  bottom: BorderSide(color: AppTheme.borderLight),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.scale,
+                    color: AppTheme.primaryAction,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Item Stock-in-Hand',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Close',
+                  ),
+                ],
+              ),
             ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: color,
+            // Table
+            Expanded(
+              child: transactionLines.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(
+                          'No stock records found for this item',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SingleChildScrollView(
+                        child: DataTable(
+                          headingRowHeight: 48,
+                          dataRowMinHeight: 40,
+                          columnSpacing: 12,
+                          horizontalMargin: 12,
+                          headingRowColor: WidgetStateProperty.all(
+                            AppTheme.primaryAction.withValues(alpha: 0.05),
+                          ),
+                          columns: [
+                            _buildTableColumn('Item Name'),
+                            _buildTableColumn('Stamp'),
+                            _buildTableColumn('Colour'),
+                            _buildTableColumn('Pcs'),
+                            _buildTableColumn('Gross Wt.'),
+                            _buildTableColumn('Less Wt.'),
+                            _buildTableColumn('Net Wt.'),
+                            _buildTableColumn('Touch (T+W)'),
+                            _buildTableColumn('Fine Wt.'),
+                            _buildTableColumn('Amount'),
+                          ],
+                          rows: transactionLines.map((line) {
+                            final touch = (line.purity ?? 0) + line.wastage;
+                            final fineWeight = line.netWeight * (touch / 100);
+                            final lessWeight = line.stoneWeight;
+
+                            return DataRow(
+                              onSelectChanged: (selected) {
+                                if (selected != null) {
+                                  Navigator.of(context).pop();
+                                  onSelect(line);
+                                }
+                              },
+                              cells: [
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      onSelect(line);
+                                    },
+                                    child: Text(
+                                      line.description ?? item.name,
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      onSelect(line);
+                                    },
+                                    child: Text(
+                                      line.stamp ?? '',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      onSelect(line);
+                                    },
+                                    child: Text(
+                                      line.color ?? '',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      onSelect(line);
+                                    },
+                                    child: Text(
+                                      line.qty.toStringAsFixed(0),
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      onSelect(line);
+                                    },
+                                    child: Text(
+                                      line.grossWeight.toStringAsFixed(3),
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      onSelect(line);
+                                    },
+                                    child: Text(
+                                      lessWeight.toStringAsFixed(3),
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      onSelect(line);
+                                    },
+                                    child: Text(
+                                      line.netWeight.toStringAsFixed(3),
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      onSelect(line);
+                                    },
+                                    child: Text(
+                                      touch.toStringAsFixed(2),
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      onSelect(line);
+                                    },
+                                    child: Text(
+                                      fineWeight.toStringAsFixed(3),
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      onSelect(line);
+                                    },
+                                    child: Text(
+                                      line.amount.toStringAsFixed(2),
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
             ),
-          ),
-        ],
+            // Footer with Close button
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundLight,
+                border: Border(
+                  top: BorderSide(color: AppTheme.borderLight),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      backgroundColor: AppTheme.backgroundWhite,
+                      side: BorderSide(color: AppTheme.borderLight),
+                    ),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  DataColumn _buildTableColumn(String label) {
+    return DataColumn(
+      label: Text(
+        label,
+        style: const TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 13,
+          color: AppTheme.textPrimary,
+        ),
       ),
     );
   }
@@ -2718,7 +2739,6 @@ class _TotalRow extends StatelessWidget {
 class TransactionLineState {
   int? selectedItemId;
   String? metalType;
-  String rateOn = 'Net Weight';
 
   final descCtrl = TextEditingController();
   final grossWeightCtrl = TextEditingController(text: '0');
@@ -2735,4 +2755,5 @@ class TransactionLineState {
   final colorCtrl = TextEditingController();
   final ghatWeightCtrl = TextEditingController(text: '0');
   final discountCtrl = TextEditingController(text: '0.00');
+  final unitCtrl = TextEditingController(text: '0');
 }
