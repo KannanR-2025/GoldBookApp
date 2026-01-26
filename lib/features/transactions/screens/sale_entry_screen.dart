@@ -182,13 +182,72 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
         _lines.clear();
         for (var l in lines) {
+          final desc = l.description ?? '';
+
+          // Check if this is a Metal Receipt line
+          if (desc.startsWith('M-Rec:') && l.lineType == 'Credit') {
+            _metalReceiptItemId = l.itemId;
+            final fineWeight = l.netWeight; // Fine weight is stored in netWeight
+            _metalReceiptGold = fineWeight;
+
+            final touch = l.purity ?? 0;
+            final wastage = l.wastage;
+            final grossWeight = l.grossWeight;
+
+            // Calculate actual net weight from fine weight: net = fine / ((touch + wastage) / 100)
+            double netWeight;
+            if (touch + wastage > 0) {
+              netWeight = fineWeight / ((touch + wastage) / 100);
+            } else {
+              netWeight = fineWeight;
+            }
+            final lessWeight = grossWeight - netWeight;
+
+            _metalReceiptGrossWeightCtrl.text = grossWeight.toStringAsFixed(3);
+            _metalReceiptLessWeightCtrl.text = lessWeight.toStringAsFixed(3);
+            _metalReceiptNetWeightCtrl.text = netWeight.toStringAsFixed(3);
+            _metalReceiptTouchCtrl.text = touch.toStringAsFixed(2);
+            _metalReceiptWastageCtrl.text = wastage.toStringAsFixed(2);
+            _metalReceiptFineWeightCtrl.text = fineWeight.toStringAsFixed(3);
+            continue; // Don't add to regular lines
+          }
+
+          // Check if this is a Metal Payment line
+          if (desc.startsWith('M-Pay:') && l.lineType == 'Debit') {
+            _metalPaymentItemId = l.itemId;
+            final fineWeight = l.netWeight; // Fine weight is stored in netWeight
+            _metalPaymentGold = fineWeight;
+
+            final touch = l.purity ?? 0;
+            final wastage = l.wastage;
+            final grossWeight = l.grossWeight;
+
+            // Calculate actual net weight from fine weight: net = fine / ((touch + wastage) / 100)
+            double netWeight;
+            if (touch + wastage > 0) {
+              netWeight = fineWeight / ((touch + wastage) / 100);
+            } else {
+              netWeight = fineWeight;
+            }
+            final lessWeight = grossWeight - netWeight;
+
+            _metalPaymentGrossWeightCtrl.text = grossWeight.toStringAsFixed(3);
+            _metalPaymentLessWeightCtrl.text = lessWeight.toStringAsFixed(3);
+            _metalPaymentNetWeightCtrl.text = netWeight.toStringAsFixed(3);
+            _metalPaymentTouchCtrl.text = touch.toStringAsFixed(2);
+            _metalPaymentWastageCtrl.text = wastage.toStringAsFixed(2);
+            _metalPaymentFineWeightCtrl.text = fineWeight.toStringAsFixed(3);
+            continue; // Don't add to regular lines
+          }
+
+          // Regular line
           final lineState = TransactionLineState();
           lineState.selectedItemId = l.itemId;
-          lineState.descCtrl.text = l.description ?? '';
+          lineState.descCtrl.text = desc;
           lineState.metalType = 'Gold';
           lineState.grossWeightCtrl.text = l.grossWeight.toString();
           lineState.netWeightCtrl.text = l.netWeight.toString();
-          lineState.purityCtrl.text = l.purity.toString();
+          lineState.purityCtrl.text = (l.purity ?? 0).toString();
           lineState.stoneWeightCtrl.text = l.stoneWeight.toString();
           lineState.wastageCtrl.text = l.wastage.toString();
           lineState.makingChargesCtrl.text = l.makingCharges.toString();

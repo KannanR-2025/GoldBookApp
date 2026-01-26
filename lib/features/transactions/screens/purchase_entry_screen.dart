@@ -209,7 +209,7 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
           final description = l.description ?? '';
           
           // Check if this is a metal receipt line
-          if (description.startsWith('M-Rec:')) {
+          if (description.startsWith('M-Rec:') && l.lineType == 'Credit') {
             final itemName = description.substring(6); // Remove "M-Rec:" prefix
             _metalReceiptItemName = itemName == 'Fine Gold' ? null : itemName;
             _metalReceiptItemId = l.itemId;
@@ -240,7 +240,7 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
           }
           
           // Check if this is a metal payment line
-          if (description.startsWith('M-Pay:')) {
+          if (description.startsWith('M-Pay:') && l.lineType == 'Debit') {
             final itemName = description.substring(6); // Remove "M-Pay:" prefix
             _metalPaymentItemName = itemName == 'Fine Gold' ? null : itemName;
             _metalPaymentItemId = l.itemId;
@@ -2680,7 +2680,9 @@ class _PurchaseEntryScreenState extends ConsumerState<PurchaseEntryScreen> {
     }
 
     final subTotalGold = _totalGold;
-    final voucherTotalGold = subTotalGold - _metalReceiptGold + _metalPaymentGold;
+    // For Purchase: Metal Payment (we give gold to supplier) reduces our debt
+    // Metal Receipt (supplier gives extra gold) adds to what we owe
+    final voucherTotalGold = subTotalGold + _metalReceiptGold - _metalPaymentGold;
     final totalDueGold = voucherTotalGold;
     final closingBalanceGold = (selectedParty?.goldBalance ?? 0) + totalDueGold;
 

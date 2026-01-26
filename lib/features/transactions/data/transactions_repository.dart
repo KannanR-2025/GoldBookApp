@@ -72,6 +72,9 @@ class TransactionsRepository {
           double qtyChange = 0;
           double weightChange = 0;
 
+          // Check if line has explicit lineType (for metal receipt/payment within Sale/Purchase)
+          final lineType = line.lineType.value;
+
           if (header.type.value == 'Inventory Adjustment') {
             // Positive Qty = Stock Increase (e.g. Found)
             // Negative Qty = Stock Decrease (e.g. Loss)
@@ -79,24 +82,35 @@ class TransactionsRepository {
             weightChange = line.netWeight.value;
           } else if (header.type.value == 'Stock Transfer') {
             // Journal Style
-            final type = line.lineType.value;
-            if (type == 'Debit') {
+            if (lineType == 'Debit') {
               // Outward / Issue -> Stock Decrease
               qtyChange = -(line.qty.value);
               weightChange = -line.netWeight.value;
-            } else if (type == 'Credit') {
+            } else if (lineType == 'Credit') {
               // Inward / Receipt -> Stock Increase
               qtyChange = line.qty.value;
               weightChange = line.netWeight.value;
             }
+          } else if (lineType != null && lineType.isNotEmpty) {
+            // Metal Receipt/Payment lines within Sale/Purchase
+            // Use lineType to determine stock direction
+            if (lineType == 'Credit') {
+              // Metal Receipt - ADD stock (receiving metal)
+              qtyChange = line.qty.value;
+              weightChange = line.netWeight.value;
+            } else if (lineType == 'Debit') {
+              // Metal Payment - DEDUCT stock (giving metal)
+              qtyChange = -(line.qty.value);
+              weightChange = -line.netWeight.value;
+            }
           } else if (header.type.value == 'Sale' ||
               header.type.value == 'Metal Issue') {
-            // Deduct stock
+            // Regular sale line - Deduct stock
             qtyChange = -(line.qty.value);
             weightChange = -line.netWeight.value;
           } else if (header.type.value == 'Purchase' ||
               header.type.value == 'Metal Receipt') {
-            // Add stock
+            // Regular purchase line - Add stock
             qtyChange = line.qty.value;
             weightChange = line.netWeight.value;
           }
@@ -260,20 +274,33 @@ class TransactionsRepository {
           double qtyChange = 0;
           double weightChange = 0;
 
+          // Check if line has explicit lineType (for metal receipt/payment)
+          final lineType = line.lineType;
+
           if (txn.type == 'Inventory Adjustment') {
             // Reverse: negative of original
             qtyChange = -line.qty;
             weightChange = -line.netWeight;
           } else if (txn.type == 'Stock Transfer') {
-            final type = line.lineType;
-            if (type == 'Debit') {
+            if (lineType == 'Debit') {
               // Was decrease, reverse to increase
               qtyChange = line.qty;
               weightChange = line.netWeight;
-            } else if (type == 'Credit') {
+            } else if (lineType == 'Credit') {
               // Was increase, reverse to decrease
               qtyChange = -line.qty;
               weightChange = -line.netWeight;
+            }
+          } else if (lineType != null && lineType.isNotEmpty) {
+            // Metal Receipt/Payment lines - reverse based on lineType
+            if (lineType == 'Credit') {
+              // Was increase (Metal Receipt), reverse to decrease
+              qtyChange = -line.qty;
+              weightChange = -line.netWeight;
+            } else if (lineType == 'Debit') {
+              // Was decrease (Metal Payment), reverse to increase
+              qtyChange = line.qty;
+              weightChange = line.netWeight;
             }
           } else if (txn.type == 'Sale' || txn.type == 'Metal Issue') {
             // Was decrease, reverse to increase
