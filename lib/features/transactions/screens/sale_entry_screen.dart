@@ -57,7 +57,34 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   double _totalSilver = 0;
   double _subtotal = 0;
   double _totalCash = 0;
-  final double _metalReceiptGold = 0; // M-Rec:Fine Gold
+  double _metalReceiptGold = 0; // M-Rec:Fine Gold
+
+  // Metal Receipt State
+  int? _metalReceiptItemId;
+  final _metalReceiptGrossWeightCtrl = TextEditingController();
+  final _metalReceiptLessWeightCtrl = TextEditingController();
+  final _metalReceiptNetWeightCtrl = TextEditingController(text: '0.000');
+  final _metalReceiptTouchCtrl = TextEditingController();
+  final _metalReceiptWastageCtrl = TextEditingController();
+  final _metalReceiptFineWeightCtrl = TextEditingController(text: '0.000');
+
+  // Metal Payment State
+  int? _metalPaymentItemId;
+  final _metalPaymentGrossWeightCtrl = TextEditingController();
+  final _metalPaymentLessWeightCtrl = TextEditingController();
+  final _metalPaymentNetWeightCtrl = TextEditingController(text: '0.000');
+  final _metalPaymentTouchCtrl = TextEditingController();
+  final _metalPaymentWastageCtrl = TextEditingController();
+  final _metalPaymentFineWeightCtrl = TextEditingController(text: '0.000');
+  double _metalPaymentGold = 0;
+
+  // Rate Cut State
+  String _rateCutMetalType = 'Gold';
+  final _rateCutMetalRateCtrl = TextEditingController();
+  final _rateCutFineCtrl = TextEditingController();
+  String _rateCutFineUnit = 'g';
+  final _rateCutAmountCtrl = TextEditingController();
+  String _rateCutAmountUnit = '₹';
 
   bool _isLoading = false;
 
@@ -342,6 +369,82 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
         );
       }).toList();
 
+      // Add metal payment as transaction line if exists
+      if (_metalPaymentGold > 0) {
+        final metalPaymentGross = double.tryParse(_metalPaymentGrossWeightCtrl.text) ?? 0;
+        final metalPaymentTouch = double.tryParse(_metalPaymentTouchCtrl.text) ?? 0;
+        final metalPaymentWastage = double.tryParse(_metalPaymentWastageCtrl.text) ?? 0;
+        
+        // Get item name if itemId exists
+        String? metalPaymentItemName;
+        if (_metalPaymentItemId != null) {
+          final items = ref.read(itemsListProvider).value ?? [];
+          final item = items.firstWhere(
+            (i) => i.id == _metalPaymentItemId,
+            orElse: () => Item(
+              id: -1, name: '', metalType: 'Gold', costPrice: 0, sellingPrice: 0,
+              makingCharges: 0, wastagePercentage: 0, stockQty: 0, stockWeight: 0,
+              minimumStockLevel: 0, reorderLevel: 0, unitOfMeasurement: 'g',
+              status: 'Active', itemType: 'Goods', maintainStockIn: 'Grams',
+              isStudded: false, fetchGoldRate: false, defaultTouch: 0,
+              taxPreference: 'Taxable', purchaseWastage: 0, purchaseMakingCharges: 0,
+              jobworkRate: 0, stockMethod: 'Loose', minStockPcs: 0, maxStockGm: 0,
+              maxStockPcs: 0, createdAt: DateTime.now(), updatedAt: DateTime.now(),
+            ),
+          );
+          metalPaymentItemName = item.id != -1 ? item.name : null;
+        }
+        
+        lines.add(TransactionLinesCompanion(
+          itemId: drift.Value(_metalPaymentItemId),
+          description: drift.Value('M-Pay:${metalPaymentItemName ?? "Fine Gold"}'),
+          grossWeight: drift.Value(metalPaymentGross),
+          netWeight: drift.Value(_metalPaymentGold), // Fine weight
+          purity: drift.Value(metalPaymentTouch),
+          wastage: drift.Value(metalPaymentWastage),
+          lineType: drift.Value('Debit'), // Metal payment is a debit
+          qty: drift.Value(1.0),
+        ));
+      }
+
+      // Add metal receipt as transaction line if exists
+      if (_metalReceiptGold > 0) {
+        final metalReceiptGross = double.tryParse(_metalReceiptGrossWeightCtrl.text) ?? 0;
+        final metalReceiptTouch = double.tryParse(_metalReceiptTouchCtrl.text) ?? 0;
+        final metalReceiptWastage = double.tryParse(_metalReceiptWastageCtrl.text) ?? 0;
+        
+        // Get item name if itemId exists
+        String? metalReceiptItemName;
+        if (_metalReceiptItemId != null) {
+          final items = ref.read(itemsListProvider).value ?? [];
+          final item = items.firstWhere(
+            (i) => i.id == _metalReceiptItemId,
+            orElse: () => Item(
+              id: -1, name: '', metalType: 'Gold', costPrice: 0, sellingPrice: 0,
+              makingCharges: 0, wastagePercentage: 0, stockQty: 0, stockWeight: 0,
+              minimumStockLevel: 0, reorderLevel: 0, unitOfMeasurement: 'g',
+              status: 'Active', itemType: 'Goods', maintainStockIn: 'Grams',
+              isStudded: false, fetchGoldRate: false, defaultTouch: 0,
+              taxPreference: 'Taxable', purchaseWastage: 0, purchaseMakingCharges: 0,
+              jobworkRate: 0, stockMethod: 'Loose', minStockPcs: 0, maxStockGm: 0,
+              maxStockPcs: 0, createdAt: DateTime.now(), updatedAt: DateTime.now(),
+            ),
+          );
+          metalReceiptItemName = item.id != -1 ? item.name : null;
+        }
+        
+        lines.add(TransactionLinesCompanion(
+          itemId: drift.Value(_metalReceiptItemId),
+          description: drift.Value('M-Rec:${metalReceiptItemName ?? "Fine Gold"}'),
+          grossWeight: drift.Value(metalReceiptGross),
+          netWeight: drift.Value(_metalReceiptGold), // Fine weight
+          purity: drift.Value(metalReceiptTouch),
+          wastage: drift.Value(metalReceiptWastage),
+          lineType: drift.Value('Credit'), // Metal receipt is a credit
+          qty: drift.Value(1.0),
+        ));
+      }
+
       try {
         print('=== Sale Save Started ===');
         print('Transaction ID: ${widget.transactionId}');
@@ -477,9 +580,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
-                              // Notes Section
-                              _buildNotesSection(),
                             ],
                           ),
                         ),
@@ -1221,16 +1321,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           ),
           DataColumn(
             label: Text(
-              'Ghat Wt.',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-          ),
-          DataColumn(
-            label: Text(
               'Fine Wt.',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
@@ -1609,35 +1699,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                 ),
               ),
               DataCell(
-                SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    controller: line.ghatWeightCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      hintText: '0',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ),
-              DataCell(
                 Center(
                   child: Text(
                     _calculateFineWeight(line).toStringAsFixed(3),
@@ -1843,7 +1904,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                 ),
               ),
             ),
-            const DataCell(Text('')),
             const DataCell(Text('')),
             const DataCell(Text('')),
             DataCell(
@@ -2195,14 +2255,27 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildActionButton(Icons.money, 'Cash Receipt', Colors.green),
-              _buildActionButton(Icons.money_off, 'Cash Payment', Colors.red),
-              _buildActionButton(Icons.account_balance, 'Bank Receipt', Colors.green),
-              _buildActionButton(Icons.account_balance_wallet, 'Bank Payment', Colors.red),
               _buildActionButton(Icons.diamond, 'Metal Receipt', Colors.blue),
               _buildActionButton(Icons.diamond_outlined, 'Metal Payment', Colors.orange),
               _buildActionButton(Icons.trending_down, 'Rate-Cut', Colors.purple),
             ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Notes',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _remarksController,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              hintText: 'Audio Remarks',
+              border: OutlineInputBorder(),
+            ),
           ),
         ],
       ),
@@ -2210,13 +2283,231 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   }
 
   Widget _buildActionButton(IconData icon, String label, Color color) {
+    VoidCallback? onPressed;
+    if (label == 'Metal Receipt') {
+      onPressed = _showMetalReceiptDialog;
+    } else if (label == 'Metal Payment') {
+      onPressed = _showMetalPaymentDialog;
+    } else if (label == 'Rate-Cut') {
+      onPressed = _showRateCutDialog;
+    }
+
     return OutlinedButton.icon(
-      onPressed: () {},
+      onPressed: onPressed,
       icon: Icon(icon, size: 18, color: color),
       label: Text(label),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
+    );
+  }
+
+  void _showMetalReceiptDialog() {
+    // Reset controllers
+    _metalReceiptGrossWeightCtrl.clear();
+    _metalReceiptLessWeightCtrl.clear();
+    _metalReceiptNetWeightCtrl.text = '0.000';
+    _metalReceiptTouchCtrl.clear();
+    _metalReceiptWastageCtrl.clear();
+    _metalReceiptFineWeightCtrl.text = '0.000';
+    _metalReceiptItemId = null;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return MetalReceiptDialog(
+          itemId: _metalReceiptItemId,
+          grossWeightCtrl: _metalReceiptGrossWeightCtrl,
+          lessWeightCtrl: _metalReceiptLessWeightCtrl,
+          netWeightCtrl: _metalReceiptNetWeightCtrl,
+          touchCtrl: _metalReceiptTouchCtrl,
+          wastageCtrl: _metalReceiptWastageCtrl,
+          fineWeightCtrl: _metalReceiptFineWeightCtrl,
+          itemsAsync: ref.watch(itemsListProvider),
+          onItemChanged: (itemId) {
+            setState(() {
+              _metalReceiptItemId = itemId;
+            });
+          },
+          onGrossWeightChanged: (value) {
+            _calculateMetalReceiptNetWeight();
+          },
+          onLessWeightChanged: (value) {
+            _calculateMetalReceiptNetWeight();
+          },
+          onTouchChanged: (value) {
+            _calculateMetalReceiptFineWeight();
+          },
+          onWastageChanged: (value) {
+            _calculateMetalReceiptFineWeight();
+          },
+          onSave: () {
+            _saveMetalReceipt();
+            Navigator.of(dialogContext).pop();
+          },
+        );
+      },
+    );
+  }
+
+  void _calculateMetalReceiptNetWeight() {
+    final gross = double.tryParse(_metalReceiptGrossWeightCtrl.text) ?? 0;
+    final less = double.tryParse(_metalReceiptLessWeightCtrl.text) ?? 0;
+    final net = gross - less;
+    setState(() {
+      _metalReceiptNetWeightCtrl.text = net.toStringAsFixed(3);
+    });
+    _calculateMetalReceiptFineWeight();
+  }
+
+  void _calculateMetalReceiptFineWeight() {
+    final net = double.tryParse(_metalReceiptNetWeightCtrl.text) ?? 0;
+    final touch = double.tryParse(_metalReceiptTouchCtrl.text) ?? 0;
+    final wastage = double.tryParse(_metalReceiptWastageCtrl.text) ?? 0;
+    final fine = net * ((touch + wastage) / 100);
+    setState(() {
+      _metalReceiptFineWeightCtrl.text = fine.toStringAsFixed(3);
+    });
+  }
+
+  void _saveMetalReceipt() {
+    final fineWeight = double.tryParse(_metalReceiptFineWeightCtrl.text) ?? 0;
+    setState(() {
+      _metalReceiptGold = fineWeight;
+    });
+    _calculateTotals();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Metal Receipt saved')),
+    );
+  }
+
+  void _showMetalPaymentDialog() {
+    // Reset controllers
+    _metalPaymentGrossWeightCtrl.clear();
+    _metalPaymentLessWeightCtrl.clear();
+    _metalPaymentNetWeightCtrl.text = '0.000';
+    _metalPaymentTouchCtrl.clear();
+    _metalPaymentWastageCtrl.clear();
+    _metalPaymentFineWeightCtrl.text = '0.000';
+    _metalPaymentItemId = null;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return MetalPaymentDialog(
+          itemId: _metalPaymentItemId,
+          grossWeightCtrl: _metalPaymentGrossWeightCtrl,
+          lessWeightCtrl: _metalPaymentLessWeightCtrl,
+          netWeightCtrl: _metalPaymentNetWeightCtrl,
+          touchCtrl: _metalPaymentTouchCtrl,
+          wastageCtrl: _metalPaymentWastageCtrl,
+          fineWeightCtrl: _metalPaymentFineWeightCtrl,
+          itemsAsync: ref.watch(itemsListProvider),
+          onItemChanged: (itemId) {
+            setState(() {
+              _metalPaymentItemId = itemId;
+            });
+          },
+          onGrossWeightChanged: (value) {
+            _calculateMetalPaymentNetWeight();
+          },
+          onLessWeightChanged: (value) {
+            _calculateMetalPaymentNetWeight();
+          },
+          onTouchChanged: (value) {
+            _calculateMetalPaymentFineWeight();
+          },
+          onWastageChanged: (value) {
+            _calculateMetalPaymentFineWeight();
+          },
+          onSave: () {
+            _saveMetalPayment();
+            Navigator.of(dialogContext).pop();
+          },
+        );
+      },
+    );
+  }
+
+  void _calculateMetalPaymentNetWeight() {
+    final gross = double.tryParse(_metalPaymentGrossWeightCtrl.text) ?? 0;
+    final less = double.tryParse(_metalPaymentLessWeightCtrl.text) ?? 0;
+    final net = gross - less;
+    setState(() {
+      _metalPaymentNetWeightCtrl.text = net.toStringAsFixed(3);
+    });
+    _calculateMetalPaymentFineWeight();
+  }
+
+  void _calculateMetalPaymentFineWeight() {
+    final net = double.tryParse(_metalPaymentNetWeightCtrl.text) ?? 0;
+    final touch = double.tryParse(_metalPaymentTouchCtrl.text) ?? 0;
+    final wastage = double.tryParse(_metalPaymentWastageCtrl.text) ?? 0;
+    final fine = net * ((touch + wastage) / 100);
+    setState(() {
+      _metalPaymentFineWeightCtrl.text = fine.toStringAsFixed(3);
+    });
+  }
+
+  void _saveMetalPayment() {
+    final fineWeight = double.tryParse(_metalPaymentFineWeightCtrl.text) ?? 0;
+    setState(() {
+      _metalPaymentGold = fineWeight;
+    });
+    _calculateTotals();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Metal Payment saved')),
+    );
+  }
+
+  void _showRateCutDialog() {
+    // Reset controllers
+    _rateCutMetalType = 'Gold';
+    _rateCutMetalRateCtrl.clear();
+    _rateCutFineCtrl.clear();
+    _rateCutFineUnit = 'g';
+    _rateCutAmountCtrl.clear();
+    _rateCutAmountUnit = '₹';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return RateCutDialog(
+          metalType: _rateCutMetalType,
+          metalRateCtrl: _rateCutMetalRateCtrl,
+          fineCtrl: _rateCutFineCtrl,
+          fineUnit: _rateCutFineUnit,
+          amountCtrl: _rateCutAmountCtrl,
+          amountUnit: _rateCutAmountUnit,
+          onMetalTypeChanged: (type) {
+            setState(() {
+              _rateCutMetalType = type;
+            });
+          },
+          onFineUnitChanged: (unit) {
+            setState(() {
+              _rateCutFineUnit = unit;
+            });
+          },
+          onAmountUnitChanged: (unit) {
+            setState(() {
+              _rateCutAmountUnit = unit;
+            });
+          },
+          onSave: () {
+            _saveRateCut();
+            Navigator.of(dialogContext).pop();
+          },
+        );
+      },
+    );
+  }
+
+  void _saveRateCut() {
+    // Handle rate cut save logic here
+    // This can be used to adjust rates or apply discounts
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Rate Cut saved')),
     );
   }
 
@@ -2254,7 +2545,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     }
 
     final subTotalGold = _totalGold;
-    final voucherTotalGold = subTotalGold - _metalReceiptGold;
+    final voucherTotalGold = subTotalGold - _metalReceiptGold + _metalPaymentGold;
     final totalDueGold = voucherTotalGold;
     final closingBalanceGold = (selectedParty?.goldBalance ?? 0) + totalDueGold;
 
@@ -2299,6 +2590,8 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           const SizedBox(height: 12),
           _buildSummaryRow('Sub-Total', subTotalGold, 0, 0, isDr: subTotalGold < 0),
           _buildSummaryRow('M-Rec:Fine Gold', _metalReceiptGold, 0, 0, isCr: _metalReceiptGold > 0),
+          if (_metalPaymentGold > 0)
+            _buildSummaryRow('M-Pay:Fine Gold', _metalPaymentGold, 0, 0, isDr: _metalPaymentGold > 0),
           _buildSummaryRow('Voucher Total', voucherTotalGold, 0, 0, isDr: voucherTotalGold < 0),
           _buildSummaryRow('Total Due', totalDueGold, 0, 0, isDr: totalDueGold < 0),
           const Divider(height: 20),
@@ -2756,4 +3049,967 @@ class TransactionLineState {
   final ghatWeightCtrl = TextEditingController(text: '0');
   final discountCtrl = TextEditingController(text: '0.00');
   final unitCtrl = TextEditingController(text: '0');
+}
+
+class MetalReceiptDialog extends ConsumerStatefulWidget {
+  final int? itemId;
+  final TextEditingController grossWeightCtrl;
+  final TextEditingController lessWeightCtrl;
+  final TextEditingController netWeightCtrl;
+  final TextEditingController touchCtrl;
+  final TextEditingController wastageCtrl;
+  final TextEditingController fineWeightCtrl;
+  final AsyncValue<List<Item>> itemsAsync;
+  final Function(int?) onItemChanged;
+  final Function(String) onGrossWeightChanged;
+  final Function(String) onLessWeightChanged;
+  final Function(String) onTouchChanged;
+  final Function(String) onWastageChanged;
+  final VoidCallback onSave;
+
+  const MetalReceiptDialog({
+    super.key,
+    required this.itemId,
+    required this.grossWeightCtrl,
+    required this.lessWeightCtrl,
+    required this.netWeightCtrl,
+    required this.touchCtrl,
+    required this.wastageCtrl,
+    required this.fineWeightCtrl,
+    required this.itemsAsync,
+    required this.onItemChanged,
+    required this.onGrossWeightChanged,
+    required this.onLessWeightChanged,
+    required this.onTouchChanged,
+    required this.onWastageChanged,
+    required this.onSave,
+  });
+
+  @override
+  ConsumerState<MetalReceiptDialog> createState() => _MetalReceiptDialogState();
+}
+
+class _MetalReceiptDialogState extends ConsumerState<MetalReceiptDialog> {
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        width: 500,
+        constraints: const BoxConstraints(maxHeight: 600),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundLight,
+                border: Border(
+                  bottom: BorderSide(color: AppTheme.borderLight),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.scale,
+                    color: AppTheme.primaryAction,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Metal Receipt',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Close',
+                  ),
+                ],
+              ),
+            ),
+            // Content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: widget.itemsAsync.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, stack) => Center(child: Text('Error: $err')),
+                  data: (items) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Item Name
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Item Name',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: DropdownButtonFormField<int>(
+                              value: widget.itemId,
+                              decoration: const InputDecoration(
+                                hintText: 'Select Item',
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                              items: items
+                                  .map(
+                                    (item) => DropdownMenuItem(
+                                      value: item.id,
+                                      child: Text(item.name),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: widget.onItemChanged,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Gross Wt.
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Gross Wt.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: widget.grossWeightCtrl,
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: widget.onGrossWeightChanged,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Less Wt.
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Less Wt.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: widget.lessWeightCtrl,
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: widget.onLessWeightChanged,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Net Wt. (read-only)
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Net Wt.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: widget.netWeightCtrl,
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                filled: true,
+                                fillColor: AppTheme.backgroundLight,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // T + W section
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'T + W',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: widget.touchCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Touch',
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    onChanged: widget.onTouchChanged,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: widget.wastageCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Wast.',
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    onChanged: widget.onWastageChanged,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Fine Wt. (read-only)
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Fine Wt.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: widget.fineWeightCtrl,
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                filled: true,
+                                fillColor: AppTheme.backgroundLight,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Footer with buttons
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundLight,
+                border: Border(
+                  top: BorderSide(color: AppTheme.borderLight),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('Close'),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: widget.onSave,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class MetalPaymentDialog extends ConsumerStatefulWidget {
+  final int? itemId;
+  final TextEditingController grossWeightCtrl;
+  final TextEditingController lessWeightCtrl;
+  final TextEditingController netWeightCtrl;
+  final TextEditingController touchCtrl;
+  final TextEditingController wastageCtrl;
+  final TextEditingController fineWeightCtrl;
+  final AsyncValue<List<Item>> itemsAsync;
+  final Function(int?) onItemChanged;
+  final Function(String) onGrossWeightChanged;
+  final Function(String) onLessWeightChanged;
+  final Function(String) onTouchChanged;
+  final Function(String) onWastageChanged;
+  final VoidCallback onSave;
+
+  const MetalPaymentDialog({
+    super.key,
+    required this.itemId,
+    required this.grossWeightCtrl,
+    required this.lessWeightCtrl,
+    required this.netWeightCtrl,
+    required this.touchCtrl,
+    required this.wastageCtrl,
+    required this.fineWeightCtrl,
+    required this.itemsAsync,
+    required this.onItemChanged,
+    required this.onGrossWeightChanged,
+    required this.onLessWeightChanged,
+    required this.onTouchChanged,
+    required this.onWastageChanged,
+    required this.onSave,
+  });
+
+  @override
+  ConsumerState<MetalPaymentDialog> createState() => _MetalPaymentDialogState();
+}
+
+class _MetalPaymentDialogState extends ConsumerState<MetalPaymentDialog> {
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        width: 500,
+        constraints: const BoxConstraints(maxHeight: 600),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundLight,
+                border: Border(
+                  bottom: BorderSide(color: AppTheme.borderLight),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.scale,
+                    color: AppTheme.primaryAction,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Metal Payment',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Close',
+                  ),
+                ],
+              ),
+            ),
+            // Content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: widget.itemsAsync.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, stack) => Center(child: Text('Error: $err')),
+                  data: (items) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Item Name
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Item Name',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: DropdownButtonFormField<int>(
+                              value: widget.itemId,
+                              decoration: const InputDecoration(
+                                hintText: 'Select Item',
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                              items: items
+                                  .map(
+                                    (item) => DropdownMenuItem(
+                                      value: item.id,
+                                      child: Text(item.name),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: widget.onItemChanged,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Gross Wt.
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Gross Wt.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: widget.grossWeightCtrl,
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: widget.onGrossWeightChanged,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Less Wt.
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Less Wt.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: widget.lessWeightCtrl,
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                              ),
+                              keyboardType: TextInputType.number,
+                              onChanged: widget.onLessWeightChanged,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Net Wt. (read-only)
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Net Wt.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: widget.netWeightCtrl,
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                filled: true,
+                                fillColor: AppTheme.backgroundLight,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // T + W section
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'T + W',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: widget.touchCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Touch',
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    onChanged: widget.onTouchChanged,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: widget.wastageCtrl,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Wast.',
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    onChanged: widget.onWastageChanged,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Fine Wt. (read-only)
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              'Fine Wt.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: widget.fineWeightCtrl,
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                filled: true,
+                                fillColor: AppTheme.backgroundLight,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Footer with buttons
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundLight,
+                border: Border(
+                  top: BorderSide(color: AppTheme.borderLight),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('Close'),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: widget.onSave,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class RateCutDialog extends StatelessWidget {
+  final String metalType;
+  final TextEditingController metalRateCtrl;
+  final TextEditingController fineCtrl;
+  final String fineUnit;
+  final TextEditingController amountCtrl;
+  final String amountUnit;
+  final Function(String) onMetalTypeChanged;
+  final Function(String) onFineUnitChanged;
+  final Function(String) onAmountUnitChanged;
+  final VoidCallback onSave;
+
+  const RateCutDialog({
+    super.key,
+    required this.metalType,
+    required this.metalRateCtrl,
+    required this.fineCtrl,
+    required this.fineUnit,
+    required this.amountCtrl,
+    required this.amountUnit,
+    required this.onMetalTypeChanged,
+    required this.onFineUnitChanged,
+    required this.onAmountUnitChanged,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        width: 500,
+        constraints: const BoxConstraints(maxHeight: 600),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundLight,
+                border: Border(
+                  bottom: BorderSide(color: AppTheme.borderLight),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Text(
+                    '₹',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryAction,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Rate Cut Details',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Close',
+                  ),
+                ],
+              ),
+            ),
+            // Info Banner
+            Container(
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Enter metal rate of 1 unit (gm or kg).',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.blue.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Rate of? (Gold/Silver radio buttons)
+                    Text(
+                      'Rate of?',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Radio<String>(
+                          value: 'Gold',
+                          groupValue: metalType,
+                          onChanged: (value) => onMetalTypeChanged(value!),
+                        ),
+                        const Text('Gold'),
+                        const SizedBox(width: 24),
+                        Radio<String>(
+                          value: 'Silver',
+                          groupValue: metalType,
+                          onChanged: (value) => onMetalTypeChanged(value!),
+                        ),
+                        const Text('Silver'),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    // Metal Rate
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 120,
+                          child: Text(
+                            'Metal Rate',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: metalRateCtrl,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Fine
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 120,
+                          child: Text(
+                            'Fine',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: fineCtrl,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 80,
+                          child: DropdownButtonFormField<String>(
+                            value: fineUnit,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 12,
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'g', child: Text('g')),
+                              DropdownMenuItem(value: 'kg', child: Text('kg')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) onFineUnitChanged(value);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Amount
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 120,
+                          child: Text(
+                            'Amount',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: amountCtrl,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 80,
+                          child: DropdownButtonFormField<String>(
+                            value: amountUnit,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 12,
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: '₹', child: Text('₹')),
+                              DropdownMenuItem(value: '%', child: Text('%')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) onAmountUnitChanged(value);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Footer with buttons
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundLight,
+                border: Border(
+                  top: BorderSide(color: AppTheme.borderLight),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('Close'),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: onSave,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

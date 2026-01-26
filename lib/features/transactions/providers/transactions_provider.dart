@@ -49,6 +49,17 @@ class TransactionsController extends AsyncNotifier<void> {
       rethrow;
     }
   }
+
+  Future<void> deleteTransaction(int id) async {
+    state = const AsyncValue.loading();
+    try {
+      await ref.read(transactionsRepositoryProvider).deleteTransaction(id);
+      state = const AsyncValue.data(null);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
+      rethrow;
+    }
+  }
 }
 
 final transactionsControllerProvider =

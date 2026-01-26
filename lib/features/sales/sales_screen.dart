@@ -92,44 +92,92 @@ class SalesScreen extends ConsumerWidget {
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final sale = sales[index];
-                    return Card(
-                      elevation: 1,
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.green.withValues(alpha: 0.2),
-                          child: const Icon(
-                            Icons.sell,
-                            color: Colors.green,
-                            size: 20,
-                          ),
+                    return Dismissible(
+                      key: Key('sale_${sale.transaction.id}'),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        title: Text(
-                          sale.party.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        child: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
                         ),
-                        subtitle: Text(
-                          DateFormat('dd MMM yyyy').format(sale.transaction.date),
-                        ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${sale.transaction.totalGoldWeight.toStringAsFixed(3)} g',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                      ),
+                      confirmDismiss: (direction) async {
+                        return await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Sale'),
+                            content: Text(
+                              'Are you sure you want to delete this sale to ${sale.party.name}?\n\nThis will reverse the stock and balance changes.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('Cancel'),
                               ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        ) ?? false;
+                      },
+                      onDismissed: (direction) {
+                        ref
+                            .read(transactionsControllerProvider.notifier)
+                            .deleteTransaction(sale.transaction.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Sale to ${sale.party.name} deleted'),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        elevation: 1,
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.green.withValues(alpha: 0.2),
+                            child: const Icon(
+                              Icons.sell,
+                              color: Colors.green,
+                              size: 20,
                             ),
-                            Text(
-                              '₹ ${sale.transaction.totalAmount.toStringAsFixed(0)}',
-                              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                            ),
-                          ],
+                          ),
+                          title: Text(
+                            sale.party.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            DateFormat('dd MMM yyyy').format(sale.transaction.date),
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${sale.transaction.totalGoldWeight.toStringAsFixed(3)} g',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                '₹ ${sale.transaction.totalAmount.toStringAsFixed(0)}',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            // TODO: View/Edit sale details
+                          },
                         ),
-                        onTap: () {
-                          // TODO: View/Edit sale details
-                        },
                       ),
                     );
                   },

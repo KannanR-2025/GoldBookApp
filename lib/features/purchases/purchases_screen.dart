@@ -92,44 +92,92 @@ class PurchasesScreen extends ConsumerWidget {
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final purchase = purchases[index];
-                    return Card(
-                      elevation: 1,
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.orange.withValues(alpha: 0.2),
-                          child: const Icon(
-                            Icons.shopping_bag,
-                            color: Colors.orange,
-                            size: 20,
-                          ),
+                    return Dismissible(
+                      key: Key('purchase_${purchase.transaction.id}'),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        title: Text(
-                          purchase.party.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        child: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
                         ),
-                        subtitle: Text(
-                          DateFormat('dd MMM yyyy').format(purchase.transaction.date),
-                        ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${purchase.transaction.totalGoldWeight.toStringAsFixed(3)} g',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                      ),
+                      confirmDismiss: (direction) async {
+                        return await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Purchase'),
+                            content: Text(
+                              'Are you sure you want to delete this purchase from ${purchase.party.name}?\n\nThis will reverse the stock and balance changes.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('Cancel'),
                               ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        ) ?? false;
+                      },
+                      onDismissed: (direction) {
+                        ref
+                            .read(transactionsControllerProvider.notifier)
+                            .deleteTransaction(purchase.transaction.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Purchase from ${purchase.party.name} deleted'),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        elevation: 1,
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.orange.withValues(alpha: 0.2),
+                            child: const Icon(
+                              Icons.shopping_bag,
+                              color: Colors.orange,
+                              size: 20,
                             ),
-                            Text(
-                              '₹ ${purchase.transaction.totalAmount.toStringAsFixed(0)}',
-                              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                            ),
-                          ],
+                          ),
+                          title: Text(
+                            purchase.party.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            DateFormat('dd MMM yyyy').format(purchase.transaction.date),
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${purchase.transaction.totalGoldWeight.toStringAsFixed(3)} g',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                '₹ ${purchase.transaction.totalAmount.toStringAsFixed(0)}',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          onTap: () {
+                            // TODO: View/Edit purchase details
+                          },
                         ),
-                        onTap: () {
-                          // TODO: View/Edit purchase details
-                        },
                       ),
                     );
                   },

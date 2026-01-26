@@ -254,5 +254,126 @@ class SeederService {
             cashBalance: kgc.cashBalance - 640000.0,
           ),
         );
+
+    // 3. Test Purchase with Metal Receipt and Payment
+    // This purchase includes regular items, metal receipt, and metal payment
+    final testPurchaseId = await db
+        .into(db.transactions)
+        .insert(
+          TransactionsCompanion(
+            transactionNumber: const Value('PUR-TEST-001'),
+            partyPoNumber: const Value('PO-TEST-123'),
+            date: Value(now.subtract(const Duration(days: 1))),
+            partyId: Value(kgc.id),
+            type: const Value('Purchase'),
+            paymentMethod: const Value('Cash'),
+            paymentReference: const Value('CHQ-12345'),
+            totalGoldWeight: const Value(150.0), // 100g items + 50g metal receipt - 0g metal payment
+            totalSilverWeight: const Value(0.0),
+            subtotal: const Value(960000.0),
+            discountAmount: const Value(5000.0),
+            discountPercentage: const Value(0.52),
+            taxAmount: const Value(0.0),
+            taxPercentage: const Value(0.0),
+            totalAmount: const Value(955000.0),
+            status: const Value('Completed'),
+            dueDays: const Value(15),
+            dueDate: Value(now.add(const Duration(days: 14))),
+            remarks: const Value('Test purchase with metal receipt and payment'),
+          ),
+        );
+
+    // Regular purchase items
+    final ring = await (db.select(
+      db.items,
+    )..where((t) => t.name.equals('Gold Ring Men'))).getSingleOrNull();
+    
+    if (ring != null) {
+      await db.batch((batch) {
+        // Regular purchase line items
+        batch.insertAll(db.transactionLines, [
+          TransactionLinesCompanion(
+            transactionId: Value(testPurchaseId),
+            itemId: Value(ring.id),
+            description: const Value('Gold Ring Men'),
+            grossWeight: const Value(10.0),
+            netWeight: const Value(10.0),
+            purity: const Value(916),
+            rate: const Value(6400),
+            amount: const Value(64000),
+            makingCharges: const Value(500),
+            qty: const Value(1.0),
+          ),
+          TransactionLinesCompanion(
+            transactionId: Value(testPurchaseId),
+            itemId: Value(chain.id),
+            description: const Value('Gold Chain 22K'),
+            grossWeight: const Value(90.0),
+            netWeight: const Value(90.0),
+            purity: const Value(916),
+            rate: const Value(6400),
+            amount: const Value(576000),
+            makingCharges: const Value(4500),
+            qty: const Value(1.0),
+          ),
+        ]);
+
+        // Metal Receipt Line (M-Rec:)
+        // Gross: 52.000, Less: 0.500, Net: 51.500, Touch: 99.50, Wastage: 0.50
+        // Fine weight = net * ((touch + wastage) / 100) = 51.5 * ((99.5 + 0.5) / 100) = 51.5
+        final metalReceiptNetWeight = 51.5; // Net weight
+        final metalReceiptTouch = 99.5;
+        final metalReceiptWastage = 0.5;
+        final metalReceiptFineWeight = metalReceiptNetWeight * ((metalReceiptTouch + metalReceiptWastage) / 100); // 51.5
+        
+        batch.insert(
+          db.transactionLines,
+          TransactionLinesCompanion(
+            transactionId: Value(testPurchaseId),
+            itemId: const Value(null), // Can be null for metal receipt
+            description: const Value('M-Rec:Fine Gold'),
+            grossWeight: const Value(52.0),
+            netWeight: Value(metalReceiptFineWeight), // Fine weight stored here
+            purity: Value(metalReceiptTouch),
+            wastage: Value(metalReceiptWastage),
+            lineType: const Value('Credit'), // Metal receipt is credit
+            qty: const Value(1.0),
+          ),
+        );
+
+        // Metal Payment Line (M-Pay:)
+        // Gross: 25.000, Less: 0.200, Net: 24.800, Touch: 99.00, Wastage: 1.00, Fine: 24.800
+        final metalPaymentNetWeight = 24.8; // Net weight
+        final metalPaymentTouch = 99.0;
+        final metalPaymentWastage = 1.0;
+        final metalPaymentFineWeight = metalPaymentNetWeight * ((metalPaymentTouch + metalPaymentWastage) / 100); // 24.8
+        
+        batch.insert(
+          db.transactionLines,
+          TransactionLinesCompanion(
+            transactionId: Value(testPurchaseId),
+            itemId: const Value(null), // Can be null for metal payment
+            description: const Value('M-Pay:Fine Gold'),
+            grossWeight: const Value(25.0),
+            netWeight: Value(metalPaymentFineWeight), // Fine weight stored here
+            purity: Value(metalPaymentTouch),
+            wastage: Value(metalPaymentWastage),
+            lineType: const Value('Debit'), // Metal payment is debit
+            qty: const Value(1.0),
+          ),
+        );
+      });
+    }
+
+    // Update KGC's Balance for test purchase
+    final testPurchaseGoldImpact = 100.0 + 51.515 - 24.8; // Items + Receipt - Payment
+    await db
+        .update(db.parties)
+        .replace(
+          kgc.copyWith(
+            goldBalance: kgc.goldBalance - testPurchaseGoldImpact,
+            cashBalance: kgc.cashBalance - 955000.0,
+          ),
+        );
   }
 }

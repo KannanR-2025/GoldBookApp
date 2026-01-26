@@ -234,6 +234,124 @@ class TransactionsRepository {
     return null;
   }
 
+  Future<void> deleteTransaction(int id) {
+    return _db.transaction(() async {
+      // 1. Fetch Transaction to reverse balance
+      final txn = await (_db.select(
+        _db.transactions,
+      )..where((t) => t.id.equals(id))).getSingle();
+
+      final party = await (_db.select(
+        _db.parties,
+      )..where((t) => t.id.equals(txn.partyId))).getSingle();
+
+      // 2. Fetch lines to reverse stock
+      final lines = await (_db.select(
+        _db.transactionLines,
+      )..where((t) => t.transactionId.equals(id))).get();
+
+      // 3. Reverse Stock for each line item
+      for (var line in lines) {
+        if (line.itemId != null) {
+          final item = await (_db.select(
+            _db.items,
+          )..where((t) => t.id.equals(line.itemId!))).getSingle();
+
+          double qtyChange = 0;
+          double weightChange = 0;
+
+          if (txn.type == 'Inventory Adjustment') {
+            // Reverse: negative of original
+            qtyChange = -line.qty;
+            weightChange = -line.netWeight;
+          } else if (txn.type == 'Stock Transfer') {
+            final type = line.lineType;
+            if (type == 'Debit') {
+              // Was decrease, reverse to increase
+              qtyChange = line.qty;
+              weightChange = line.netWeight;
+            } else if (type == 'Credit') {
+              // Was increase, reverse to decrease
+              qtyChange = -line.qty;
+              weightChange = -line.netWeight;
+            }
+          } else if (txn.type == 'Sale' || txn.type == 'Metal Issue') {
+            // Was decrease, reverse to increase
+            qtyChange = line.qty;
+            weightChange = line.netWeight;
+          } else if (txn.type == 'Purchase' || txn.type == 'Metal Receipt') {
+            // Was increase, reverse to decrease
+            qtyChange = -line.qty;
+            weightChange = -line.netWeight;
+          }
+
+          if (qtyChange != 0 || weightChange != 0) {
+            await _db
+                .update(_db.items)
+                .replace(
+                  item.copyWith(
+                    stockQty: item.stockQty + qtyChange,
+                    stockWeight: item.stockWeight + weightChange,
+                  ),
+                );
+          }
+        }
+      }
+
+      // 4. Reverse Party Balance
+      double revGold = 0;
+      double revSilver = 0;
+      double revCash = 0;
+
+      if (txn.type == 'Sale') {
+        revGold = -txn.totalGoldWeight;
+        revSilver = -txn.totalSilverWeight;
+        revCash = -txn.totalAmount;
+      } else if (txn.type == 'Purchase') {
+        revGold = txn.totalGoldWeight;
+        revSilver = txn.totalSilverWeight;
+        revCash = txn.totalAmount;
+      } else if (txn.type == 'Receipt') {
+        revGold = txn.totalGoldWeight;
+        revSilver = txn.totalSilverWeight;
+        revCash = txn.totalAmount;
+      } else if (txn.type == 'Payment') {
+        revGold = -txn.totalGoldWeight;
+        revSilver = -txn.totalSilverWeight;
+        revCash = -txn.totalAmount;
+      } else if (txn.type == 'Stock Transfer') {
+        for (var line in lines) {
+          final lType = line.lineType;
+          if (lType == 'Debit') {
+            revGold -= line.netWeight;
+          } else if (lType == 'Credit') {
+            revGold += line.netWeight;
+          }
+        }
+      }
+
+      await _db
+          .update(_db.parties)
+          .replace(
+            party.copyWith(
+              goldBalance: party.goldBalance + revGold,
+              silverBalance: party.silverBalance + revSilver,
+              cashBalance: party.cashBalance + revCash,
+            ),
+          );
+
+      // 5. Delete transaction lines
+      await (_db.delete(
+        _db.transactionLines,
+      )..where((t) => t.transactionId.equals(id))).go();
+
+      // 6. Delete transaction
+      await (_db.delete(
+        _db.transactions,
+      )..where((t) => t.id.equals(id))).go();
+    });
+  }
+
   Future<void> updateTransaction({
     required int id,
     required TransactionsCompanion header,

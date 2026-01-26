@@ -46,7 +46,38 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
       body: partiesAsync.when(
         data: (parties) => _buildTable(parties),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        error: (err, stack) {
+          // Error logging for supplier screen
+          print('=== Supplier Screen Error ===');
+          print('Error: $err');
+          print('Stack trace: $stack');
+          print('Party Type: ${widget.partyType}');
+          print('Timestamp: ${DateTime.now()}');
+          print('===========================');
+          
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading ${widget.partyType.toLowerCase()}s',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    '$err',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -208,13 +239,31 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
   }
 
   void _showAddDialog(BuildContext context, {Party? party}) {
-    final base = '${widget.partyType.toLowerCase()}s';
-    if (party != null) {
-      // Edit existing party
-      context.go('/$base/edit/${party.id}');
-    } else {
-      // Add new party
-      context.go('/$base/new');
+    try {
+      final base = '${widget.partyType.toLowerCase()}s';
+      if (party != null) {
+        // Edit existing party
+        context.go('/$base/edit/${party.id}');
+      } else {
+        // Add new party
+        context.go('/$base/new');
+      }
+    } catch (e, stackTrace) {
+      // Error logging for supplier screen - navigation error
+      print('=== Supplier Screen Error ===');
+      print('Error navigating to ${party != null ? 'edit' : 'new'} screen: $e');
+      print('Stack trace: $stackTrace');
+      print('Party Type: ${widget.partyType}');
+      print('Party ID: ${party?.id}');
+      print('Timestamp: ${DateTime.now()}');
+      print('===========================');
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }
@@ -305,10 +354,45 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen>
   Future<void> _loadPartyData() async {
     if (widget.partyId == null) return;
 
-    // Fetch party data
-    final party = await ref.read(partyByIdProvider(widget.partyId!).future);
-    if (party != null && mounted) {
-      _populateFields(party);
+    try {
+      // Fetch party data
+      final party = await ref.read(partyByIdProvider(widget.partyId!).future);
+      if (party != null && mounted) {
+        _populateFields(party);
+      } else if (mounted) {
+        // Error logging for supplier screen - party not found
+        print('=== Supplier Screen Error ===');
+        print('Error: Party not found');
+        print('Party ID: ${widget.partyId}');
+        print('Party Type: ${widget.type}');
+        print('Timestamp: ${DateTime.now()}');
+        print('===========================');
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Party not found'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      // Error logging for supplier screen - load error
+      print('=== Supplier Screen Error ===');
+      print('Error loading party data: $e');
+      print('Stack trace: $stackTrace');
+      print('Party ID: ${widget.partyId}');
+      print('Party Type: ${widget.type}');
+      print('Timestamp: ${DateTime.now()}');
+      print('===========================');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading party: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -378,17 +462,59 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen>
     if (_formKey.currentState!.validate()) {
       final isEdit = widget.partyId != null;
 
+      // Additional validation before submission
+      final name = _nameCtrl.text.trim();
+      final mobile = _mobileCtrl.text.trim();
+      
+      if (name.isEmpty) {
+        // Error logging for supplier screen - validation error
+        print('=== Supplier Screen Error ===');
+        print('Error: Name field is empty');
+        print('Party Type: ${widget.type}');
+        print('Is Edit: $isEdit');
+        print('Party ID: ${widget.partyId}');
+        print('Timestamp: ${DateTime.now()}');
+        print('===========================');
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Name is required'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      if (mobile.isEmpty) {
+        // Error logging for supplier screen - validation error
+        print('=== Supplier Screen Error ===');
+        print('Error: Mobile field is empty');
+        print('Party Type: ${widget.type}');
+        print('Is Edit: $isEdit');
+        print('Party ID: ${widget.partyId}');
+        print('Timestamp: ${DateTime.now()}');
+        print('===========================');
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Mobile number is required'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       final companion = PartiesCompanion(
         id: isEdit ? drift.Value(widget.partyId!) : const drift.Value.absent(),
         // General
         type: drift.Value(widget.type),
         code: drift.Value(_codeCtrl.text.isEmpty ? null : _codeCtrl.text),
         title: drift.Value(_titleCtrl.text.isEmpty ? null : _titleCtrl.text),
-        name: drift.Value(_nameCtrl.text),
+        name: drift.Value(name),
         contactPerson: drift.Value(
           _contactPersonCtrl.text.isEmpty ? null : _contactPersonCtrl.text,
         ),
-        mobile: drift.Value(_mobileCtrl.text),
+        mobile: drift.Value(mobile),
         workPhone: drift.Value(
           _workPhoneCtrl.text.isEmpty ? null : _workPhoneCtrl.text,
         ),
@@ -492,11 +618,36 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen>
         // Check if the operation was successful
         final controllerState = ref.read(partiesControllerProvider);
         if (controllerState.hasError) {
+          // Error logging for supplier screen - controller error
+          print('=== Supplier Screen Error ===');
+          print('Error: Controller has error');
+          print('Error message: ${controllerState.error}');
+          print('Party Type: ${widget.type}');
+          print('Is Edit: $isEdit');
+          print('Party ID: ${widget.partyId}');
+          print('Field Values:');
+          print('  - Name: "${_nameCtrl.text}" (length: ${_nameCtrl.text.length})');
+          print('  - Mobile: "${_mobileCtrl.text}" (length: ${_mobileCtrl.text.length})');
+          print('  - Code: "${_codeCtrl.text}"');
+          print('  - Company Name: "${_companyNameCtrl.text}"');
+          print('Timestamp: ${DateTime.now()}');
+          print('===========================');
+          
           if (mounted) {
+            // Extract a more user-friendly error message
+            final errorMsg = controllerState.error.toString();
+            String userMessage = errorMsg;
+            if (errorMsg.contains('name: Must at least be 1 characters long')) {
+              userMessage = 'Name is required and must be at least 1 character long';
+            } else if (errorMsg.contains('mobile')) {
+              userMessage = 'Mobile number is required';
+            }
+            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error: ${controllerState.error}'),
+                content: Text('Error: $userMessage'),
                 backgroundColor: Colors.red,
+                duration: const Duration(seconds: 5),
               ),
             );
           }
@@ -513,10 +664,25 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen>
             ),
           );
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        // Error logging for supplier screen - save/update error
+        print('=== Supplier Screen Error ===');
+        print('Error ${isEdit ? 'updating' : 'adding'} ${widget.type}: $e');
+        print('Stack trace: $stackTrace');
+        print('Party Type: ${widget.type}');
+        print('Is Edit: $isEdit');
+        print('Party ID: ${widget.partyId}');
+        print('Party Name: $name');
+        print('Party Mobile: $mobile');
+        print('Timestamp: ${DateTime.now()}');
+        print('===========================');
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -674,7 +840,15 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen>
                   decoration: const InputDecoration(
                     labelText: 'Display Name *',
                   ),
-                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Name is required';
+                    }
+                    if (v.trim().length < 1) {
+                      return 'Name must be at least 1 character';
+                    }
+                    return null;
+                  },
                 ),
               ),
               const SizedBox(width: 16),
@@ -694,7 +868,12 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen>
             TextFormField(
               controller: _mobileCtrl,
               decoration: const InputDecoration(labelText: 'Mobile Number *'),
-              validator: (v) => v!.isEmpty ? 'Required' : null,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) {
+                  return 'Mobile number is required';
+                }
+                return null;
+              },
               keyboardType: TextInputType.phone,
             ),
             TextFormField(
