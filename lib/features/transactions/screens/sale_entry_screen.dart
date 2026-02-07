@@ -83,8 +83,13 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   final _rateCutMetalRateCtrl = TextEditingController();
   final _rateCutFineCtrl = TextEditingController();
   String _rateCutFineUnit = 'g';
+  String _rateCutFineType = 'Payable'; // Payable or Receivable
   final _rateCutAmountCtrl = TextEditingController();
   String _rateCutAmountUnit = '₹';
+  String _rateCutAmountType = 'Receivable'; // Payable or Receivable
+  double _rateCutGold = 0; // Saved fine gold amount
+  double _rateCutCash = 0; // Saved cash amount
+  double _rateCutMetalRate = 0; // Saved metal rate for display
 
   bool _isLoading = false;
 
@@ -180,6 +185,17 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
         _taxAmountCtrl.text = txn.taxAmount.toString();
         _taxPercentCtrl.text = txn.taxPercentage.toString();
 
+        // Reset rate cut state
+        _rateCutGold = 0;
+        _rateCutCash = 0;
+        _rateCutMetalRate = 0;
+        _rateCutMetalType = 'Gold';
+        _rateCutFineType = 'Payable';
+        _rateCutAmountType = 'Receivable';
+        _rateCutMetalRateCtrl.clear();
+        _rateCutFineCtrl.clear();
+        _rateCutAmountCtrl.clear();
+
         _lines.clear();
         for (var l in lines) {
           final desc = l.description ?? '';
@@ -237,6 +253,41 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
             _metalPaymentTouchCtrl.text = touch.toStringAsFixed(2);
             _metalPaymentWastageCtrl.text = wastage.toStringAsFixed(2);
             _metalPaymentFineWeightCtrl.text = fineWeight.toStringAsFixed(3);
+            continue; // Don't add to regular lines
+          }
+
+          // Check if this is a Rate Cut line
+          if (desc.startsWith('R-Cut:')) {
+            _rateCutGold = l.netWeight; // Fine gold amount is stored in netWeight
+            _rateCutCash = l.amount; // Cash amount is stored in amount
+            _rateCutMetalRate = l.rate; // Metal rate is stored in rate
+            
+            // Extract fine type and amount type from description
+            if (desc.contains('|FineType:')) {
+              final fineTypeMatch = RegExp(r'\|FineType:(\w+)').firstMatch(desc);
+              if (fineTypeMatch != null) {
+                _rateCutFineType = fineTypeMatch.group(1) ?? 'Payable';
+              } else {
+                _rateCutFineType = l.lineType == 'Debit' ? 'Payable' : 'Receivable';
+              }
+            } else {
+              _rateCutFineType = l.lineType == 'Debit' ? 'Payable' : 'Receivable';
+            }
+            
+            if (desc.contains('|AmountType:')) {
+              final amountTypeMatch = RegExp(r'\|AmountType:(\w+)').firstMatch(desc);
+              if (amountTypeMatch != null) {
+                _rateCutAmountType = amountTypeMatch.group(1) ?? 'Receivable';
+              }
+            }
+            
+            // Populate controllers for dialog display
+            _rateCutMetalRateCtrl.text = _rateCutMetalRate.toStringAsFixed(2);
+            _rateCutFineCtrl.text = _rateCutGold.toStringAsFixed(3);
+            _rateCutAmountCtrl.text = _rateCutCash.toStringAsFixed(2);
+            
+            // Extract metal type from description if available, default to 'Gold'
+            _rateCutMetalType = 'Gold';
             continue; // Don't add to regular lines
           }
 
@@ -500,6 +551,19 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           purity: drift.Value(metalReceiptTouch),
           wastage: drift.Value(metalReceiptWastage),
           lineType: drift.Value('Credit'), // Metal receipt is a credit
+          qty: drift.Value(1.0),
+        ));
+      }
+
+      // Add rate cut as transaction line if exists
+      if (_rateCutGold > 0 || _rateCutCash > 0) {
+        lines.add(TransactionLinesCompanion(
+          itemId: const drift.Value(null),
+          description: drift.Value('R-Cut:Rate Cut @ ${_rateCutMetalRate.toStringAsFixed(2)}|FineType:${_rateCutFineType}|AmountType:${_rateCutAmountType}'),
+          netWeight: drift.Value(_rateCutGold), // Fine gold amount
+          amount: drift.Value(_rateCutCash), // Cash amount
+          rate: drift.Value(_rateCutMetalRate),
+          lineType: drift.Value(_rateCutFineType == 'Payable' ? 'Debit' : 'Credit'),
           qty: drift.Value(1.0),
         ));
       }
@@ -2520,13 +2584,22 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   }
 
   void _showRateCutDialog() {
-    // Reset controllers
-    _rateCutMetalType = 'Gold';
-    _rateCutMetalRateCtrl.clear();
-    _rateCutFineCtrl.clear();
-    _rateCutFineUnit = 'g';
-    _rateCutAmountCtrl.clear();
-    _rateCutAmountUnit = '₹';
+    // Load existing values if rate cut is already saved, otherwise reset
+    if (_rateCutGold > 0 || _rateCutCash > 0) {
+      _rateCutMetalRateCtrl.text = _rateCutMetalRate.toStringAsFixed(2);
+      _rateCutFineCtrl.text = _rateCutGold.toStringAsFixed(3);
+      _rateCutAmountCtrl.text = _rateCutCash.toStringAsFixed(2);
+    } else {
+      // Reset controllers
+      _rateCutMetalType = 'Gold';
+      _rateCutMetalRateCtrl.clear();
+      _rateCutFineCtrl.clear();
+      _rateCutFineUnit = 'g';
+      _rateCutFineType = 'Payable';
+      _rateCutAmountCtrl.clear();
+      _rateCutAmountUnit = '₹';
+      _rateCutAmountType = 'Receivable';
+    }
 
     showDialog(
       context: context,
@@ -2536,8 +2609,10 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           metalRateCtrl: _rateCutMetalRateCtrl,
           fineCtrl: _rateCutFineCtrl,
           fineUnit: _rateCutFineUnit,
+          fineType: _rateCutFineType,
           amountCtrl: _rateCutAmountCtrl,
           amountUnit: _rateCutAmountUnit,
+          amountType: _rateCutAmountType,
           onMetalTypeChanged: (type) {
             setState(() {
               _rateCutMetalType = type;
@@ -2548,9 +2623,19 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
               _rateCutFineUnit = unit;
             });
           },
+          onFineTypeChanged: (type) {
+            setState(() {
+              _rateCutFineType = type;
+            });
+          },
           onAmountUnitChanged: (unit) {
             setState(() {
               _rateCutAmountUnit = unit;
+            });
+          },
+          onAmountTypeChanged: (type) {
+            setState(() {
+              _rateCutAmountType = type;
             });
           },
           onSave: () {
@@ -2563,8 +2648,17 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   }
 
   void _saveRateCut() {
-    // Handle rate cut save logic here
-    // This can be used to adjust rates or apply discounts
+    final fine = double.tryParse(_rateCutFineCtrl.text) ?? 0;
+    final amount = double.tryParse(_rateCutAmountCtrl.text) ?? 0;
+    final metalRate = double.tryParse(_rateCutMetalRateCtrl.text) ?? 0;
+    
+    setState(() {
+      _rateCutGold = fine;
+      _rateCutCash = amount;
+      _rateCutMetalRate = metalRate;
+    });
+    
+    _calculateTotals();
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Rate Cut saved')),
     );
@@ -2604,7 +2698,9 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     }
 
     final subTotalGold = _totalGold;
-    final voucherTotalGold = subTotalGold - _metalReceiptGold + _metalPaymentGold;
+    // Rate Cut: Fine gold affects gold balance, cash amount affects cash balance
+    final rateCutGoldImpact = _rateCutFineType == 'Payable' ? -_rateCutGold : _rateCutGold;
+    final voucherTotalGold = subTotalGold - _metalReceiptGold + _metalPaymentGold + rateCutGoldImpact;
     final totalDueGold = voucherTotalGold;
     final closingBalanceGold = (selectedParty?.goldBalance ?? 0) + totalDueGold;
 
@@ -2651,10 +2747,31 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           _buildSummaryRow('M-Rec:Fine Gold', _metalReceiptGold, 0, 0, isCr: _metalReceiptGold > 0),
           if (_metalPaymentGold > 0)
             _buildSummaryRow('M-Pay:Fine Gold', _metalPaymentGold, 0, 0, isDr: _metalPaymentGold > 0),
-          _buildSummaryRow('Voucher Total', voucherTotalGold, 0, 0, isDr: voucherTotalGold < 0),
-          _buildSummaryRow('Total Due', totalDueGold, 0, 0, isDr: totalDueGold < 0),
+          if (_rateCutGold > 0 || _rateCutCash > 0)
+            _buildSummaryRowWithActions(
+              'Rate Cut @ ${_rateCutMetalRate.toStringAsFixed(2)}',
+              _rateCutGold,
+              0,
+              _rateCutCash,
+              isDr: _rateCutFineType == 'Payable',
+              isCr: _rateCutAmountType == 'Receivable',
+              onEdit: () => _showRateCutDialog(),
+              onDelete: () {
+                setState(() {
+                  _rateCutGold = 0;
+                  _rateCutCash = 0;
+                  _rateCutMetalRate = 0;
+                  _rateCutMetalRateCtrl.clear();
+                  _rateCutFineCtrl.clear();
+                  _rateCutAmountCtrl.clear();
+                });
+                _calculateTotals();
+              },
+            ),
+          _buildSummaryRow('Voucher Total', voucherTotalGold, 0, _rateCutCash, isDr: voucherTotalGold < 0),
+          _buildSummaryRow('Total Due', totalDueGold, 0, _rateCutCash, isDr: totalDueGold < 0, isCr: _rateCutCash > 0 && _rateCutAmountType == 'Receivable'),
           const Divider(height: 20),
-          _buildSummaryRow('Closing Balance', closingBalanceGold, 0, 0, isDr: closingBalanceGold < 0, isBold: true),
+          _buildSummaryRow('Closing Balance', closingBalanceGold, 0, _rateCutCash, isDr: closingBalanceGold < 0, isCr: _rateCutCash > 0 && _rateCutAmountType == 'Receivable', isBold: true),
         ],
       ),
     );
@@ -2701,11 +2818,120 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                 ),
               ),
               const SizedBox(width: 12),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    cash.toStringAsFixed(2),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+                      color: cash > 0 && isCr ? Colors.green : (cash > 0 && isDr ? Colors.red : AppTheme.textPrimary),
+                    ),
+                  ),
+                  if (cash > 0 && (isCr || isDr)) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      isCr ? 'Rec' : 'Pay',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: isCr ? Colors.red : Colors.green,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRowWithActions(
+    String label,
+    double gold,
+    double silver,
+    double cash, {
+    bool isDr = false,
+    bool isCr = false,
+    required VoidCallback onEdit,
+    required VoidCallback onDelete,
+  }) {
+    final drCr = isCr ? 'Rec' : (isDr ? 'Pay' : '');
+    final drCrColor = isCr ? Colors.red : (isDr ? Colors.green : AppTheme.textPrimary);
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          Row(
+            children: [
               Text(
-                cash.toStringAsFixed(2),
+                gold.toStringAsFixed(3),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: FontWeight.w600,
+                  color: drCrColor,
                 ),
+              ),
+              if (drCr.isNotEmpty) ...[
+                const SizedBox(width: 4),
+                Text(
+                  drCr,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: drCrColor,
+                  ),
+                ),
+              ],
+              const SizedBox(width: 12),
+              Text(
+                silver.toStringAsFixed(3),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(width: 12),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    cash.toStringAsFixed(2),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: cash > 0 ? FontWeight.w600 : FontWeight.normal,
+                      color: cash > 0 && isCr ? Colors.red : (cash > 0 && isDr ? Colors.green : AppTheme.textPrimary),
+                    ),
+                  ),
+                  if (cash > 0 && (isCr || isDr)) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      isCr ? 'Rec' : 'Pay',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: isCr ? Colors.red : Colors.green,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.edit, size: 16, color: AppTheme.primaryAction),
+                onPressed: onEdit,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Edit',
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 16, color: Colors.red),
+                onPressed: onDelete,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Delete',
               ),
             ],
           ),
@@ -3778,16 +4004,20 @@ class _MetalPaymentDialogState extends ConsumerState<MetalPaymentDialog> {
   }
 }
 
-class RateCutDialog extends StatelessWidget {
+class RateCutDialog extends StatefulWidget {
   final String metalType;
   final TextEditingController metalRateCtrl;
   final TextEditingController fineCtrl;
   final String fineUnit;
+  final String fineType;
   final TextEditingController amountCtrl;
   final String amountUnit;
+  final String amountType;
   final Function(String) onMetalTypeChanged;
   final Function(String) onFineUnitChanged;
+  final Function(String) onFineTypeChanged;
   final Function(String) onAmountUnitChanged;
+  final Function(String) onAmountTypeChanged;
   final VoidCallback onSave;
 
   const RateCutDialog({
@@ -3796,19 +4026,59 @@ class RateCutDialog extends StatelessWidget {
     required this.metalRateCtrl,
     required this.fineCtrl,
     required this.fineUnit,
+    required this.fineType,
     required this.amountCtrl,
     required this.amountUnit,
+    required this.amountType,
     required this.onMetalTypeChanged,
     required this.onFineUnitChanged,
+    required this.onFineTypeChanged,
     required this.onAmountUnitChanged,
+    required this.onAmountTypeChanged,
     required this.onSave,
   });
+
+  @override
+  State<RateCutDialog> createState() => _RateCutDialogState();
+}
+
+class _RateCutDialogState extends State<RateCutDialog> {
+  late String _fineType;
+  late String _amountType;
+
+  @override
+  void initState() {
+    super.initState();
+    _fineType = widget.fineType;
+    _amountType = widget.amountType;
+    
+    // Add listeners for auto-calculation
+    widget.metalRateCtrl.addListener(_calculateAmount);
+    widget.fineCtrl.addListener(_calculateAmount);
+  }
+
+  @override
+  void dispose() {
+    widget.metalRateCtrl.removeListener(_calculateAmount);
+    widget.fineCtrl.removeListener(_calculateAmount);
+    super.dispose();
+  }
+
+  void _calculateAmount() {
+    final metalRate = double.tryParse(widget.metalRateCtrl.text) ?? 0;
+    final fine = double.tryParse(widget.fineCtrl.text) ?? 0;
+    final amount = metalRate * fine;
+    
+    if (amount > 0 && widget.amountCtrl.text != amount.toStringAsFixed(2)) {
+      widget.amountCtrl.text = amount.toStringAsFixed(2);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       child: Container(
-        width: 500,
+        width: 550,
         constraints: const BoxConstraints(maxHeight: 600),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -3893,15 +4163,15 @@ class RateCutDialog extends StatelessWidget {
                       children: [
                         Radio<String>(
                           value: 'Gold',
-                          groupValue: metalType,
-                          onChanged: (value) => onMetalTypeChanged(value!),
+                          groupValue: widget.metalType,
+                          onChanged: (value) => widget.onMetalTypeChanged(value!),
                         ),
                         const Text('Gold'),
                         const SizedBox(width: 24),
                         Radio<String>(
                           value: 'Silver',
-                          groupValue: metalType,
-                          onChanged: (value) => onMetalTypeChanged(value!),
+                          groupValue: widget.metalType,
+                          onChanged: (value) => widget.onMetalTypeChanged(value!),
                         ),
                         const Text('Silver'),
                       ],
@@ -3919,7 +4189,7 @@ class RateCutDialog extends StatelessWidget {
                         ),
                         Expanded(
                           child: TextFormField(
-                            controller: metalRateCtrl,
+                            controller: widget.metalRateCtrl,
                             decoration: const InputDecoration(
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
@@ -3928,6 +4198,7 @@ class RateCutDialog extends StatelessWidget {
                               ),
                             ),
                             keyboardType: TextInputType.number,
+                            onChanged: (_) => _calculateAmount(),
                           ),
                         ),
                       ],
@@ -3945,7 +4216,7 @@ class RateCutDialog extends StatelessWidget {
                         ),
                         Expanded(
                           child: TextFormField(
-                            controller: fineCtrl,
+                            controller: widget.fineCtrl,
                             decoration: const InputDecoration(
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
@@ -3954,13 +4225,14 @@ class RateCutDialog extends StatelessWidget {
                               ),
                             ),
                             keyboardType: TextInputType.number,
+                            onChanged: (_) => _calculateAmount(),
                           ),
                         ),
                         const SizedBox(width: 8),
                         SizedBox(
-                          width: 80,
+                          width: 100,
                           child: DropdownButtonFormField<String>(
-                            value: fineUnit,
+                            value: widget.fineUnit,
                             decoration: const InputDecoration(
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
@@ -3973,7 +4245,33 @@ class RateCutDialog extends StatelessWidget {
                               DropdownMenuItem(value: 'kg', child: Text('kg')),
                             ],
                             onChanged: (value) {
-                              if (value != null) onFineUnitChanged(value);
+                              if (value != null) widget.onFineUnitChanged(value);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 100,
+                          child: DropdownButtonFormField<String>(
+                            value: _fineType,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 12,
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'Payable', child: Text('Payable', style: TextStyle(fontSize: 12))),
+                              DropdownMenuItem(value: 'Receivable', child: Text('Receivable', style: TextStyle(fontSize: 12))),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _fineType = value;
+                                });
+                                widget.onFineTypeChanged(value);
+                              }
                             },
                           ),
                         ),
@@ -3992,7 +4290,7 @@ class RateCutDialog extends StatelessWidget {
                         ),
                         Expanded(
                           child: TextFormField(
-                            controller: amountCtrl,
+                            controller: widget.amountCtrl,
                             decoration: const InputDecoration(
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
@@ -4007,7 +4305,7 @@ class RateCutDialog extends StatelessWidget {
                         SizedBox(
                           width: 80,
                           child: DropdownButtonFormField<String>(
-                            value: amountUnit,
+                            value: widget.amountUnit,
                             decoration: const InputDecoration(
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
@@ -4020,7 +4318,33 @@ class RateCutDialog extends StatelessWidget {
                               DropdownMenuItem(value: '%', child: Text('%')),
                             ],
                             onChanged: (value) {
-                              if (value != null) onAmountUnitChanged(value);
+                              if (value != null) widget.onAmountUnitChanged(value);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 100,
+                          child: DropdownButtonFormField<String>(
+                            value: _amountType,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 12,
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'Payable', child: Text('Payable', style: TextStyle(fontSize: 12))),
+                              DropdownMenuItem(value: 'Receivable', child: Text('Receivable', style: TextStyle(fontSize: 12))),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _amountType = value;
+                                });
+                                widget.onAmountTypeChanged(value);
+                              }
                             },
                           ),
                         ),
@@ -4054,7 +4378,7 @@ class RateCutDialog extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
-                    onPressed: onSave,
+                    onPressed: widget.onSave,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,

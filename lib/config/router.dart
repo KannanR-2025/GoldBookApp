@@ -9,6 +9,8 @@ import 'package:goldbook_desktop/features/transactions/screens/purchase_entry_sc
 import 'package:goldbook_desktop/features/transactions/screens/receipt_entry_screen.dart';
 import 'package:goldbook_desktop/features/transactions/screens/payment_entry_screen.dart';
 import 'package:goldbook_desktop/features/transactions/screens/transactions_list_screen.dart';
+import 'package:goldbook_desktop/features/sales/sales_screen.dart';
+import 'package:goldbook_desktop/features/purchases/purchases_screen.dart';
 import 'package:goldbook_desktop/features/reports/reports_screen.dart';
 import 'package:goldbook_desktop/features/reports/day_book_screen.dart';
 import 'package:goldbook_desktop/features/reports/cash_book_screen.dart';
@@ -104,8 +106,7 @@ final router = GoRouter(
         // Sales routes
         GoRoute(
           path: '/sales',
-          builder: (context, state) =>
-              const TransactionsListScreen(typeFilter: 'Sale'),
+          builder: (context, state) => const SalesScreen(),
           routes: [
             GoRoute(
               path: 'new',
@@ -125,8 +126,7 @@ final router = GoRouter(
         // Purchase routes
         GoRoute(
           path: '/purchases',
-          builder: (context, state) =>
-              const TransactionsListScreen(typeFilter: 'Purchase'),
+          builder: (context, state) => const PurchasesScreen(),
           routes: [
             GoRoute(
               path: 'new',

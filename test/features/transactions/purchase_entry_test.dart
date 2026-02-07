@@ -71,6 +71,9 @@ class FakeTransactionsRepository implements TransactionsRepository {
   FakeTransactionsRepository([this._db]);
 
   @override
+  Future<int> deleteTransaction(int id) async => 1;
+
+  @override
   Future<String?> getLastTransactionNumberForDate(DateTime date) async {
     return 'PUR-20260126-003';
   }
