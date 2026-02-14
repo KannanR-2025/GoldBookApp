@@ -2378,7 +2378,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildActionButton(Icons.diamond, 'Metal Receipt', Colors.blue),
+              _buildActionButton(Icons.diamond, 'Metal Received', Colors.blue),
               _buildActionButton(Icons.diamond_outlined, 'Metal Payment', Colors.orange),
               _buildActionButton(Icons.trending_down, 'Rate-Cut', Colors.purple),
             ],
@@ -2407,7 +2407,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
   Widget _buildActionButton(IconData icon, String label, Color color) {
     VoidCallback? onPressed;
-    if (label == 'Metal Receipt') {
+    if (label == 'Metal Received') {
       onPressed = _showMetalReceiptDialog;
     } else if (label == 'Metal Payment') {
       onPressed = _showMetalPaymentDialog;

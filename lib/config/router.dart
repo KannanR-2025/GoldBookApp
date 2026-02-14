@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:goldbook_desktop/features/auth/login_screen.dart';
 import 'package:goldbook_desktop/features/dashboard/dashboard_screen.dart';
 import 'package:goldbook_desktop/features/parties/screens/parties_screen.dart';
+import 'package:goldbook_desktop/features/parties/screens/supplier_entry_screen.dart';
 import 'package:goldbook_desktop/features/inventory/items_screen.dart';
 import 'package:goldbook_desktop/features/transactions/screens/sale_entry_screen.dart';
 import 'package:goldbook_desktop/features/transactions/screens/purchase_entry_screen.dart';
@@ -16,8 +17,10 @@ import 'package:goldbook_desktop/features/reports/day_book_screen.dart';
 import 'package:goldbook_desktop/features/reports/cash_book_screen.dart';
 import 'package:goldbook_desktop/features/transactions/screens/metal_issue_entry_screen.dart';
 import 'package:goldbook_desktop/features/transactions/screens/metal_receipt_entry_screen.dart';
+import 'package:goldbook_desktop/features/transactions/screens/metal_in_out_screen.dart';
 import 'package:goldbook_desktop/features/transactions/screens/stock_transfer_entry_screen.dart';
 import 'package:goldbook_desktop/features/transactions/screens/inventory_adjustment_entry_screen.dart';
+import 'package:goldbook_desktop/features/transactions/screens/rate_cut_entry_screen.dart';
 import 'package:goldbook_desktop/features/settings/screens/settings_screen.dart';
 import 'package:goldbook_desktop/features/reports/financial_reports_screen.dart';
 
@@ -71,15 +74,14 @@ final router = GoRouter(
             GoRoute(
               path: 'new',
               parentNavigatorKey: rootNavigatorKey,
-              builder: (context, state) =>
-                  const PartyEntryScreen(type: 'Supplier'),
+              builder: (context, state) => const SupplierEntryScreen(),
             ),
             GoRoute(
               path: 'edit/:id',
               parentNavigatorKey: rootNavigatorKey,
               builder: (context, state) {
                 final id = int.tryParse(state.pathParameters['id'] ?? '');
-                return PartyEntryScreen(type: 'Supplier', partyId: id);
+                return SupplierEntryScreen(partyId: id);
               },
             ),
           ],
@@ -190,26 +192,68 @@ final router = GoRouter(
           path: '/transactions',
           builder: (context, state) => const TransactionsListScreen(),
         ),
-        // Metal transactions
+        // Metal In/Out (combined list + entry routes)
+        GoRoute(
+          path: '/metal-in-out',
+          builder: (context, state) => const MetalInOutScreen(),
+          routes: [
+            GoRoute(
+              path: 'new-issue',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) => const MetalIssueEntryScreen(),
+            ),
+            GoRoute(
+              path: 'new-receipt',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) => const MetalReceiptEntryScreen(),
+            ),
+            GoRoute(
+              path: 'edit-issue/:id',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                final id = int.tryParse(state.pathParameters['id'] ?? '');
+                return MetalIssueEntryScreen(transactionId: id);
+              },
+            ),
+            GoRoute(
+              path: 'edit-receipt/:id',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                final id = int.tryParse(state.pathParameters['id'] ?? '');
+                return MetalReceiptEntryScreen(transactionId: id);
+              },
+            ),
+          ],
+        ),
+        // Legacy metal routes (backward compat)
         GoRoute(
           path: '/metal-issue/new',
           builder: (context, state) => const MetalIssueEntryScreen(),
         ),
         GoRoute(
-          path: '/metal-issue/edit/:id',
-          builder: (context, state) => MetalIssueEntryScreen(
-            transactionId: int.parse(state.pathParameters['id']!),
-          ),
-        ),
-        GoRoute(
           path: '/metal-receipt/new',
           builder: (context, state) => const MetalReceiptEntryScreen(),
         ),
+        // Rate Cut
         GoRoute(
-          path: '/metal-receipt/edit/:id',
-          builder: (context, state) => MetalReceiptEntryScreen(
-            transactionId: int.parse(state.pathParameters['id']!),
-          ),
+          path: '/rate-cut',
+          builder: (context, state) =>
+              const TransactionsListScreen(typeFilter: 'RateCut'),
+          routes: [
+            GoRoute(
+              path: 'new',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) => const RateCutEntryScreen(),
+            ),
+            GoRoute(
+              path: 'edit/:id',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                final id = int.tryParse(state.pathParameters['id'] ?? '');
+                return RateCutEntryScreen(transactionId: id);
+              },
+            ),
+          ],
         ),
         // Stock Transfer
         GoRoute(

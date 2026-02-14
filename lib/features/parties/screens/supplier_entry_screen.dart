@@ -6,286 +6,27 @@ import 'package:goldbook_desktop/config/theme.dart';
 import 'package:goldbook_desktop/core/database/database.dart';
 import 'package:goldbook_desktop/features/parties/providers/parties_provider.dart';
 
-class PartiesScreen extends ConsumerStatefulWidget {
-  final String partyType; // 'Customer' or 'Supplier'
-
-  const PartiesScreen({super.key, required this.partyType});
-
-  @override
-  ConsumerState<PartiesScreen> createState() => _PartiesScreenState();
-}
-
-class _PartiesScreenState extends ConsumerState<PartiesScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(partyTypeFilterProvider.notifier).setType(widget.partyType);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final partiesAsync = ref.watch(partiesListProvider);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.partyType}s'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: ElevatedButton.icon(
-              onPressed: () => _showAddDialog(context),
-              icon: const Icon(Icons.add),
-              label: Text('New ${widget.partyType}'),
-            ),
-          ),
-        ],
-      ),
-      body: partiesAsync.when(
-        data: (parties) => _buildTable(parties),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) {
-          // Error logging for supplier screen
-          print('=== Supplier Screen Error ===');
-          print('Error: $err');
-          print('Stack trace: $stack');
-          print('Party Type: ${widget.partyType}');
-          print('Timestamp: ${DateTime.now()}');
-          print('===========================');
-          
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                const SizedBox(height: 16),
-                Text(
-                  'Error loading ${widget.partyType.toLowerCase()}s',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(
-                    '$err',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildTable(List<Party> parties) {
-    if (parties.isEmpty) {
-      return Center(
-        child: Text(
-          'No ${widget.partyType.toLowerCase()}s found. Add one to get started.',
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Card(
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(AppTheme.backgroundGrey),
-            headingRowHeight: 56,
-            dataRowMinHeight: 56,
-            dataRowMaxHeight: 72,
-            columns: const [
-              DataColumn(
-                label: Text(
-                  'Name',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              DataColumn(
-                label: Text(
-                  'Mobile',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              DataColumn(
-                label: Text(
-                  'WhatsApp',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              DataColumn(
-                label: Text(
-                  'City',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              DataColumn(
-                label: Text(
-                  'Status',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              DataColumn(
-                label: Text(
-                  'Gold Bal (g)',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              DataColumn(
-                label: Text(
-                  'Cash Bal (₹)',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              DataColumn(
-                label: Text(
-                  'Actions',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-            rows: parties.map((party) {
-              return DataRow(
-                cells: [
-                  DataCell(
-                    Row(
-                      children: [
-                        if (party.title != null && party.title!.isNotEmpty)
-                          Text(
-                            '${party.title} ',
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        Text(
-                          party.name,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                  DataCell(Text(party.mobile)),
-                  DataCell(Text(party.whatsappNumber ?? '-')),
-                  DataCell(Text(party.city ?? '-')),
-                  DataCell(
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: party.status == 'Active'
-                            ? Colors.green.shade100
-                            : Colors.red.shade100,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        party.status,
-                        style: TextStyle(
-                          color: party.status == 'Active'
-                              ? Colors.green.shade900
-                              : Colors.red.shade900,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  DataCell(
-                    Text(
-                      party.goldBalance.toStringAsFixed(3),
-                      style: TextStyle(
-                        color: party.goldBalance > 0
-                            ? Colors.green
-                            : (party.goldBalance < 0
-                                  ? Colors.red
-                                  : Colors.black),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  DataCell(
-                    Text(
-                      party.cashBalance.toStringAsFixed(2),
-                      style: TextStyle(
-                        color: party.cashBalance > 0
-                            ? Colors.green
-                            : (party.cashBalance < 0
-                                  ? Colors.red
-                                  : Colors.black),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  DataCell(
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: AppTheme.primaryGold),
-                      onPressed: () => _showAddDialog(context, party: party),
-                      tooltip: 'Edit',
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showAddDialog(BuildContext context, {Party? party}) {
-    try {
-      final base = '${widget.partyType.toLowerCase()}s';
-      if (party != null) {
-        // Edit existing party
-        context.go('/$base/edit/${party.id}');
-      } else {
-        // Add new party
-        context.go('/$base/new');
-      }
-    } catch (e, stackTrace) {
-      // Error logging for supplier screen - navigation error
-      print('=== Supplier Screen Error ===');
-      print('Error navigating to ${party != null ? 'edit' : 'new'} screen: $e');
-      print('Stack trace: $stackTrace');
-      print('Party Type: ${widget.partyType}');
-      print('Party ID: ${party?.id}');
-      print('Timestamp: ${DateTime.now()}');
-      print('===========================');
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-}
-
-class PartyEntryScreen extends ConsumerStatefulWidget {
-  final String type; // Customer or Supplier
+class SupplierEntryScreen extends ConsumerStatefulWidget {
   final int? partyId;
 
-  const PartyEntryScreen({super.key, required this.type, this.partyId});
+  const SupplierEntryScreen({super.key, this.partyId});
 
   @override
-  ConsumerState<PartyEntryScreen> createState() => _PartyEntryScreenState();
+  ConsumerState<SupplierEntryScreen> createState() =>
+      _SupplierEntryScreenState();
 }
 
-class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
+class _SupplierEntryScreenState extends ConsumerState<SupplierEntryScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // General Info
+  // General
+  String _supplierType = 'Business'; // Business, Karigar / Individual
   final _companyNameCtrl = TextEditingController();
   final _codeCtrl = TextEditingController();
-  final _nameCtrl = TextEditingController(); // Display Name
+  final _nameCtrl = TextEditingController();
+  String _status = 'Active';
 
-  // Financial
+  // Financials
   final _opGoldCtrl = TextEditingController(text: '0');
   final _opSilverCtrl = TextEditingController(text: '0');
   final _opCashCtrl = TextEditingController(text: '0');
@@ -295,14 +36,15 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
   final _defaultRateCtrl = TextEditingController(text: '0');
   final _discountCtrl = TextEditingController(text: '0');
   final _paymentTermsCtrl = TextEditingController();
+
+
+  // Notes
   final _notesCtrl = TextEditingController();
-  String _status = 'Active';
 
   @override
   void initState() {
     super.initState();
 
-    // Load data if editing
     if (widget.partyId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadPartyData();
@@ -320,7 +62,7 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Error: Party not found'),
+            content: Text('Error: Supplier not found'),
             backgroundColor: Colors.red,
           ),
         );
@@ -329,7 +71,7 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading party: $e'),
+            content: Text('Error loading supplier: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -343,9 +85,9 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
       _codeCtrl.text = p.code ?? '';
       _nameCtrl.text = p.name;
       _companyNameCtrl.text = p.companyName ?? '';
-
-      // Financial
       _status = p.status;
+
+      // Financials
       _discountCtrl.text = p.discountPercentage.toString();
       _paymentTermsCtrl.text = p.paymentTerms ?? '';
       _opGoldCtrl.text = p.openingGoldBalance.toString();
@@ -355,6 +97,7 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
       _limitCashCtrl.text = p.creditLimitCash.toString();
       _defaultWastageCtrl.text = p.defaultWastage?.toString() ?? '0';
       _defaultRateCtrl.text = p.defaultRate?.toString() ?? '0';
+      // Notes
       _notesCtrl.text = p.notes ?? '';
     });
   }
@@ -394,10 +137,10 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
 
       final companion = PartiesCompanion(
         id: isEdit ? drift.Value(widget.partyId!) : const drift.Value.absent(),
-        type: drift.Value(widget.type),
+        type: const drift.Value('Supplier'),
         code: drift.Value(_codeCtrl.text.isEmpty ? null : _codeCtrl.text),
         name: drift.Value(name),
-        mobile: const drift.Value(''), // Empty string for mobile (not used but required)
+        mobile: const drift.Value(''),
         companyName: drift.Value(
           _companyNameCtrl.text.isEmpty ? null : _companyNameCtrl.text,
         ),
@@ -408,9 +151,8 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
         paymentTerms: drift.Value(
           _paymentTermsCtrl.text.isEmpty ? null : _paymentTermsCtrl.text,
         ),
-        notes: drift.Value(
-          _notesCtrl.text.isEmpty ? null : _notesCtrl.text,
-        ),
+        taxPreference: const drift.Value('Taxable'),
+        notes: drift.Value(_notesCtrl.text.isEmpty ? null : _notesCtrl.text),
         openingGoldBalance: drift.Value(double.tryParse(_opGoldCtrl.text) ?? 0),
         openingSilverBalance: drift.Value(
           double.tryParse(_opSilverCtrl.text) ?? 0,
@@ -451,7 +193,7 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${widget.type} ${isEdit ? 'updated' : 'added'} successfully',
+                'Supplier ${isEdit ? 'updated' : 'added'} successfully',
               ),
             ),
           );
@@ -475,9 +217,7 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
       backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
         title: Text(
-          widget.partyId == null
-              ? 'Add New ${widget.type}'
-              : 'Edit ${widget.type}',
+          widget.partyId == null ? 'Add New Supplier' : 'Edit Supplier',
         ),
         elevation: 0,
       ),
@@ -496,6 +236,27 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
                       title: 'General Info',
                       child: Column(
                         children: [
+                          RadioGroup<String>(
+                            groupValue: _supplierType,
+                            onChanged: (v) =>
+                                setState(() => _supplierType = v!),
+                            child: Row(
+                              children: [
+                                const Text(
+                                  'Supplier Type: ',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(width: 16),
+                                const Radio<String>(value: 'Business'),
+                                const Text('Business'),
+                                const SizedBox(width: 16),
+                                const Radio<String>(
+                                    value: 'Karigar / Individual'),
+                                const Text('Karigar / Individual'),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           _buildTwoColumnRow(
                             TextFormField(
                               controller: _companyNameCtrl,
@@ -511,44 +272,37 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _nameCtrl,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Display Name *',
-                                  ),
-                                  validator: (v) {
-                                    if (v == null || v.trim().isEmpty) {
-                                      return 'Display Name is required';
-                                    }
-                                    return null;
-                                  },
-                                ),
+                          _buildTwoColumnRow(
+                            TextFormField(
+                              controller: _nameCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Display Name *',
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  initialValue: _status,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Status',
-                                  ),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 'Active',
-                                      child: Text('Active'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'Inactive',
-                                      child: Text('Inactive'),
-                                    ),
-                                  ],
-                                  onChanged: (v) =>
-                                      setState(() => _status = v!),
-                                ),
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) {
+                                  return 'Display Name is required';
+                                }
+                                return null;
+                              },
+                            ),
+                            DropdownButtonFormField<String>(
+                              initialValue: _status,
+                              decoration: const InputDecoration(
+                                labelText: 'Status',
                               ),
-                            ],
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'Active',
+                                  child: Text('Active'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Inactive',
+                                  child: Text('Inactive'),
+                                ),
+                              ],
+                              onChanged: (v) =>
+                                  setState(() => _status = v!),
+                            ),
                           ),
                         ],
                       ),
@@ -689,7 +443,8 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
                             decoration: const InputDecoration(
                               labelText: 'Internal Notes',
                               alignLabelWithHint: true,
-                              hintText: 'Add any notes about this party...',
+                              hintText:
+                                  'Add any notes about this supplier...',
                             ),
                           ),
                         ],

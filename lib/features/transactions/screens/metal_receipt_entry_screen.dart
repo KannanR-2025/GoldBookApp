@@ -21,9 +21,7 @@ class MetalReceiptEntryScreen extends ConsumerStatefulWidget {
 }
 
 class _MetalReceiptEntryScreenState
-    extends ConsumerState<MetalReceiptEntryScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+    extends ConsumerState<MetalReceiptEntryScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Header State
@@ -63,18 +61,11 @@ class _MetalReceiptEntryScreenState
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     _lines.add(TransactionLineState());
 
     if (widget.transactionId != null) {
       _loadTransaction();
     }
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadTransaction() async {
@@ -291,7 +282,7 @@ class _MetalReceiptEntryScreenState
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('MetalReceipt Saved')));
+        ).showSnackBar(const SnackBar(content: Text('Metal Receipt Saved')));
         context.pop();
       }
     } else {
@@ -315,8 +306,8 @@ class _MetalReceiptEntryScreenState
       appBar: AppBar(
         title: Text(
           widget.transactionId != null
-              ? 'Edit MetalReceipt'
-              : 'New MetalReceipt',
+              ? 'Edit Metal Receipt'
+              : 'New Metal Receipt',
         ),
         elevation: 0,
       ),
@@ -331,30 +322,31 @@ class _MetalReceiptEntryScreenState
                   key: _formKey,
                   child: Column(
                     children: [
-                      // Tab Bar
-                      Container(
-                        color: AppTheme.backgroundWhite,
-                        child: TabBar(
-                          controller: _tabController,
-                          labelColor: AppTheme.primaryAction,
-                          unselectedLabelColor: AppTheme.textSecondary,
-                          indicatorColor: AppTheme.primaryAction,
-                          tabs: const [
-                            Tab(text: 'Header Info'),
-                            Tab(text: 'Items'),
-                            Tab(text: 'Totals'),
-                          ],
-                        ),
-                      ),
-                      // Tab Content
                       Expanded(
-                        child: TabBarView(
-                          controller: _tabController,
-                          children: [
-                            _buildHeaderTab(parties),
-                            _buildItemsTab(itemsAsync),
-                            _buildTotalsTab(),
-                          ],
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header Info Section
+                              _buildSectionCard(
+                                title: 'Party & Date',
+                                child: _buildHeaderSection(parties, partyType),
+                              ),
+                              const SizedBox(height: 24),
+                              // Items Section
+                              _buildSectionCard(
+                                title: 'Items',
+                                child: _buildItemsSection(itemsAsync),
+                              ),
+                              const SizedBox(height: 24),
+                              // Totals Section
+                              _buildSectionCard(
+                                title: 'Totals & Summary',
+                                child: _buildTotalsSection(),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       // Action buttons
@@ -376,7 +368,7 @@ class _MetalReceiptEntryScreenState
                             const SizedBox(width: 12),
                             ElevatedButton(
                               onPressed: _save,
-                              child: const Text('Save MetalReceipt'),
+                              child: const Text('Save Metal Receipt'),
                             ),
                           ],
                         ),
@@ -389,437 +381,442 @@ class _MetalReceiptEntryScreenState
     );
   }
 
-  Widget _buildHeaderTab(List<Party> parties) {
-    const String partyType = 'Supplier';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Party Section
-          Text('Party & Date', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<int>(
-                  value: _selectedPartyId,
-                  decoration: InputDecoration(labelText: '$partyType *'),
-                  items: parties
-                      .map(
-                        (p) =>
-                            DropdownMenuItem(value: p.id, child: Text(p.name)),
-                      )
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedPartyId = v),
-                  validator: (v) => v == null ? 'Required' : null,
-                ),
+  Widget _buildHeaderSection(List<Party> parties, String partyType) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<int>(
+                initialValue: _selectedPartyId,
+                decoration: InputDecoration(labelText: '$partyType *'),
+                items: parties
+                    .map(
+                      (p) =>
+                          DropdownMenuItem(value: p.id, child: Text(p.name)),
+                    )
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedPartyId = v),
+                validator: (v) => v == null ? 'Required' : null,
               ),
-              const SizedBox(width: 16),
-              if (_selectedPartyId != null)
-                Builder(
-                  builder: (context) {
-                    final party = parties.firstWhere(
-                      (p) => p.id == _selectedPartyId,
-                      orElse: () => Party(
-                        id: -1,
-                        name: '',
-                        type: '',
-                        mobile: '',
-                        createdAt: DateTime.now(),
-                        addressLine1: '',
-                        city: '',
-                        state: '',
-                        pinCode: '',
-                        country: 'India',
-                        status: 'Active',
-                        openingGoldBalance: 0,
-                        openingSilverBalance: 0,
-                        openingCashBalance: 0,
-                        goldBalance: 0,
-                        silverBalance: 0,
-                        cashBalance: 0,
-                        creditLimitGold: 0,
-                        creditLimitCash: 0,
-                        discountPercentage: 0,
-                        taxPreference: 'Taxable',
-                        defaultWastage: null,
-                        defaultRate: null,
+            ),
+            const SizedBox(width: 16),
+            if (_selectedPartyId != null)
+              Builder(
+                builder: (context) {
+                  final party = parties.firstWhere(
+                    (p) => p.id == _selectedPartyId,
+                    orElse: () => Party(
+                      id: -1,
+                      name: '',
+                      type: '',
+                      mobile: '',
+                      createdAt: DateTime.now(),
+                      addressLine1: '',
+                      city: '',
+                      state: '',
+                      pinCode: '',
+                      country: 'India',
+                      status: 'Active',
+                      openingGoldBalance: 0,
+                      openingSilverBalance: 0,
+                      openingCashBalance: 0,
+                      goldBalance: 0,
+                      silverBalance: 0,
+                      cashBalance: 0,
+                      creditLimitGold: 0,
+                      creditLimitCash: 0,
+                      discountPercentage: 0,
+                      taxPreference: 'Taxable',
+                      defaultWastage: null,
+                      defaultRate: null,
+                    ),
+                  );
+                  if (party.id == -1) return const SizedBox();
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGold.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppTheme.primaryGold.withValues(alpha: 0.3),
                       ),
-                    );
-                    if (party.id == -1) {
-                      return const SizedBox();
-                    }
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryGold.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppTheme.primaryGold.withValues(alpha: 0.3),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Gold: ${party.goldBalance.toStringAsFixed(3)} g',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryGoldDark,
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Gold: ${party.goldBalance.toStringAsFixed(3)} g',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryGoldDark,
-                            ),
+                        Text(
+                          'Silver: ${party.silverBalance.toStringAsFixed(3)} g',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textSecondary,
                           ),
-                          Text(
-                            'Silver: ${party.silverBalance.toStringAsFixed(3)} g',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textSecondary,
-                            ),
+                        ),
+                        Text(
+                          'Cash: ₹${party.cashBalance.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.success,
                           ),
-                          Text(
-                            'Cash: ₹${party.cashBalance.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.success,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final d = await showDatePicker(
-                      context: context,
-                      initialDate: _date,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (d != null) setState(() => _date = d);
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Date *'),
-                    child: Text(DateFormat('dd/MM/yyyy').format(_date)),
-                  ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: context,
+                    initialDate: _date,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (d != null) setState(() => _date = d);
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(labelText: 'Date *'),
+                  child: Text(DateFormat('dd/MM/yyyy').format(_date)),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _transactionNumberCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Transaction/Invoice #',
-                    hintText: 'Auto-generated if empty',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          // Rates Section
-          Text('Metal Rates', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _goldRateCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Gold Rate (24k) per gram',
-                    prefixText: '₹ ',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _silverRateCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Silver Rate per gram',
-                    prefixText: '₹ ',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          // Payment Section
-          Text(
-            'Payment Details',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            initialValue: _paymentMethod,
-            decoration: const InputDecoration(labelText: 'Payment Method'),
-            items: const [
-              DropdownMenuItem(value: 'Cash', child: Text('Cash')),
-              DropdownMenuItem(value: 'Card', child: Text('Card')),
-              DropdownMenuItem(value: 'UPI', child: Text('UPI')),
-              DropdownMenuItem(value: 'Cheque', child: Text('Cheque')),
-              DropdownMenuItem(
-                value: 'Bank Transfer',
-                child: Text('Bank Transfer'),
-              ),
-              DropdownMenuItem(value: 'Credit', child: Text('Credit')),
-            ],
-            onChanged: (v) => setState(() => _paymentMethod = v),
-          ),
-          if (_paymentMethod != null &&
-              _paymentMethod != 'Cash' &&
-              _paymentMethod != 'Credit')
-            Container(
-              margin: const EdgeInsets.only(top: 16),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
               child: TextFormField(
-                controller: _paymentRefCtrl,
+                controller: _transactionNumberCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'Payment Reference (Cheque No / Transaction ID)',
-                  hintText: 'Enter details...',
+                  labelText: 'Transaction/Invoice #',
+                  hintText: 'Auto-generated if empty',
                 ),
               ),
             ),
-          const SizedBox(height: 32),
-          // Due Date & PO Section
-          Text(
-            'Terms & References',
-            style: Theme.of(context).textTheme.titleMedium,
+          ],
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Metal Rates',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            color: AppTheme.textSecondary,
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _dueDaysCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Due Days',
-                    hintText: '0',
-                  ),
-                  keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _goldRateCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Gold Rate (24k) per gram',
+                  prefixText: '₹ ',
                 ),
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _calculateTotals(),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _partyPoCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Party PO Number',
-                    hintText: 'Optional',
-                  ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _silverRateCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Silver Rate per gram',
+                  prefixText: '₹ ',
                 ),
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _calculateTotals(),
               ),
-            ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Payment Details',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            color: AppTheme.textSecondary,
           ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _remarksController,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Remarks/Notes',
-              alignLabelWithHint: true,
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          initialValue: _paymentMethod,
+          decoration: const InputDecoration(labelText: 'Payment Method'),
+          items: const [
+            DropdownMenuItem(value: 'Cash', child: Text('Cash')),
+            DropdownMenuItem(value: 'Card', child: Text('Card')),
+            DropdownMenuItem(value: 'UPI', child: Text('UPI')),
+            DropdownMenuItem(value: 'Cheque', child: Text('Cheque')),
+            DropdownMenuItem(
+              value: 'Bank Transfer',
+              child: Text('Bank Transfer'),
+            ),
+            DropdownMenuItem(value: 'Credit', child: Text('Credit')),
+          ],
+          onChanged: (v) => setState(() => _paymentMethod = v),
+        ),
+        if (_paymentMethod != null &&
+            _paymentMethod != 'Cash' &&
+            _paymentMethod != 'Credit')
+          Container(
+            margin: const EdgeInsets.only(top: 16),
+            child: TextFormField(
+              controller: _paymentRefCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Payment Reference (Cheque No / Transaction ID)',
+                hintText: 'Enter details...',
+              ),
             ),
           ),
-        ],
-      ),
+        const SizedBox(height: 24),
+        const Text(
+          'Terms & References',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            color: AppTheme.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _dueDaysCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Due Days',
+                  hintText: '0',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _partyPoCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Party PO Number',
+                  hintText: 'Optional',
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _remarksController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            labelText: 'Remarks/Notes',
+            alignLabelWithHint: true,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildItemsTab(AsyncValue<List<Item>> itemsAsync) {
+  Widget _buildItemsSection(AsyncValue<List<Item>> itemsAsync) {
     return itemsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(child: Text('Error: $err')),
       data: (inventoryItems) {
         return Column(
           children: [
-            // Add Item Button
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'MetalReceipt Items',
-                    style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${_lines.length} item(s)',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textSecondary,
                   ),
-                  ElevatedButton.icon(
-                    onPressed: _addLine,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add Item'),
-                  ),
-                ],
-              ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _addLine,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add Item'),
+                ),
+              ],
             ),
-            // Items List
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: _lines.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  return _buildLineItem(index, inventoryItems);
-                },
-              ),
-            ),
+            const SizedBox(height: 16),
+            ...List.generate(_lines.length, (index) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: index < _lines.length - 1 ? 12 : 0,
+                ),
+                child: _buildLineItem(index, inventoryItems),
+              );
+            }),
           ],
         );
       },
     );
   }
 
-  Widget _buildTotalsTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Discount Section
-          Text('Discount', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _discountPercentCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Discount (%)',
-                    hintText: '0',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _discountAmountCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Discount Amount (₹)',
-                    prefixText: '₹ ',
-                    hintText: '0',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-            ],
+  Widget _buildTotalsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Discount',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            color: AppTheme.textSecondary,
           ),
-          const SizedBox(height: 32),
-          // Tax Section
-          Text('Tax / GST', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _taxPercentCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Tax/GST (%)',
-                    hintText: '0',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _discountPercentCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Discount (%)',
+                  hintText: '0',
                 ),
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _calculateTotals(),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _taxAmountCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Tax Amount (₹)',
-                    prefixText: '₹ ',
-                    hintText: '0',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (_) => _calculateTotals(),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          // Totals Summary
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.backgroundWhite,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.borderLight),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_totalGold > 0)
-                  _TotalRow(
-                    label: 'Total Fine Gold:',
-                    value: '${_totalGold.toStringAsFixed(3)} g',
-                  ),
-                if (_totalSilver > 0)
-                  _TotalRow(
-                    label: 'Total Fine Silver:',
-                    value: '${_totalSilver.toStringAsFixed(3)} g',
-                  ),
-                if (_totalGold > 0 || _totalSilver > 0)
-                  const Divider(height: 20),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _discountAmountCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Discount Amount (₹)',
+                  prefixText: '₹ ',
+                  hintText: '0',
+                ),
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _calculateTotals(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Tax / GST',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            color: AppTheme.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _taxPercentCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Tax/GST (%)',
+                  hintText: '0',
+                ),
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _calculateTotals(),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _taxAmountCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Tax Amount (₹)',
+                  prefixText: '₹ ',
+                  hintText: '0',
+                ),
+                keyboardType: TextInputType.number,
+                onChanged: (_) => _calculateTotals(),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppTheme.backgroundLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.borderLight),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_totalGold > 0)
                 _TotalRow(
-                  label: 'Subtotal:',
-                  value: NumberFormat.currency(symbol: '₹').format(_subtotal),
-                  isSubtotal: true,
+                  label: 'Total Fine Gold:',
+                  value: '${_totalGold.toStringAsFixed(3)} g',
                 ),
-                if ((double.tryParse(_discountAmountCtrl.text) ?? 0) > 0)
-                  _TotalRow(
-                    label: 'Discount:',
-                    value:
-                        '- ${NumberFormat.currency(symbol: '₹').format(double.tryParse(_discountAmountCtrl.text) ?? 0)}',
-                    isDiscount: true,
-                  ),
-                if ((double.tryParse(_taxAmountCtrl.text) ?? 0) > 0)
-                  _TotalRow(
-                    label: 'Tax/GST:',
-                    value:
-                        '+ ${NumberFormat.currency(symbol: '₹').format(double.tryParse(_taxAmountCtrl.text) ?? 0)}',
-                    isTax: true,
-                  ),
+              if (_totalSilver > 0)
+                _TotalRow(
+                  label: 'Total Fine Silver:',
+                  value: '${_totalSilver.toStringAsFixed(3)} g',
+                ),
+              if (_totalGold > 0 || _totalSilver > 0)
                 const Divider(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Grand Total',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Text(
-                      NumberFormat.currency(symbol: '₹').format(_totalCash),
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryGoldDark,
-                          ),
-                    ),
-                  ],
+              _TotalRow(
+                label: 'Subtotal:',
+                value: NumberFormat.currency(symbol: '₹').format(_subtotal),
+                isSubtotal: true,
+              ),
+              if ((double.tryParse(_discountAmountCtrl.text) ?? 0) > 0)
+                _TotalRow(
+                  label: 'Discount:',
+                  value:
+                      '- ${NumberFormat.currency(symbol: '₹').format(double.tryParse(_discountAmountCtrl.text) ?? 0)}',
+                  isDiscount: true,
                 ),
-              ],
-            ),
+              if ((double.tryParse(_taxAmountCtrl.text) ?? 0) > 0)
+                _TotalRow(
+                  label: 'Tax/GST:',
+                  value:
+                      '+ ${NumberFormat.currency(symbol: '₹').format(double.tryParse(_taxAmountCtrl.text) ?? 0)}',
+                  isTax: true,
+                ),
+              const Divider(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Grand Total',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  Text(
+                    NumberFormat.currency(symbol: '₹').format(_totalCash),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryGoldDark,
+                        ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -829,7 +826,7 @@ class _MetalReceiptEntryScreenState
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.backgroundWhite,
+        color: AppTheme.backgroundLight,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppTheme.borderLight),
       ),
@@ -1104,6 +1101,33 @@ class _MetalReceiptEntryScreenState
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({required String title, required Widget child}) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: AppTheme.borderLight),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
       ),
     );
   }

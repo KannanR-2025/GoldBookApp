@@ -114,7 +114,7 @@ class TopNavigationBar extends StatelessWidget {
                     label: 'Transactions',
                     currentPath: currentPath,
                     basePath:
-                        '/sales,/purchases,/receipts,/payments,/metal-issue,/metal-receipt,/approval',
+                        '/sales,/purchases,/receipts,/payments,/metal-in-out,/metal-issue,/metal-receipt,/approval',
                     columns: [
                       _MegaColumn(
                         header: 'Sales',
@@ -172,7 +172,7 @@ class TopNavigationBar extends StatelessWidget {
                           _MegaItem(
                             label: 'Rate-Cut',
                             icon: Icons.currency_rupee,
-                            onTap: () => _showCoomingSoon(context),
+                            onTap: () => context.go('/rate-cut/new'),
                           ),
                           _MegaItem(
                             label: 'Daily Cash',
@@ -182,8 +182,8 @@ class TopNavigationBar extends StatelessWidget {
                           _MegaItem(
                             label: 'Metal In/Out',
                             icon: Icons.swap_vert,
-                            onTap: () => context.go('/metal-issue/new'),
-                          ), // Mapping to Metal Issue for now
+                            onTap: () => context.go('/metal-in-out'),
+                          ),
                         ],
                       ),
                     ],
