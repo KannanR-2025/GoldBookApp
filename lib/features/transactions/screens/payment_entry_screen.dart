@@ -400,7 +400,7 @@ class _PaymentEntryScreenState extends ConsumerState<PaymentEntryScreen>
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: _selectedPartyId,
+                  initialValue: _selectedPartyId,
                   decoration: InputDecoration(labelText: '$partyType *'),
                   items: parties
                       .map(

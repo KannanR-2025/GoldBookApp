@@ -6,14 +6,12 @@ import 'package:goldbook_desktop/features/parties/data/parties_repository.dart';
 import 'package:goldbook_desktop/features/transactions/data/transactions_repository.dart';
 import 'package:goldbook_desktop/features/transactions/screens/purchase_entry_screen.dart';
 import 'package:goldbook_desktop/core/database/database.dart';
-import 'package:drift/drift.dart' as drift;
 
 // Generate mocks (conceptually - we will implement manual mocks for simplicity)
 // @GenerateMocks([PartiesRepository, TransactionsRepository])
 
 class FakePartiesRepository implements PartiesRepository {
-  final AppDatabase? _db;
-  FakePartiesRepository([this._db]);
+  FakePartiesRepository();
 
   @override
   Future<List<Party>> getParties(String type) async {

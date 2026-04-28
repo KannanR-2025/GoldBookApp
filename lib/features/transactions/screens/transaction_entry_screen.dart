@@ -121,7 +121,9 @@ class _TransactionEntryScreenState
           lineState.rateOn = l.rateOn ?? 'Net Weight';
           _lines.add(lineState);
         }
-        if (_lines.isEmpty) _lines.add(TransactionLineState());
+        if (_lines.isEmpty) {
+          _lines.add(TransactionLineState());
+        }
         _isLoading = false;
 
         // Recalculate totals to ensure consistency
@@ -379,7 +381,7 @@ class _TransactionEntryScreenState
                               children: [
                                 Expanded(
                                   child: DropdownButtonFormField<int>(
-                                    value: _selectedPartyId,
+                                    initialValue: _selectedPartyId,
                                     decoration: InputDecoration(
                                       labelText: '$partyType *',
                                     ),

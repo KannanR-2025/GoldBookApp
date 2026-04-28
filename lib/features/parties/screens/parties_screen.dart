@@ -46,14 +46,6 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
         data: (parties) => _buildTable(parties),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) {
-          // Error logging for supplier screen
-          print('=== Supplier Screen Error ===');
-          print('Error: $err');
-          print('Stack trace: $stack');
-          print('Party Type: ${widget.partyType}');
-          print('Timestamp: ${DateTime.now()}');
-          print('===========================');
-          
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -62,7 +54,10 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'Error loading ${widget.partyType.toLowerCase()}s',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Padding(
@@ -247,22 +242,12 @@ class _PartiesScreenState extends ConsumerState<PartiesScreen> {
         // Add new party
         context.go('/$base/new');
       }
-    } catch (e, stackTrace) {
-      // Error logging for supplier screen - navigation error
-      print('=== Supplier Screen Error ===');
-      print('Error navigating to ${party != null ? 'edit' : 'new'} screen: $e');
-      print('Stack trace: $stackTrace');
-      print('Party Type: ${widget.partyType}');
-      print('Party ID: ${party?.id}');
-      print('Timestamp: ${DateTime.now()}');
-      print('===========================');
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 }
@@ -397,7 +382,9 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
         type: drift.Value(widget.type),
         code: drift.Value(_codeCtrl.text.isEmpty ? null : _codeCtrl.text),
         name: drift.Value(name),
-        mobile: const drift.Value(''), // Empty string for mobile (not used but required)
+        mobile: const drift.Value(
+          '',
+        ), // Empty string for mobile (not used but required)
         companyName: drift.Value(
           _companyNameCtrl.text.isEmpty ? null : _companyNameCtrl.text,
         ),
@@ -408,9 +395,7 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
         paymentTerms: drift.Value(
           _paymentTermsCtrl.text.isEmpty ? null : _paymentTermsCtrl.text,
         ),
-        notes: drift.Value(
-          _notesCtrl.text.isEmpty ? null : _notesCtrl.text,
-        ),
+        notes: drift.Value(_notesCtrl.text.isEmpty ? null : _notesCtrl.text),
         openingGoldBalance: drift.Value(double.tryParse(_opGoldCtrl.text) ?? 0),
         openingSilverBalance: drift.Value(
           double.tryParse(_opSilverCtrl.text) ?? 0,
@@ -459,10 +444,7 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: $e'),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
           );
         }
       }
@@ -714,10 +696,7 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: _submit,
-                    child: const Text('Save'),
-                  ),
+                  ElevatedButton(onPressed: _submit, child: const Text('Save')),
                 ],
               ),
             ),
@@ -741,10 +720,7 @@ class _PartyEntryScreenState extends ConsumerState<PartyEntryScreen> {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 16),
             child,

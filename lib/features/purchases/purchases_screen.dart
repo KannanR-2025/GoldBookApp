@@ -22,18 +22,20 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
     super.dispose();
   }
 
-  Future<Map<String, dynamic>> _getTransactionLineStats(int transactionId) async {
+  Future<Map<String, dynamic>> _getTransactionLineStats(
+    int transactionId,
+  ) async {
     final repo = ref.read(transactionsRepositoryProvider);
     final lines = await repo.getTransactionLines(transactionId);
-    
+
     // Filter out metal receipt/payment and rate cut lines
     final regularLines = lines.where((l) {
       final desc = l.description ?? '';
-      return !desc.startsWith('M-Rec:') && 
-             !desc.startsWith('M-Pay:') && 
-             !desc.startsWith('R-Cut:');
+      return !desc.startsWith('M-Rec:') &&
+          !desc.startsWith('M-Pay:') &&
+          !desc.startsWith('R-Cut:');
     }).toList();
-    
+
     int totalItems = regularLines.where((l) => l.itemId != null).length;
     double totalQty = regularLines.fold(0.0, (sum, l) => sum + l.qty);
     double totalNetWt = regularLines.fold(0.0, (sum, l) => sum + l.netWeight);
@@ -44,7 +46,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
       // Fine wt = net wt * (purity + wastage) / 100
       return sum + (net * ((purity + wastage) / 100));
     });
-    
+
     return {
       'totalItems': totalItems,
       'totalQty': totalQty,
@@ -99,7 +101,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               ? purchases
               : purchases.where((purchase) {
                   final partyName = purchase.party.name.toLowerCase();
-                  final invoiceNo = purchase.transaction.transactionNumber?.toLowerCase() ?? '';
+                  final invoiceNo =
+                      purchase.transaction.transactionNumber?.toLowerCase() ??
+                      '';
                   final query = _searchQuery.toLowerCase();
                   return partyName.contains(query) || invoiceNo.contains(query);
                 }).toList();
@@ -110,7 +114,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                 _buildSearchAndActions(),
                 const Expanded(
                   child: Center(
-                    child: Text('No purchase transactions found. Create a new purchase to get started.'),
+                    child: Text(
+                      'No purchase transactions found. Create a new purchase to get started.',
+                    ),
                   ),
                 ),
               ],
@@ -120,9 +126,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
           return Column(
             children: [
               _buildSearchAndActions(),
-              Expanded(
-                child: _buildTable(filteredPurchases),
-              ),
+              Expanded(child: _buildTable(filteredPurchases)),
             ],
           );
         },
@@ -141,10 +145,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
       ),
       child: Row(
         children: [
-          const Text(
-            'Search',
-            style: TextStyle(fontWeight: FontWeight.w500),
-          ),
+          const Text('Search', style: TextStyle(fontWeight: FontWeight.w500)),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
@@ -152,7 +153,10 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               decoration: const InputDecoration(
                 hintText: 'Type to search...',
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 isDense: true,
               ),
               onChanged: (value) {
@@ -204,7 +208,7 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -233,7 +237,9 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
               return _TableRow(
                 cells: [
                   _TableCell(rowNumber.toString(), alignment: TextAlign.center),
-                  _TableCell(DateFormat('dd-MMM-yyyy').format(purchase.transaction.date)),
+                  _TableCell(
+                    DateFormat('dd-MMM-yyyy').format(purchase.transaction.date),
+                  ),
                   _TableCell(purchase.transaction.transactionNumber ?? '-'),
                   _TableCell(
                     purchase.party.name,
@@ -246,7 +252,8 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                     FutureBuilder<Map<String, dynamic>>(
                       future: _getTransactionLineStats(purchase.transaction.id),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const SizedBox(
                             width: 16,
                             height: 16,
@@ -263,7 +270,8 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                     FutureBuilder<Map<String, dynamic>>(
                       future: _getTransactionLineStats(purchase.transaction.id),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const SizedBox(
                             width: 16,
                             height: 16,
@@ -280,7 +288,8 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                     FutureBuilder<Map<String, dynamic>>(
                       future: _getTransactionLineStats(purchase.transaction.id),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const SizedBox(
                             width: 16,
                             height: 16,
@@ -297,7 +306,8 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                     FutureBuilder<Map<String, dynamic>>(
                       future: _getTransactionLineStats(purchase.transaction.id),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const SizedBox(
                             width: 16,
                             height: 16,
@@ -311,65 +321,82 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                     alignment: TextAlign.right,
                   ),
                   _TableCell(
-                    NumberFormat.currency(symbol: '₹').format(purchase.transaction.totalAmount),
+                    NumberFormat.currency(
+                      symbol: '₹',
+                    ).format(purchase.transaction.totalAmount),
                     alignment: TextAlign.right,
                     isBold: true,
                   ),
                   _TableCell(
                     PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert, size: 18, color: Colors.grey),
+                      icon: const Icon(
+                        Icons.more_vert,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       onSelected: (value) async {
                         if (value == 'view') {
-                          context.push('/purchases/edit/${purchase.transaction.id}');
+                          context.push(
+                            '/purchases/edit/${purchase.transaction.id}',
+                          );
                         } else if (value == 'edit') {
-                          context.push('/purchases/edit/${purchase.transaction.id}');
+                          context.push(
+                            '/purchases/edit/${purchase.transaction.id}',
+                          );
                         } else if (value == 'delete') {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Delete Purchase'),
-                              content: Text(
-                                'Are you sure you want to delete this purchase from ${purchase.party.name}?\n\nThis will reverse the stock and balance changes.',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(false),
-                                  child: const Text('Cancel'),
+                          final confirmed =
+                              await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Delete Purchase'),
+                                  content: Text(
+                                    'Are you sure you want to delete this purchase from ${purchase.party.name}?\n\nThis will reverse the stock and balance changes.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(true),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                      ),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
                                 ),
-                                TextButton(
-                                  onPressed: () => Navigator.of(context).pop(true),
-                                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                                  child: const Text('Delete'),
-                                ),
-                              ],
-                            ),
-                          ) ?? false;
-                          
-                          if (confirmed && context.mounted) {
+                              ) ??
+                              false;
+
+                          if (confirmed) {
                             try {
                               await ref
                                   .read(transactionsControllerProvider.notifier)
                                   .deleteTransaction(purchase.transaction.id);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Purchase from ${purchase.party.name} deleted'),
-                                    backgroundColor: Colors.green,
+
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Purchase from ${purchase.party.name} deleted',
                                   ),
-                                );
-                              }
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
                             } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error deleting purchase: $e'),
-                                    backgroundColor: Colors.red,
-                                    duration: const Duration(seconds: 5),
-                                  ),
-                                );
-                              }
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error deleting purchase: $e'),
+                                  backgroundColor: Colors.red,
+                                  duration: const Duration(seconds: 5),
+                                ),
+                              );
                             }
                           }
                         }
@@ -401,7 +428,10 @@ class _PurchasesScreenState extends ConsumerState<PurchasesScreen> {
                             children: [
                               Icon(Icons.delete, color: Colors.red, size: 18),
                               SizedBox(width: 8),
-                              Text('Delete', style: TextStyle(color: Colors.red)),
+                              Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ],
                           ),
                         ),
@@ -457,10 +487,7 @@ class _ProfessionalDataTable extends StatelessWidget {
   final List<_TableColumn> columns;
   final List<_TableRow> rows;
 
-  const _ProfessionalDataTable({
-    required this.columns,
-    required this.rows,
-  });
+  const _ProfessionalDataTable({required this.columns, required this.rows});
 
   @override
   Widget build(BuildContext context) {
@@ -506,7 +533,7 @@ class _ProfessionalDataTable extends StatelessWidget {
           final index = entry.key;
           final row = entry.value;
           final isEven = index % 2 == 0;
-          
+
           return TableRow(
             decoration: BoxDecoration(
               color: isEven ? Colors.white : const Color(0xFFFAFBFC),
@@ -514,7 +541,7 @@ class _ProfessionalDataTable extends StatelessWidget {
             children: row.cells.asMap().entries.map((cellEntry) {
               final cellIndex = cellEntry.key;
               final cell = cellEntry.value;
-              
+
               Widget content;
               if (cell.content is Widget) {
                 content = cell.content;
@@ -523,25 +550,34 @@ class _ProfessionalDataTable extends StatelessWidget {
                   cell.content.toString(),
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: cell.isBold ? FontWeight.w600 : FontWeight.normal,
-                    color: cell.isLink ? const Color(0xFF0066CC) : const Color(0xFF212529),
+                    fontWeight: cell.isBold
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                    color: cell.isLink
+                        ? const Color(0xFF0066CC)
+                        : const Color(0xFF212529),
                     decoration: cell.isLink ? TextDecoration.underline : null,
                   ),
                   textAlign: cell.alignment,
                 );
               }
-              
+
               return MouseRegion(
-                cursor: (cell.isLink || row.onTap != null) ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                cursor: (cell.isLink || row.onTap != null)
+                    ? SystemMouseCursors.click
+                    : SystemMouseCursors.basic,
                 child: GestureDetector(
                   onTap: cell.onTap ?? row.onTap,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       border: Border(
                         right: BorderSide(
-                          color: cellIndex < row.cells.length - 1 
-                              ? Colors.grey.shade200 
+                          color: cellIndex < row.cells.length - 1
+                              ? Colors.grey.shade200
                               : Colors.transparent,
                           width: 0.5,
                         ),

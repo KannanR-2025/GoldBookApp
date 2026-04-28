@@ -6,20 +6,30 @@ import 'package:goldbook_desktop/features/transactions/data/transactions_reposit
 import 'package:goldbook_desktop/features/transactions/providers/transactions_provider.dart';
 import 'package:intl/intl.dart';
 
-/// Combined Metal In/Out screen showing both Metal Issue and Metal Receipt
-/// transactions in a unified list with tab-based filtering.
-class MetalInOutScreen extends ConsumerStatefulWidget {
-  const MetalInOutScreen({super.key});
+/// Combined Metal Transactions screen showing MetalTransaction, MetalIssue,
+/// and MetalReceipt transactions in a unified list with tab-based filtering.
+class MetalTransactionsScreen extends ConsumerStatefulWidget {
+  const MetalTransactionsScreen({super.key});
 
   @override
-  ConsumerState<MetalInOutScreen> createState() => _MetalInOutScreenState();
+  ConsumerState<MetalTransactionsScreen> createState() =>
+      _MetalTransactionsScreenState();
 }
 
-class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
+class _MetalTransactionsScreenState
+    extends ConsumerState<MetalTransactionsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _searchQuery = '';
   final _searchCtrl = TextEditingController();
+
+  static const _metalTypes = [
+    'MetalTransaction',
+    'MetalIssue',
+    'Metal Issue',
+    'MetalReceipt',
+    'Metal Receipt',
+  ];
 
   @override
   void initState() {
@@ -35,38 +45,36 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
     super.dispose();
   }
 
-  /// Filters: 0 = All, 1 = Metal Issue (Out), 2 = Metal Receipt (In)
+  bool _isMetalType(String type) => _metalTypes.contains(type);
+
+  /// Filters: 0 = All, 1 = Metal Out (Issue), 2 = Metal In (Receipt)
   List<TransactionWithParty> _filterTransactions(
     List<TransactionWithParty> all,
   ) {
-    // First filter by type
     List<TransactionWithParty> filtered;
     switch (_tabController.index) {
       case 1:
         filtered = all
-            .where((t) =>
-                t.transaction.type == 'MetalIssue' ||
-                t.transaction.type == 'Metal Issue')
+            .where(
+              (t) =>
+                  t.transaction.type == 'MetalIssue' ||
+                  t.transaction.type == 'Metal Issue',
+            )
             .toList();
         break;
       case 2:
         filtered = all
-            .where((t) =>
-                t.transaction.type == 'MetalReceipt' ||
-                t.transaction.type == 'Metal Receipt')
+            .where(
+              (t) =>
+                  t.transaction.type == 'MetalReceipt' ||
+                  t.transaction.type == 'Metal Receipt',
+            )
             .toList();
         break;
       default:
-        filtered = all
-            .where((t) =>
-                t.transaction.type == 'MetalIssue' ||
-                t.transaction.type == 'Metal Issue' ||
-                t.transaction.type == 'MetalReceipt' ||
-                t.transaction.type == 'Metal Receipt')
-            .toList();
+        filtered = all.where((t) => _isMetalType(t.transaction.type)).toList();
     }
 
-    // Then filter by search
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       filtered = filtered.where((t) {
@@ -78,22 +86,43 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
       }).toList();
     }
 
-    // Sort by date descending
     filtered.sort((a, b) => b.transaction.date.compareTo(a.transaction.date));
     return filtered;
   }
 
   String _getEditRoute(TransactionWithParty item) {
-    final type = item.transaction.type;
-    if (type == 'MetalIssue' || type == 'Metal Issue') {
-      return '/metal-in-out/edit-issue/${item.transaction.id}';
-    } else {
-      return '/metal-in-out/edit-receipt/${item.transaction.id}';
-    }
+    return '/metal-in-out/edit/${item.transaction.id}';
   }
 
-  bool _isIssue(String type) =>
-      type == 'MetalIssue' || type == 'Metal Issue';
+  String _getTypeLabel(String type) {
+    if (type == 'MetalTransaction') return 'Metal Txn';
+    if (type == 'MetalIssue' || type == 'Metal Issue') return 'Out';
+    return 'In';
+  }
+
+  Color _getTypeColor(String type) {
+    if (type == 'MetalTransaction') return AppTheme.primaryAction;
+    if (type == 'MetalIssue' || type == 'Metal Issue') {
+      return Colors.orange.shade700;
+    }
+    return Colors.green.shade700;
+  }
+
+  Color _getTypeBgColor(String type) {
+    if (type == 'MetalTransaction') {
+      return AppTheme.primaryAction.withValues(alpha: 0.1);
+    }
+    if (type == 'MetalIssue' || type == 'Metal Issue') {
+      return Colors.orange.withValues(alpha: 0.1);
+    }
+    return Colors.green.withValues(alpha: 0.1);
+  }
+
+  IconData _getTypeIcon(String type) {
+    if (type == 'MetalTransaction') return Icons.swap_horiz;
+    if (type == 'MetalIssue' || type == 'Metal Issue') return Icons.upload;
+    return Icons.download;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,15 +132,11 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
       backgroundColor: AppTheme.backgroundLight,
       body: Column(
         children: [
-          // ── Header Bar ──
           _buildHeader(context),
-          // ── Content ──
           Expanded(
             child: transactionsAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (err, stack) =>
-                  Center(child: Text('Error: $err')),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
               data: (allTransactions) {
                 final filtered = _filterTransactions(allTransactions);
                 return _buildContent(filtered, allTransactions);
@@ -123,23 +148,16 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // HEADER
-  // ─────────────────────────────────────────────────────────────────────────
-
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         color: AppTheme.backgroundWhite,
-        border: Border(
-          bottom: BorderSide(color: AppTheme.borderLight),
-        ),
+        border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -147,7 +165,7 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Metal In / Out',
+                    'Metal Transactions',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppTheme.textPrimary,
@@ -155,46 +173,30 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Manage metal issue and receipt transactions',
+                    'Manage metal transactions with rate cut support',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppTheme.textSecondary,
                     ),
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: () => context.push('/metal-in-out/new-receipt'),
-                    icon: const Icon(Icons.download, size: 18),
-                    label: const Text('Metal In'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.green.shade700,
-                      side: BorderSide(color: Colors.green.shade300),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
-                    ),
+              ElevatedButton.icon(
+                onPressed: () => context.push('/metal-in-out/new'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Metal Entry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryAction,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
                   ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    onPressed: () => context.push('/metal-in-out/new-issue'),
-                    icon: const Icon(Icons.upload, size: 18),
-                    label: const Text('Metal Out'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryAction,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          // Tabs + Search row
           Row(
             children: [
-              // Tabs
               Container(
                 decoration: BoxDecoration(
                   color: AppTheme.backgroundLight,
@@ -229,7 +231,6 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 ),
               ),
               const SizedBox(width: 16),
-              // Search
               Expanded(
                 child: SizedBox(
                   height: 40,
@@ -240,7 +241,9 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                       isDense: true,
                       prefixIcon: const Icon(Icons.search, size: 18),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.close, size: 16),
@@ -262,32 +265,35 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // CONTENT
-  // ─────────────────────────────────────────────────────────────────────────
-
   Widget _buildContent(
     List<TransactionWithParty> filtered,
     List<TransactionWithParty> all,
   ) {
-    // Stats for summary cards
-    final metalIssueAll = all.where((t) =>
-        t.transaction.type == 'MetalIssue' ||
-        t.transaction.type == 'Metal Issue');
-    final metalReceiptAll = all.where((t) =>
-        t.transaction.type == 'MetalReceipt' ||
-        t.transaction.type == 'Metal Receipt');
+    final metalAll = all.where((t) => _isMetalType(t.transaction.type));
+    final metalIssueAll = all.where(
+      (t) =>
+          t.transaction.type == 'MetalIssue' ||
+          t.transaction.type == 'Metal Issue',
+    );
+    final metalReceiptAll = all.where(
+      (t) =>
+          t.transaction.type == 'MetalReceipt' ||
+          t.transaction.type == 'Metal Receipt',
+    );
 
     final totalIssueGold = metalIssueAll.fold<double>(
-        0, (sum, t) => sum + t.transaction.totalGoldWeight);
+      0,
+      (sum, t) => sum + t.transaction.totalGoldWeight,
+    );
     final totalReceiptGold = metalReceiptAll.fold<double>(
-        0, (sum, t) => sum + t.transaction.totalGoldWeight);
+      0,
+      (sum, t) => sum + t.transaction.totalGoldWeight,
+    );
 
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // ── Summary Cards ──
           Row(
             children: [
               _buildSummaryCard(
@@ -295,7 +301,7 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 iconColor: AppTheme.primaryAction,
                 iconBg: AppTheme.primaryAction.withValues(alpha: 0.1),
                 title: 'Total Transactions',
-                value: '${metalIssueAll.length + metalReceiptAll.length}',
+                value: '${metalAll.length}',
                 subtitle:
                     '${metalIssueAll.length} out  /  ${metalReceiptAll.length} in',
               ),
@@ -332,8 +338,6 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
             ],
           ),
           const SizedBox(height: 20),
-
-          // ── Data Table ──
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -346,8 +350,11 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.swap_vert,
-                              size: 48, color: AppTheme.textTertiary),
+                          Icon(
+                            Icons.swap_vert,
+                            size: 48,
+                            color: AppTheme.textTertiary,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             'No metal transactions found',
@@ -358,7 +365,7 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Create a Metal In or Metal Out transaction to get started.',
+                            'Create a Metal Transaction to get started.',
                             style: TextStyle(
                               color: AppTheme.textTertiary,
                               fontSize: 13,
@@ -374,10 +381,6 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
       ),
     );
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // SUMMARY CARD
-  // ─────────────────────────────────────────────────────────────────────────
 
   Widget _buildSummaryCard({
     required IconData icon,
@@ -444,24 +447,15 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // DATA TABLE
-  // ─────────────────────────────────────────────────────────────────────────
-
   Widget _buildDataTable(List<TransactionWithParty> items) {
     return Column(
       children: [
-        // Table header
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: AppTheme.primaryAction.withValues(alpha: 0.05),
-            border: Border(
-              bottom: BorderSide(color: AppTheme.borderLight),
-            ),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(8),
-            ),
+            border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
           ),
           child: Row(
             children: [
@@ -473,11 +467,10 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
               _headerCell('Silver Wt', flex: 2, align: TextAlign.right),
               _headerCell('Amount', flex: 2, align: TextAlign.right),
               _headerCell('Status', flex: 1),
-              const SizedBox(width: 80), // actions space
+              const SizedBox(width: 80),
             ],
           ),
         ),
-        // Table body
         Expanded(
           child: ListView.builder(
             itemCount: items.length,
@@ -487,14 +480,11 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
             },
           ),
         ),
-        // Footer count
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: AppTheme.backgroundLight,
-            border: Border(
-              top: BorderSide(color: AppTheme.borderLight),
-            ),
+            border: Border(top: BorderSide(color: AppTheme.borderLight)),
             borderRadius: const BorderRadius.vertical(
               bottom: Radius.circular(8),
             ),
@@ -504,10 +494,7 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
             children: [
               Text(
                 'Showing ${items.length} transaction${items.length != 1 ? 's' : ''}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textSecondary,
-                ),
+                style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
               ),
             ],
           ),
@@ -534,7 +521,10 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
   Widget _buildTableRow(TransactionWithParty item, int index) {
     final txn = item.transaction;
     final party = item.party;
-    final isIssueType = _isIssue(txn.type);
+    final typeLabel = _getTypeLabel(txn.type);
+    final typeColor = _getTypeColor(txn.type);
+    final typeBgColor = _getTypeBgColor(txn.type);
+    final typeIcon = _getTypeIcon(txn.type);
 
     return InkWell(
       onTap: () => context.push(_getEditRoute(item)),
@@ -552,39 +542,30 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
         ),
         child: Row(
           children: [
-            // Type badge
             Expanded(
               flex: 2,
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: isIssueType
-                          ? Colors.orange.withValues(alpha: 0.1)
-                          : Colors.green.withValues(alpha: 0.1),
+                      color: typeBgColor,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          isIssueType ? Icons.upload : Icons.download,
-                          size: 14,
-                          color: isIssueType
-                              ? Colors.orange.shade700
-                              : Colors.green.shade700,
-                        ),
+                        Icon(typeIcon, size: 14, color: typeColor),
                         const SizedBox(width: 4),
                         Text(
-                          isIssueType ? 'Out' : 'In',
+                          typeLabel,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: isIssueType
-                                ? Colors.orange.shade700
-                                : Colors.green.shade700,
+                            color: typeColor,
                           ),
                         ),
                       ],
@@ -593,8 +574,6 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 ],
               ),
             ),
-
-            // Party name
             Expanded(
               flex: 3,
               child: Text(
@@ -606,20 +585,13 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-
-            // Voucher No
             Expanded(
               flex: 2,
               child: Text(
                 txn.transactionNumber ?? '-',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: AppTheme.textSecondary,
-                ),
+                style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
               ),
             ),
-
-            // Date
             Expanded(
               flex: 2,
               child: Text(
@@ -627,8 +599,6 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 style: const TextStyle(fontSize: 13),
               ),
             ),
-
-            // Gold Weight
             Expanded(
               flex: 2,
               child: Text(
@@ -643,8 +613,6 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 ),
               ),
             ),
-
-            // Silver Weight
             Expanded(
               flex: 2,
               child: Text(
@@ -658,8 +626,6 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 ),
               ),
             ),
-
-            // Amount
             Expanded(
               flex: 2,
               child: Text(
@@ -673,13 +639,10 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 ),
               ),
             ),
-
-            // Status
             Expanded(
               flex: 1,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
                   color: txn.status == 'Completed'
                       ? Colors.green.withValues(alpha: 0.1)
@@ -699,16 +662,17 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 ),
               ),
             ),
-
-            // Actions
             SizedBox(
               width: 80,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined,
-                        size: 18, color: AppTheme.primaryAction),
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      size: 18,
+                      color: AppTheme.primaryAction,
+                    ),
                     onPressed: () => context.push(_getEditRoute(item)),
                     tooltip: 'Edit',
                     padding: EdgeInsets.zero,
@@ -716,8 +680,11 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: Icon(Icons.delete_outline,
-                        size: 18, color: Colors.red.shade400),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: Colors.red.shade400,
+                    ),
                     onPressed: () => _confirmDelete(item),
                     tooltip: 'Delete',
                     padding: EdgeInsets.zero,
@@ -732,18 +699,14 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // DELETE CONFIRMATION
-  // ─────────────────────────────────────────────────────────────────────────
-
   void _confirmDelete(TransactionWithParty item) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Transaction'),
         content: Text(
-          'Are you sure you want to delete this ${_isIssue(item.transaction.type) ? 'Metal Issue' : 'Metal Receipt'} '
-          'transaction for ${item.party.name}?\n\n'
+          'Are you sure you want to delete this metal transaction '
+          'for ${item.party.name}?\n\n'
           'This will reverse the party balance and stock changes.',
         ),
         actions: [
@@ -761,22 +724,22 @@ class _MetalInOutScreenState extends ConsumerState<MetalInOutScreen>
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Transaction deleted successfully')),
+                      content: Text('Transaction deleted successfully'),
+                    ),
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: Text('Error: $e'),
-                        backgroundColor: Colors.red),
+                      content: Text('Error: $e'),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],

@@ -56,6 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(60),
+                  child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,6 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             'Cloud-based architecture gives you freedom of using GoldBook from anywhere',
                       ),
                     ],
+                  ),
                   ),
                 ),
               ),

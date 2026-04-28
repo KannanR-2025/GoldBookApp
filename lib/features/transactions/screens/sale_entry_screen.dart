@@ -48,7 +48,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
   // Lines State
   final List<TransactionLineState> _lines = [];
-  
+
   // Search controllers for item dropdowns
   final Map<int, TextEditingController> _itemSearchControllers = {};
 
@@ -60,6 +60,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   double _metalReceiptGold = 0; // M-Rec:Fine Gold
 
   // Metal Receipt State
+  String? _metalReceiptItemName;
   int? _metalReceiptItemId;
   final _metalReceiptGrossWeightCtrl = TextEditingController();
   final _metalReceiptLessWeightCtrl = TextEditingController();
@@ -69,6 +70,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   final _metalReceiptFineWeightCtrl = TextEditingController(text: '0.000');
 
   // Metal Payment State
+  String? _metalPaymentItemName;
   int? _metalPaymentItemId;
   final _metalPaymentGrossWeightCtrl = TextEditingController();
   final _metalPaymentLessWeightCtrl = TextEditingController();
@@ -114,10 +116,10 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
       // Get the last invoice number for today's date
       final today = DateTime.now();
       final dateStr = DateFormat('yyyyMMdd').format(today);
-      
+
       // Query for the last transaction number that starts with today's date
       final lastTxn = await repo.getLastTransactionNumberForDate(today);
-      
+
       int nextNumber = 1;
       if (lastTxn != null && lastTxn.isNotEmpty) {
         // Extract number from format like INV-20250125-001 or similar
@@ -139,9 +141,10 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           }
         }
       }
-      
+
       // Format: INV-YYYYMMDD-XXX
-      final invoiceNumber = 'INV-$dateStr-${nextNumber.toString().padLeft(3, '0')}';
+      final invoiceNumber =
+          'INV-$dateStr-${nextNumber.toString().padLeft(3, '0')}';
       if (mounted) {
         setState(() {
           _transactionNumberCtrl.text = invoiceNumber;
@@ -165,7 +168,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     final txn = await repo.getTransaction(widget.transactionId!);
     if (txn != null) {
       final lines = await repo.getTransactionLines(widget.transactionId!);
-      
+
       // Load party to get code
       final party = await partiesRepo.getPartyById(txn.partyId);
 
@@ -202,8 +205,11 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
           // Check if this is a Metal Receipt line
           if (desc.startsWith('M-Rec:') && l.lineType == 'Credit') {
+            final itemName = desc.substring(6); // Remove "M-Rec:" prefix
+            _metalReceiptItemName = itemName == 'Fine Gold' ? null : itemName;
             _metalReceiptItemId = l.itemId;
-            final fineWeight = l.netWeight; // Fine weight is stored in netWeight
+            final fineWeight =
+                l.netWeight; // Fine weight is stored in netWeight
             _metalReceiptGold = fineWeight;
 
             final touch = l.purity ?? 0;
@@ -230,8 +236,11 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
           // Check if this is a Metal Payment line
           if (desc.startsWith('M-Pay:') && l.lineType == 'Debit') {
+            final itemName = desc.substring(6); // Remove "M-Pay:" prefix
+            _metalPaymentItemName = itemName == 'Fine Gold' ? null : itemName;
             _metalPaymentItemId = l.itemId;
-            final fineWeight = l.netWeight; // Fine weight is stored in netWeight
+            final fineWeight =
+                l.netWeight; // Fine weight is stored in netWeight
             _metalPaymentGold = fineWeight;
 
             final touch = l.purity ?? 0;
@@ -258,34 +267,43 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
           // Check if this is a Rate Cut line
           if (desc.startsWith('R-Cut:')) {
-            _rateCutGold = l.netWeight; // Fine gold amount is stored in netWeight
+            _rateCutGold =
+                l.netWeight; // Fine gold amount is stored in netWeight
             _rateCutCash = l.amount; // Cash amount is stored in amount
             _rateCutMetalRate = l.rate; // Metal rate is stored in rate
-            
+
             // Extract fine type and amount type from description
             if (desc.contains('|FineType:')) {
-              final fineTypeMatch = RegExp(r'\|FineType:(\w+)').firstMatch(desc);
+              final fineTypeMatch = RegExp(
+                r'\|FineType:(\w+)',
+              ).firstMatch(desc);
               if (fineTypeMatch != null) {
                 _rateCutFineType = fineTypeMatch.group(1) ?? 'Payable';
               } else {
-                _rateCutFineType = l.lineType == 'Debit' ? 'Payable' : 'Receivable';
+                _rateCutFineType = l.lineType == 'Debit'
+                    ? 'Payable'
+                    : 'Receivable';
               }
             } else {
-              _rateCutFineType = l.lineType == 'Debit' ? 'Payable' : 'Receivable';
+              _rateCutFineType = l.lineType == 'Debit'
+                  ? 'Payable'
+                  : 'Receivable';
             }
-            
+
             if (desc.contains('|AmountType:')) {
-              final amountTypeMatch = RegExp(r'\|AmountType:(\w+)').firstMatch(desc);
+              final amountTypeMatch = RegExp(
+                r'\|AmountType:(\w+)',
+              ).firstMatch(desc);
               if (amountTypeMatch != null) {
                 _rateCutAmountType = amountTypeMatch.group(1) ?? 'Receivable';
               }
             }
-            
+
             // Populate controllers for dialog display
             _rateCutMetalRateCtrl.text = _rateCutMetalRate.toStringAsFixed(2);
             _rateCutFineCtrl.text = _rateCutGold.toStringAsFixed(3);
             _rateCutAmountCtrl.text = _rateCutCash.toStringAsFixed(2);
-            
+
             // Extract metal type from description if available, default to 'Gold'
             _rateCutMetalType = 'Gold';
             continue; // Don't add to regular lines
@@ -447,7 +465,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
       // Filter out lines without items
       final validLines = _lines.where((l) => l.selectedItemId != null).toList();
-      
+
       final lines = validLines.map((l) {
         return TransactionLinesCompanion(
           itemId: drift.Value(l.selectedItemId),
@@ -481,10 +499,13 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
       // Add metal payment as transaction line if exists
       if (_metalPaymentGold > 0) {
-        final metalPaymentGross = double.tryParse(_metalPaymentGrossWeightCtrl.text) ?? 0;
-        final metalPaymentTouch = double.tryParse(_metalPaymentTouchCtrl.text) ?? 0;
-        final metalPaymentWastage = double.tryParse(_metalPaymentWastageCtrl.text) ?? 0;
-        
+        final metalPaymentGross =
+            double.tryParse(_metalPaymentGrossWeightCtrl.text) ?? 0;
+        final metalPaymentTouch =
+            double.tryParse(_metalPaymentTouchCtrl.text) ?? 0;
+        final metalPaymentWastage =
+            double.tryParse(_metalPaymentWastageCtrl.text) ?? 0;
+
         // Get item name if itemId exists
         String? metalPaymentItemName;
         if (_metalPaymentItemId != null) {
@@ -492,37 +513,64 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           final item = items.firstWhere(
             (i) => i.id == _metalPaymentItemId,
             orElse: () => Item(
-              id: -1, name: '', metalType: 'Gold', costPrice: 0, sellingPrice: 0,
-              makingCharges: 0, wastagePercentage: 0, stockQty: 0, stockWeight: 0,
-              minimumStockLevel: 0, reorderLevel: 0, unitOfMeasurement: 'g',
-              status: 'Active', itemType: 'Goods', maintainStockIn: 'Grams',
-              isStudded: false, fetchGoldRate: false, defaultTouch: 0,
-              taxPreference: 'Taxable', purchaseWastage: 0, purchaseMakingCharges: 0,
-              jobworkRate: 0, stockMethod: 'Loose', minStockPcs: 0, maxStockGm: 0,
-              maxStockPcs: 0, createdAt: DateTime.now(), updatedAt: DateTime.now(),
+              id: -1,
+              name: '',
+              metalType: 'Gold',
+              costPrice: 0,
+              sellingPrice: 0,
+              makingCharges: 0,
+              wastagePercentage: 0,
+              stockQty: 0,
+              stockWeight: 0,
+              minimumStockLevel: 0,
+              reorderLevel: 0,
+              unitOfMeasurement: 'g',
+              status: 'Active',
+              itemType: 'Goods',
+              maintainStockIn: 'Grams',
+              isStudded: false,
+              fetchGoldRate: false,
+              defaultTouch: 0,
+              taxPreference: 'Taxable',
+              purchaseWastage: 0,
+              purchaseMakingCharges: 0,
+              jobworkRate: 0,
+              stockMethod: 'Loose',
+              minStockPcs: 0,
+              maxStockGm: 0,
+              maxStockPcs: 0,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
             ),
           );
           metalPaymentItemName = item.id != -1 ? item.name : null;
         }
-        
-        lines.add(TransactionLinesCompanion(
-          itemId: drift.Value(_metalPaymentItemId),
-          description: drift.Value('M-Pay:${metalPaymentItemName ?? "Fine Gold"}'),
-          grossWeight: drift.Value(metalPaymentGross),
-          netWeight: drift.Value(_metalPaymentGold), // Fine weight
-          purity: drift.Value(metalPaymentTouch),
-          wastage: drift.Value(metalPaymentWastage),
-          lineType: drift.Value('Debit'), // Metal payment is a debit
-          qty: drift.Value(1.0),
-        ));
+
+        lines.add(
+          TransactionLinesCompanion(
+            itemId: drift.Value(_metalPaymentItemId),
+            description: drift.Value(
+              'M-Pay:${metalPaymentItemName ?? "Fine Gold"}',
+            ),
+            grossWeight: drift.Value(metalPaymentGross),
+            netWeight: drift.Value(_metalPaymentGold), // Fine weight
+            purity: drift.Value(metalPaymentTouch),
+            wastage: drift.Value(metalPaymentWastage),
+            lineType: drift.Value('Debit'), // Metal payment is a debit
+            qty: drift.Value(1.0),
+          ),
+        );
       }
 
       // Add metal receipt as transaction line if exists
       if (_metalReceiptGold > 0) {
-        final metalReceiptGross = double.tryParse(_metalReceiptGrossWeightCtrl.text) ?? 0;
-        final metalReceiptTouch = double.tryParse(_metalReceiptTouchCtrl.text) ?? 0;
-        final metalReceiptWastage = double.tryParse(_metalReceiptWastageCtrl.text) ?? 0;
-        
+        final metalReceiptGross =
+            double.tryParse(_metalReceiptGrossWeightCtrl.text) ?? 0;
+        final metalReceiptTouch =
+            double.tryParse(_metalReceiptTouchCtrl.text) ?? 0;
+        final metalReceiptWastage =
+            double.tryParse(_metalReceiptWastageCtrl.text) ?? 0;
+
         // Get item name if itemId exists
         String? metalReceiptItemName;
         if (_metalReceiptItemId != null) {
@@ -530,53 +578,76 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           final item = items.firstWhere(
             (i) => i.id == _metalReceiptItemId,
             orElse: () => Item(
-              id: -1, name: '', metalType: 'Gold', costPrice: 0, sellingPrice: 0,
-              makingCharges: 0, wastagePercentage: 0, stockQty: 0, stockWeight: 0,
-              minimumStockLevel: 0, reorderLevel: 0, unitOfMeasurement: 'g',
-              status: 'Active', itemType: 'Goods', maintainStockIn: 'Grams',
-              isStudded: false, fetchGoldRate: false, defaultTouch: 0,
-              taxPreference: 'Taxable', purchaseWastage: 0, purchaseMakingCharges: 0,
-              jobworkRate: 0, stockMethod: 'Loose', minStockPcs: 0, maxStockGm: 0,
-              maxStockPcs: 0, createdAt: DateTime.now(), updatedAt: DateTime.now(),
+              id: -1,
+              name: '',
+              metalType: 'Gold',
+              costPrice: 0,
+              sellingPrice: 0,
+              makingCharges: 0,
+              wastagePercentage: 0,
+              stockQty: 0,
+              stockWeight: 0,
+              minimumStockLevel: 0,
+              reorderLevel: 0,
+              unitOfMeasurement: 'g',
+              status: 'Active',
+              itemType: 'Goods',
+              maintainStockIn: 'Grams',
+              isStudded: false,
+              fetchGoldRate: false,
+              defaultTouch: 0,
+              taxPreference: 'Taxable',
+              purchaseWastage: 0,
+              purchaseMakingCharges: 0,
+              jobworkRate: 0,
+              stockMethod: 'Loose',
+              minStockPcs: 0,
+              maxStockGm: 0,
+              maxStockPcs: 0,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
             ),
           );
           metalReceiptItemName = item.id != -1 ? item.name : null;
         }
-        
-        lines.add(TransactionLinesCompanion(
-          itemId: drift.Value(_metalReceiptItemId),
-          description: drift.Value('M-Rec:${metalReceiptItemName ?? "Fine Gold"}'),
-          grossWeight: drift.Value(metalReceiptGross),
-          netWeight: drift.Value(_metalReceiptGold), // Fine weight
-          purity: drift.Value(metalReceiptTouch),
-          wastage: drift.Value(metalReceiptWastage),
-          lineType: drift.Value('Credit'), // Metal receipt is a credit
-          qty: drift.Value(1.0),
-        ));
+
+        lines.add(
+          TransactionLinesCompanion(
+            itemId: drift.Value(_metalReceiptItemId),
+            description: drift.Value(
+              'M-Rec:${metalReceiptItemName ?? "Fine Gold"}',
+            ),
+            grossWeight: drift.Value(metalReceiptGross),
+            netWeight: drift.Value(_metalReceiptGold), // Fine weight
+            purity: drift.Value(metalReceiptTouch),
+            wastage: drift.Value(metalReceiptWastage),
+            lineType: drift.Value('Credit'), // Metal receipt is a credit
+            qty: drift.Value(1.0),
+          ),
+        );
       }
 
       // Add rate cut as transaction line if exists
       if (_rateCutGold > 0 || _rateCutCash > 0) {
-        lines.add(TransactionLinesCompanion(
-          itemId: const drift.Value(null),
-          description: drift.Value('R-Cut:Rate Cut @ ${_rateCutMetalRate.toStringAsFixed(2)}|FineType:${_rateCutFineType}|AmountType:${_rateCutAmountType}'),
-          netWeight: drift.Value(_rateCutGold), // Fine gold amount
-          amount: drift.Value(_rateCutCash), // Cash amount
-          rate: drift.Value(_rateCutMetalRate),
-          lineType: drift.Value(_rateCutFineType == 'Payable' ? 'Debit' : 'Credit'),
-          qty: drift.Value(1.0),
-        ));
+        lines.add(
+          TransactionLinesCompanion(
+            itemId: const drift.Value(null),
+            description: drift.Value(
+              'R-Cut:Rate Cut @ ${_rateCutMetalRate.toStringAsFixed(2)}|FineType:$_rateCutFineType|AmountType:$_rateCutAmountType',
+            ),
+            netWeight: drift.Value(_rateCutGold), // Fine gold amount
+            amount: drift.Value(_rateCutCash), // Cash amount
+            rate: drift.Value(_rateCutMetalRate),
+            lineType: drift.Value(
+              _rateCutFineType == 'Payable' ? 'Debit' : 'Credit',
+            ),
+            qty: drift.Value(1.0),
+          ),
+        );
       }
 
       try {
-        print('=== Sale Save Started ===');
-        print('Transaction ID: ${widget.transactionId}');
-        print('Party ID: $_selectedPartyId');
-        print('Number of lines: ${_lines.length}');
-        print('Valid lines: ${validLines.length}');
-        
         if (widget.transactionId != null) {
-          print('Updating transaction ${widget.transactionId}');
           await ref
               .read(transactionsControllerProvider.notifier)
               .updateTransaction(
@@ -585,24 +656,18 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                 lines: lines,
               );
         } else {
-          print('Creating new transaction');
           await ref
               .read(transactionsControllerProvider.notifier)
               .createTransaction(header: header, lines: lines);
         }
 
-        print('=== Sale Save Successful ===');
         if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('Sale Saved')));
           context.pop();
         }
-      } catch (e, stackTrace) {
-        print('=== Save Exception ===');
-        print('Error: $e');
-        print('Stack trace: $stackTrace');
-        
+      } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -755,9 +820,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                               ),
                               child: const Text(
                                 'Save',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: TextStyle(fontWeight: FontWeight.w600),
                               ),
                             ),
                           ],
@@ -844,9 +907,12 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                     // When searching, show all parties that match (code or name)
                     // but prioritize those with codes
                     return parties.where((party) {
-                      final codeMatch = party.code != null &&
+                      final codeMatch =
+                          party.code != null &&
                           party.code!.toLowerCase().contains(query);
-                      final nameMatch = party.name.toLowerCase().contains(query);
+                      final nameMatch = party.name.toLowerCase().contains(
+                        query,
+                      );
                       return codeMatch || nameMatch;
                     });
                   },
@@ -856,127 +922,129 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                       _partyCodeCtrl.text = party.code ?? '';
                     });
                   },
-                  fieldViewBuilder: (
-                    BuildContext context,
-                    TextEditingController textEditingController,
-                    FocusNode focusNode,
-                    VoidCallback onFieldSubmitted,
-                  ) {
-                    // Initialize field with selected party info if available
-                    // Defer text update to avoid setState during build
-                    if (_selectedPartyId != null && !focusNode.hasFocus) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!mounted) return;
-                        try {
-                          final selectedParty = parties.firstWhere(
-                            (p) => p.id == _selectedPartyId,
-                          );
-                          final displayText = selectedParty.code != null &&
-                                  selectedParty.code!.isNotEmpty
-                              ? '${selectedParty.code} - ${selectedParty.name}'
-                              : selectedParty.name;
-                          if (textEditingController.text != displayText) {
-                            textEditingController.text = displayText;
-                            _partyCodeCtrl.text = selectedParty.code ?? '';
-                          }
-                        } catch (e) {
-                          // Party not found in list
-                        }
-                      });
-                    }
-                    return TextFormField(
-                      controller: textEditingController,
-                      focusNode: focusNode,
-                      decoration: const InputDecoration(
-                        labelText: 'Customer Code',
-                        isDense: true,
-                        hintText: 'Search by code or name...',
-                        suffixIcon: Icon(Icons.search, size: 18),
-                      ),
-                      onChanged: (value) {
-                        _partyCodeCtrl.text = value;
-                      },
-                      onFieldSubmitted: (String value) {
-                        onFieldSubmitted();
-                      },
-                    );
-                  },
-                  optionsViewBuilder: (
-                    BuildContext context,
-                    AutocompleteOnSelected<Party> onSelected,
-                    Iterable<Party> options,
-                  ) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 4.0,
-                        borderRadius: BorderRadius.circular(8),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 200),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: options.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              final party = options.elementAt(index);
-                              return InkWell(
-                                onTap: () => onSelected(party),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              party.code != null &&
-                                                      party.code!.isNotEmpty
-                                                  ? '${party.code} - ${party.name}'
-                                                  : party.name,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            if (party.mobile.isNotEmpty)
-                                              Text(
-                                                party.mobile,
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: AppTheme.textSecondary,
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                  fieldViewBuilder:
+                      (
+                        BuildContext context,
+                        TextEditingController textEditingController,
+                        FocusNode focusNode,
+                        VoidCallback onFieldSubmitted,
+                      ) {
+                        // Initialize field with selected party info if available
+                        // Defer text update to avoid setState during build
+                        if (_selectedPartyId != null && !focusNode.hasFocus) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (!mounted) return;
+                            try {
+                              final selectedParty = parties.firstWhere(
+                                (p) => p.id == _selectedPartyId,
                               );
-                            },
+                              final displayText =
+                                  selectedParty.code != null &&
+                                      selectedParty.code!.isNotEmpty
+                                  ? '${selectedParty.code} - ${selectedParty.name}'
+                                  : selectedParty.name;
+                              if (textEditingController.text != displayText) {
+                                textEditingController.text = displayText;
+                                _partyCodeCtrl.text = selectedParty.code ?? '';
+                              }
+                            } catch (e) {
+                              // Party not found in list
+                            }
+                          });
+                        }
+                        return TextFormField(
+                          controller: textEditingController,
+                          focusNode: focusNode,
+                          decoration: const InputDecoration(
+                            labelText: 'Customer Code',
+                            isDense: true,
+                            hintText: 'Search by code or name...',
+                            suffixIcon: Icon(Icons.search, size: 18),
                           ),
-                        ),
-                      ),
-                    );
-                  },
+                          onChanged: (value) {
+                            _partyCodeCtrl.text = value;
+                          },
+                          onFieldSubmitted: (String value) {
+                            onFieldSubmitted();
+                          },
+                        );
+                      },
+                  optionsViewBuilder:
+                      (
+                        BuildContext context,
+                        AutocompleteOnSelected<Party> onSelected,
+                        Iterable<Party> options,
+                      ) {
+                        return Align(
+                          alignment: Alignment.topLeft,
+                          child: Material(
+                            elevation: 4.0,
+                            borderRadius: BorderRadius.circular(8),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 200),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                itemCount: options.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  final party = options.elementAt(index);
+                                  return InkWell(
+                                    onTap: () => onSelected(party),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12.0),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  party.code != null &&
+                                                          party.code!.isNotEmpty
+                                                      ? '${party.code} - ${party.name}'
+                                                      : party.name,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                if (party.mobile.isNotEmpty)
+                                                  Text(
+                                                    party.mobile,
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: AppTheme
+                                                          .textSecondary,
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 flex: 2,
                 child: DropdownButtonFormField<int>(
-                  value: _selectedPartyId,
+                  initialValue: _selectedPartyId,
                   decoration: const InputDecoration(
                     labelText: 'Party Name *',
                     isDense: true,
                   ),
                   items: parties
                       .map(
-                        (p) => DropdownMenuItem(
-                          value: p.id,
-                          child: Text(p.name),
-                        ),
+                        (p) =>
+                            DropdownMenuItem(value: p.id, child: Text(p.name)),
                       )
                       .toList(),
                   onChanged: (v) {
@@ -1082,17 +1150,14 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text(label, style: Theme.of(context).textTheme.bodyMedium),
           Row(
             children: [
               Text(
                 value,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 4),
               Text(
@@ -1216,7 +1281,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     );
   }
 
-
   Widget _buildItemsSection(AsyncValue<List<Item>> itemsAsync) {
     return itemsAsync.when(
       loading: () => const Center(
@@ -1302,9 +1366,9 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
         boxShadow: AppTheme.cardShadow,
       ),
       child: DataTable(
-      headingRowHeight: 48,
-      dataRowMinHeight: 60,
-      dataRowMaxHeight: 80,
+        headingRowHeight: 48,
+        dataRowMinHeight: 60,
+        dataRowMaxHeight: 80,
         columnSpacing: 10,
         horizontalMargin: 12,
         headingRowColor: WidgetStateProperty.all(
@@ -1508,569 +1572,709 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
             final index = entry.key;
             final line = entry.value;
             return DataRow(
-              color: WidgetStateProperty.resolveWith<Color?>(
-                (Set<WidgetState> states) {
-                  if (states.contains(WidgetState.hovered)) {
-                    return AppTheme.primaryAction.withValues(alpha: 0.03);
-                  }
-                  return index % 2 == 0
-                      ? AppTheme.backgroundWhite
-                      : AppTheme.backgroundLight.withValues(alpha: 0.3);
-                },
-              ),
+              color: WidgetStateProperty.resolveWith<Color?>((
+                Set<WidgetState> states,
+              ) {
+                if (states.contains(WidgetState.hovered)) {
+                  return AppTheme.primaryAction.withValues(alpha: 0.03);
+                }
+                return index % 2 == 0
+                    ? AppTheme.backgroundWhite
+                    : AppTheme.backgroundLight.withValues(alpha: 0.3);
+              }),
               cells: [
+                DataCell(
+                  Center(
+                    child: Text(
+                      '${index + 1}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 250,
+                    child: _buildSearchableItemDropdown(
+                      line: line,
+                      index: index,
+                      inventoryItems: inventoryItems,
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Center(
+                    child: line.selectedItemId != null
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.info_outline,
+                              size: 18,
+                              color: AppTheme.primaryAction,
+                            ),
+                            onPressed: () => _showStockDetails(
+                              context,
+                              line.selectedItemId!,
+                              inventoryItems,
+                              index,
+                            ),
+                            tooltip: 'View stock details',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 100,
+                    child: TextFormField(
+                      controller: line.descCtrl,
+                      style: const TextStyle(fontSize: 13),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppTheme.backgroundWhite,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryAction,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 80,
+                    child: TextFormField(
+                      controller: line.stampCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 80,
+                    child: TextFormField(
+                      controller: line.colorCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 60,
+                    child: TextFormField(
+                      controller: line.unitCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppTheme.backgroundWhite,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryAction,
+                            width: 2,
+                          ),
+                        ),
+                        hintText: '0',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => _calculateTotals(),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 60,
+                    child: TextFormField(
+                      controller: line.sizeCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 80,
+                    child: TextFormField(
+                      controller: line.grossWeightCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppTheme.backgroundWhite,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryAction,
+                            width: 2,
+                          ),
+                        ),
+                        hintText: '0',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (v) {
+                        double gross = double.tryParse(v) ?? 0;
+                        double stone =
+                            double.tryParse(line.stoneWeightCtrl.text) ?? 0;
+                        line.netWeightCtrl.text = (gross - stone)
+                            .toStringAsFixed(3);
+                        _calculateTotals();
+                      },
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 80,
+                    child: TextFormField(
+                      controller: line.stoneWeightCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppTheme.backgroundWhite,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryAction,
+                            width: 2,
+                          ),
+                        ),
+                        hintText: '0',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (v) {
+                        double gross =
+                            double.tryParse(line.grossWeightCtrl.text) ?? 0;
+                        double stone = double.tryParse(v) ?? 0;
+                        line.netWeightCtrl.text = (gross - stone)
+                            .toStringAsFixed(3);
+                        _calculateTotals();
+                      },
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 80,
+                    child: TextFormField(
+                      controller: line.netWeightCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppTheme.backgroundWhite,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryAction,
+                            width: 2,
+                          ),
+                        ),
+                        hintText: '0',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => _calculateTotals(),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 70,
+                    child: TextFormField(
+                      controller: line.purityCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppTheme.backgroundWhite,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryAction,
+                            width: 2,
+                          ),
+                        ),
+                        hintText: '92.00',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => _calculateTotals(),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 70,
+                    child: TextFormField(
+                      controller: line.wastageCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppTheme.backgroundWhite,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryAction,
+                            width: 2,
+                          ),
+                        ),
+                        hintText: '0',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => _calculateTotals(),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Center(
+                    child: Text(
+                      _calculateFineWeight(line).toStringAsFixed(3),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: AppTheme.primaryGoldDark,
+                      ),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 80,
+                    child: TextFormField(
+                      controller: line.rateCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppTheme.backgroundWhite,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryAction,
+                            width: 2,
+                          ),
+                        ),
+                        hintText: '0.00',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => _calculateTotals(),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 100,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: line.makingChargesCtrl,
+                            style: const TextStyle(fontSize: 12),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              filled: true,
+                              fillColor: AppTheme.backgroundWhite,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4),
+                                borderSide: BorderSide(
+                                  color: AppTheme.borderInput,
+                                  width: 1,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4),
+                                borderSide: BorderSide(
+                                  color: AppTheme.borderInput,
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4),
+                                borderSide: BorderSide(
+                                  color: AppTheme.primaryAction,
+                                  width: 2,
+                                ),
+                              ),
+                              hintText: '0.00',
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 12,
+                              ),
+                            ),
+                            readOnly: true,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 14),
+                          onPressed: () {},
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 24,
+                            minHeight: 24,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 80,
+                    child: TextFormField(
+                      controller: line.discountCtrl,
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        filled: true,
+                        fillColor: AppTheme.backgroundWhite,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.borderInput,
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(
+                            color: AppTheme.primaryAction,
+                            width: 2,
+                          ),
+                        ),
+                        hintText: '0.00',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => _calculateTotals(),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Center(
+                    child: Text(
+                      _calculateLineTotal(line).toStringAsFixed(2),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Center(
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        size: 20,
+                        color: Colors.red,
+                      ),
+                      onPressed: () => _removeLine(index),
+                      tooltip: 'Delete row',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      hoverColor: Colors.red.withValues(alpha: 0.1),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+          // Gold Totals Row
+          DataRow(
+            color: WidgetStateProperty.all(
+              AppTheme.primaryAction.withValues(alpha: 0.1),
+            ),
+            cells: [
+              const DataCell(Text('')),
+              DataCell(
+                Text(
+                  'Gold Totals',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+              ),
+              const DataCell(Text('')), // Stock column
+              const DataCell(Text('')),
+              const DataCell(Text('')),
+              const DataCell(Text('')),
               DataCell(
                 Center(
                   child: Text(
-                    '${index + 1}',
+                    _calculateTotalUnits().toStringAsFixed(2),
                     style: const TextStyle(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+              const DataCell(Text('')),
+              DataCell(
+                Center(
+                  child: Text(
+                    _calculateTotalGrossWeight().toStringAsFixed(3),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
                   ),
                 ),
               ),
               DataCell(
-                SizedBox(
-                  width: 250,
-                  child: _buildSearchableItemDropdown(
-                    line: line,
-                    index: index,
-                    inventoryItems: inventoryItems,
-                  ),
-                ),
-              ),
-              DataCell(
                 Center(
-                  child: line.selectedItemId != null
-                      ? IconButton(
-                          icon: const Icon(
-                            Icons.info_outline,
-                            size: 18,
-                            color: AppTheme.primaryAction,
-                          ),
-                          onPressed: () => _showStockDetails(
-                            context,
-                            line.selectedItemId!,
-                            inventoryItems,
-                            index,
-                          ),
-                          tooltip: 'View stock details',
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 100,
-                  child: TextFormField(
-                    controller: line.descCtrl,
-                    style: const TextStyle(fontSize: 13),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  child: Text(
+                    _calculateTotalLessWeight().toStringAsFixed(3),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
                     ),
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    controller: line.stampCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                    ),
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    controller: line.colorCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                    ),
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 60,
-                  child: TextFormField(
-                    controller: line.unitCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      hintText: '0',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateTotals(),
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 60,
-                  child: TextFormField(
-                    controller: line.sizeCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                    ),
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    controller: line.grossWeightCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      hintText: '0',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (v) {
-                      double gross = double.tryParse(v) ?? 0;
-                      double stone = double.tryParse(line.stoneWeightCtrl.text) ?? 0;
-                      line.netWeightCtrl.text = (gross - stone).toStringAsFixed(3);
-                      _calculateTotals();
-                    },
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    controller: line.stoneWeightCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      hintText: '0',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (v) {
-                      double gross = double.tryParse(line.grossWeightCtrl.text) ?? 0;
-                      double stone = double.tryParse(v) ?? 0;
-                      line.netWeightCtrl.text = (gross - stone).toStringAsFixed(3);
-                      _calculateTotals();
-                    },
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    controller: line.netWeightCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      hintText: '0',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateTotals(),
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 70,
-                  child: TextFormField(
-                    controller: line.purityCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      hintText: '92.00',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateTotals(),
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 70,
-                  child: TextFormField(
-                    controller: line.wastageCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      hintText: '0',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateTotals(),
                   ),
                 ),
               ),
               DataCell(
                 Center(
                   child: Text(
-                    _calculateFineWeight(line).toStringAsFixed(3),
+                    _calculateTotalNetWeight().toStringAsFixed(3),
                     style: const TextStyle(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+              const DataCell(Text('')),
+              const DataCell(Text('')),
+              DataCell(
+                Center(
+                  child: Text(
+                    _totalGold.toStringAsFixed(3),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
                       fontSize: 13,
                       color: AppTheme.primaryGoldDark,
                     ),
                   ),
                 ),
               ),
-              DataCell(
-                SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    controller: line.rateCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      hintText: '0.00',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateTotals(),
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 100,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: line.makingChargesCtrl,
-                          style: const TextStyle(fontSize: 12),
-                          decoration: InputDecoration(
-                            isDense: true,
-                            filled: true,
-                            fillColor: AppTheme.backgroundWhite,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(4),
-                              borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(4),
-                              borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(4),
-                              borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                            ),
-                            hintText: '0.00',
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                          ),
-                          readOnly: true,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit, size: 14),
-                        onPressed: () {},
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    controller: line.discountCtrl,
-                    style: const TextStyle(fontSize: 12),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.backgroundWhite,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-                      ),
-                      hintText: '0.00',
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => _calculateTotals(),
-                  ),
-                ),
-              ),
+              const DataCell(Text('')),
               DataCell(
                 Center(
                   child: Text(
-                    _calculateLineTotal(line).toStringAsFixed(2),
+                    _calculateTotalCharges().toStringAsFixed(2),
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
-                      color: AppTheme.textPrimary,
                     ),
                   ),
                 ),
               ),
+              const DataCell(Text('')),
               DataCell(
                 Center(
-                  child: IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                    onPressed: () => _removeLine(index),
-                    tooltip: 'Delete row',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    hoverColor: Colors.red.withValues(alpha: 0.1),
+                  child: Text(
+                    _calculateTotalAmount().toStringAsFixed(2),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: AppTheme.primaryAction,
+                    ),
                   ),
                 ),
               ),
+              const DataCell(Text('')),
             ],
-          );
-        }),
-        // Gold Totals Row
-        DataRow(
-          color: WidgetStateProperty.all(
-            AppTheme.primaryAction.withValues(alpha: 0.1),
           ),
-          cells: [
-            const DataCell(Text('')),
-            DataCell(
-              Text(
-                'Gold Totals',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-            ),
-            const DataCell(Text('')), // Stock column
-            const DataCell(Text('')),
-            const DataCell(Text('')),
-            const DataCell(Text('')),
-            DataCell(
-              Center(
-                child: Text(
-                  _calculateTotalUnits().toStringAsFixed(2),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-            const DataCell(Text('')),
-            DataCell(
-              Center(
-                child: Text(
-                  _calculateTotalGrossWeight().toStringAsFixed(3),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-            DataCell(
-              Center(
-                child: Text(
-                  _calculateTotalLessWeight().toStringAsFixed(3),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-            DataCell(
-              Center(
-                child: Text(
-                  _calculateTotalNetWeight().toStringAsFixed(3),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-            const DataCell(Text('')),
-            const DataCell(Text('')),
-            DataCell(
-              Center(
-                child: Text(
-                  _totalGold.toStringAsFixed(3),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: AppTheme.primaryGoldDark,
-                  ),
-                ),
-              ),
-            ),
-            const DataCell(Text('')),
-            DataCell(
-              Center(
-                child: Text(
-                  _calculateTotalCharges().toStringAsFixed(2),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ),
-            const DataCell(Text('')),
-            DataCell(
-              Center(
-                child: Text(
-                  _calculateTotalAmount().toStringAsFixed(2),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: AppTheme.primaryAction,
-                  ),
-                ),
-              ),
-            ),
-            const DataCell(Text('')),
-          ],
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 
@@ -2087,29 +2291,41 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   }
 
   double _calculateTotalGrossWeight() {
-    return _lines.fold(0.0, (sum, line) => sum + (double.tryParse(line.grossWeightCtrl.text) ?? 0));
+    return _lines.fold(
+      0.0,
+      (sum, line) => sum + (double.tryParse(line.grossWeightCtrl.text) ?? 0),
+    );
   }
 
   double _calculateTotalLessWeight() {
-    return _lines.fold(0.0, (sum, line) => sum + (double.tryParse(line.stoneWeightCtrl.text) ?? 0));
+    return _lines.fold(
+      0.0,
+      (sum, line) => sum + (double.tryParse(line.stoneWeightCtrl.text) ?? 0),
+    );
   }
 
   double _calculateTotalNetWeight() {
-    return _lines.fold(0.0, (sum, line) => sum + (double.tryParse(line.netWeightCtrl.text) ?? 0));
+    return _lines.fold(
+      0.0,
+      (sum, line) => sum + (double.tryParse(line.netWeightCtrl.text) ?? 0),
+    );
   }
 
   double _calculateTotalCharges() {
-    return _lines.fold(0.0, (sum, line) => sum + (double.tryParse(line.makingChargesCtrl.text) ?? 0));
+    return _lines.fold(
+      0.0,
+      (sum, line) => sum + (double.tryParse(line.makingChargesCtrl.text) ?? 0),
+    );
   }
 
   double _calculateLineTotal(TransactionLineState line) {
     double rate = double.tryParse(line.rateCtrl.text) ?? 0;
     double discount = double.tryParse(line.discountCtrl.text) ?? 0;
-    
+
     // Charges = unit * rate
     double unit = double.tryParse(line.unitCtrl.text) ?? 0;
     double charges = unit * rate;
-    
+
     return charges - discount;
   }
 
@@ -2186,172 +2402,182 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
         });
         _calculateTotals();
       },
-      fieldViewBuilder: (
-        BuildContext context,
-        TextEditingController textEditingController,
-        FocusNode focusNode,
-        VoidCallback onFieldSubmitted,
-      ) {
-        // Sync controller with our stored controller
-        final storedController = _itemSearchControllers[index];
-        if (storedController != null && storedController != textEditingController) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (textEditingController.text != storedController.text) {
-              textEditingController.text = storedController.text;
-            }
-          });
-        } else if (storedController == null) {
-          // Initialize with selected item name
-          final selectedItem = inventoryItems.firstWhere(
-            (i) => i.id == line.selectedItemId,
-            orElse: () => Item(
-              id: -1,
-              name: '',
-              metalType: 'Gold',
-              costPrice: 0,
-              sellingPrice: 0,
-              makingCharges: 0,
-              wastagePercentage: 0,
-              stockQty: 0,
-              stockWeight: 0,
-              minimumStockLevel: 0,
-              reorderLevel: 0,
-              unitOfMeasurement: 'g',
-              status: 'Active',
-              itemType: 'Goods',
-              maintainStockIn: 'Grams',
-              isStudded: false,
-              fetchGoldRate: false,
-              defaultTouch: 0,
-              taxPreference: 'Taxable',
-              purchaseWastage: 0,
-              purchaseMakingCharges: 0,
-              jobworkRate: 0,
-              stockMethod: 'Loose',
-              minStockPcs: 0,
-              maxStockGm: 0,
-              maxStockPcs: 0,
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-            ),
-          );
-          if (selectedItem.id != -1) {
-            textEditingController.text = selectedItem.name;
-            _itemSearchControllers[index] = textEditingController;
-          }
-        }
-        return TextFormField(
-          controller: textEditingController,
-          focusNode: focusNode,
-          style: TextStyle(
-            fontSize: 13,
-            color: AppTheme.textPrimary,
-          ),
-          decoration: InputDecoration(
-            isDense: true,
-            filled: true,
-            fillColor: AppTheme.backgroundWhite,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: AppTheme.primaryAction, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-            hintText: 'Search item...',
-            suffixIcon: const Icon(Icons.search, size: 18),
-          ),
-          onChanged: (String value) {
-            // Update stored controller
+      fieldViewBuilder:
+          (
+            BuildContext context,
+            TextEditingController textEditingController,
+            FocusNode focusNode,
+            VoidCallback onFieldSubmitted,
+          ) {
+            // Sync controller with our stored controller
             final storedController = _itemSearchControllers[index];
-            if (storedController != null && storedController != textEditingController) {
-              storedController.text = value;
-            }
-          },
-          onFieldSubmitted: (String value) {
-            onFieldSubmitted();
-          },
-        );
-      },
-      optionsViewBuilder: (
-        BuildContext context,
-        AutocompleteOnSelected<Item> onSelected,
-        Iterable<Item> options,
-      ) {
-        return Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 4,
-            borderRadius: BorderRadius.circular(8),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 300),
-              child: Container(
-                width: 300,
-                decoration: BoxDecoration(
-                  color: AppTheme.backgroundWhite,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppTheme.borderLight),
+            if (storedController != null &&
+                storedController != textEditingController) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (textEditingController.text != storedController.text) {
+                  textEditingController.text = storedController.text;
+                }
+              });
+            } else if (storedController == null) {
+              // Initialize with selected item name
+              final selectedItem = inventoryItems.firstWhere(
+                (i) => i.id == line.selectedItemId,
+                orElse: () => Item(
+                  id: -1,
+                  name: '',
+                  metalType: 'Gold',
+                  costPrice: 0,
+                  sellingPrice: 0,
+                  makingCharges: 0,
+                  wastagePercentage: 0,
+                  stockQty: 0,
+                  stockWeight: 0,
+                  minimumStockLevel: 0,
+                  reorderLevel: 0,
+                  unitOfMeasurement: 'g',
+                  status: 'Active',
+                  itemType: 'Goods',
+                  maintainStockIn: 'Grams',
+                  isStudded: false,
+                  fetchGoldRate: false,
+                  defaultTouch: 0,
+                  taxPreference: 'Taxable',
+                  purchaseWastage: 0,
+                  purchaseMakingCharges: 0,
+                  jobworkRate: 0,
+                  stockMethod: 'Loose',
+                  minStockPcs: 0,
+                  maxStockGm: 0,
+                  maxStockPcs: 0,
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
                 ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  padding: EdgeInsets.zero,
-                  itemCount: options.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    final Item option = options.elementAt(index);
-                    final bool isSelected = option.id == line.selectedItemId;
-                    return InkWell(
-                      onTap: () {
-                        onSelected(option);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppTheme.primaryAction.withValues(alpha: 0.1)
-                              : AppTheme.backgroundWhite,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                option.name,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: isSelected
-                                      ? AppTheme.primaryAction
-                                      : AppTheme.textPrimary,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
-                              ),
+              );
+              if (selectedItem.id != -1) {
+                textEditingController.text = selectedItem.name;
+                _itemSearchControllers[index] = textEditingController;
+              }
+            }
+            return TextFormField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              style: TextStyle(fontSize: 13, color: AppTheme.textPrimary),
+              decoration: InputDecoration(
+                isDense: true,
+                filled: true,
+                fillColor: AppTheme.backgroundWhite,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  borderSide: BorderSide(color: AppTheme.borderInput, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  borderSide: BorderSide(
+                    color: AppTheme.primaryAction,
+                    width: 2,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 12,
+                ),
+                hintText: 'Search item...',
+                suffixIcon: const Icon(Icons.search, size: 18),
+              ),
+              onChanged: (String value) {
+                // Update stored controller
+                final storedController = _itemSearchControllers[index];
+                if (storedController != null &&
+                    storedController != textEditingController) {
+                  storedController.text = value;
+                }
+              },
+              onFieldSubmitted: (String value) {
+                onFieldSubmitted();
+              },
+            );
+          },
+      optionsViewBuilder:
+          (
+            BuildContext context,
+            AutocompleteOnSelected<Item> onSelected,
+            Iterable<Item> options,
+          ) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(8),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: Container(
+                    width: 300,
+                    decoration: BoxDecoration(
+                      color: AppTheme.backgroundWhite,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.borderLight),
+                    ),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      itemCount: options.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final Item option = options.elementAt(index);
+                        final bool isSelected =
+                            option.id == line.selectedItemId;
+                        return InkWell(
+                          onTap: () {
+                            onSelected(option);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
                             ),
-                            if (isSelected)
-                              const Icon(
-                                Icons.check,
-                                size: 18,
-                                color: AppTheme.primaryAction,
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppTheme.primaryAction.withValues(
+                                      alpha: 0.1,
+                                    )
+                                  : AppTheme.backgroundWhite,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    option.name,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: isSelected
+                                          ? AppTheme.primaryAction
+                                          : AppTheme.textPrimary,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  const Icon(
+                                    Icons.check,
+                                    size: 18,
+                                    color: AppTheme.primaryAction,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        );
-      },
+            );
+          },
     );
   }
 
@@ -2379,8 +2605,16 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
             runSpacing: 8,
             children: [
               _buildActionButton(Icons.diamond, 'Metal Received', Colors.blue),
-              _buildActionButton(Icons.diamond_outlined, 'Metal Payment', Colors.orange),
-              _buildActionButton(Icons.trending_down, 'Rate-Cut', Colors.purple),
+              _buildActionButton(
+                Icons.diamond_outlined,
+                'Metal Payment',
+                Colors.orange,
+              ),
+              _buildActionButton(
+                Icons.trending_down,
+                'Rate-Cut',
+                Colors.purple,
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -2425,15 +2659,18 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     );
   }
 
-  void _showMetalReceiptDialog() {
-    // Reset controllers
-    _metalReceiptGrossWeightCtrl.clear();
-    _metalReceiptLessWeightCtrl.clear();
-    _metalReceiptNetWeightCtrl.text = '0.000';
-    _metalReceiptTouchCtrl.clear();
-    _metalReceiptWastageCtrl.clear();
-    _metalReceiptFineWeightCtrl.text = '0.000';
-    _metalReceiptItemId = null;
+  void _showMetalReceiptDialog({bool isEdit = false}) {
+    if (!isEdit) {
+      // Reset controllers
+      _metalReceiptGrossWeightCtrl.clear();
+      _metalReceiptLessWeightCtrl.clear();
+      _metalReceiptNetWeightCtrl.text = '0.000';
+      _metalReceiptTouchCtrl.clear();
+      _metalReceiptWastageCtrl.clear();
+      _metalReceiptFineWeightCtrl.text = '0.000';
+      _metalReceiptItemId = null;
+      _metalReceiptItemName = null;
+    }
 
     showDialog(
       context: context,
@@ -2450,6 +2687,14 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           onItemChanged: (itemId) {
             setState(() {
               _metalReceiptItemId = itemId;
+              final items = ref.read(itemsListProvider).value ?? [];
+              if (itemId != null) {
+                _metalReceiptItemName = items
+                    .firstWhere((i) => i.id == itemId)
+                    .name;
+              } else {
+                _metalReceiptItemName = null;
+              }
             });
           },
           onGrossWeightChanged: (value) {
@@ -2500,19 +2745,24 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     });
     _calculateTotals();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Metal Receipt saved')),
+      SnackBar(
+        content: Text('Metal Receipt ${_metalReceiptItemName ?? ""} saved'),
+      ),
     );
   }
 
-  void _showMetalPaymentDialog() {
-    // Reset controllers
-    _metalPaymentGrossWeightCtrl.clear();
-    _metalPaymentLessWeightCtrl.clear();
-    _metalPaymentNetWeightCtrl.text = '0.000';
-    _metalPaymentTouchCtrl.clear();
-    _metalPaymentWastageCtrl.clear();
-    _metalPaymentFineWeightCtrl.text = '0.000';
-    _metalPaymentItemId = null;
+  void _showMetalPaymentDialog({bool isEdit = false}) {
+    if (!isEdit) {
+      // Reset controllers
+      _metalPaymentGrossWeightCtrl.clear();
+      _metalPaymentLessWeightCtrl.clear();
+      _metalPaymentNetWeightCtrl.text = '0.000';
+      _metalPaymentTouchCtrl.clear();
+      _metalPaymentWastageCtrl.clear();
+      _metalPaymentFineWeightCtrl.text = '0.000';
+      _metalPaymentItemId = null;
+      _metalPaymentItemName = null;
+    }
 
     showDialog(
       context: context,
@@ -2529,6 +2779,14 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           onItemChanged: (itemId) {
             setState(() {
               _metalPaymentItemId = itemId;
+              final items = ref.read(itemsListProvider).value ?? [];
+              if (itemId != null) {
+                _metalPaymentItemName = items
+                    .firstWhere((i) => i.id == itemId)
+                    .name;
+              } else {
+                _metalPaymentItemName = null;
+              }
             });
           },
           onGrossWeightChanged: (value) {
@@ -2579,7 +2837,9 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     });
     _calculateTotals();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Metal Payment saved')),
+      SnackBar(
+        content: Text('Metal Payment ${_metalPaymentItemName ?? ""} saved'),
+      ),
     );
   }
 
@@ -2651,17 +2911,17 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     final fine = double.tryParse(_rateCutFineCtrl.text) ?? 0;
     final amount = double.tryParse(_rateCutAmountCtrl.text) ?? 0;
     final metalRate = double.tryParse(_rateCutMetalRateCtrl.text) ?? 0;
-    
+
     setState(() {
       _rateCutGold = fine;
       _rateCutCash = amount;
       _rateCutMetalRate = metalRate;
     });
-    
+
     _calculateTotals();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Rate Cut saved')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Rate Cut saved')));
   }
 
   Widget _buildSummarySection(List<Party> parties) {
@@ -2699,10 +2959,18 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
     final subTotalGold = _totalGold;
     // Rate Cut: Fine gold affects gold balance, cash amount affects cash balance
-    final rateCutGoldImpact = _rateCutFineType == 'Payable' ? -_rateCutGold : _rateCutGold;
-    final voucherTotalGold = subTotalGold - _metalReceiptGold + _metalPaymentGold + rateCutGoldImpact;
+    final rateCutGoldImpact = _rateCutFineType == 'Payable'
+        ? -_rateCutGold
+        : _rateCutGold;
+    final voucherTotalGold =
+        subTotalGold -
+        _metalReceiptGold +
+        _metalPaymentGold +
+        rateCutGoldImpact;
     final totalDueGold = voucherTotalGold;
-    final closingBalanceGold = (selectedParty?.goldBalance ?? 0) + totalDueGold;
+    final openingBalanceGold = selectedParty?.openingGoldBalance ?? 0;
+    final currentBalanceGold = selectedParty?.goldBalance ?? 0;
+    final closingBalanceGold = currentBalanceGold + totalDueGold;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -2743,10 +3011,74 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          _buildSummaryRow('Sub-Total', subTotalGold, 0, 0, isDr: subTotalGold < 0),
-          _buildSummaryRow('M-Rec:Fine Gold', _metalReceiptGold, 0, 0, isCr: _metalReceiptGold > 0),
+          _buildSummaryRow(
+            'Opening Balance',
+            openingBalanceGold,
+            0,
+            0,
+            isDr: openingBalanceGold < 0,
+          ),
+          _buildSummaryRow(
+            'Current Balance',
+            currentBalanceGold,
+            0,
+            0,
+            isDr: currentBalanceGold < 0,
+          ),
+          const Divider(height: 12),
+          _buildSummaryRow(
+            'Sub-Total',
+            subTotalGold,
+            0,
+            0,
+            isDr: subTotalGold < 0,
+          ),
+          if (_metalReceiptGold > 0)
+            _buildSummaryRowWithActions(
+              'M-Rec:${_metalReceiptItemName ?? "Fine Gold"}',
+              _metalReceiptGold,
+              0,
+              0,
+              isCr: _metalReceiptGold > 0,
+              onEdit: () => _showMetalReceiptDialog(isEdit: true),
+              onDelete: () {
+                setState(() {
+                  _metalReceiptGold = 0;
+                  _metalReceiptItemId = null;
+                  _metalReceiptItemName = null;
+                  _metalReceiptGrossWeightCtrl.clear();
+                  _metalReceiptLessWeightCtrl.clear();
+                  _metalReceiptNetWeightCtrl.text = '0.000';
+                  _metalReceiptTouchCtrl.clear();
+                  _metalReceiptWastageCtrl.clear();
+                  _metalReceiptFineWeightCtrl.text = '0.000';
+                });
+                _calculateTotals();
+              },
+            ),
           if (_metalPaymentGold > 0)
-            _buildSummaryRow('M-Pay:Fine Gold', _metalPaymentGold, 0, 0, isDr: _metalPaymentGold > 0),
+            _buildSummaryRowWithActions(
+              'M-Pay:${_metalPaymentItemName ?? "Fine Gold"}',
+              _metalPaymentGold,
+              0,
+              0,
+              isDr: _metalPaymentGold > 0,
+              onEdit: () => _showMetalPaymentDialog(isEdit: true),
+              onDelete: () {
+                setState(() {
+                  _metalPaymentGold = 0;
+                  _metalPaymentItemId = null;
+                  _metalPaymentItemName = null;
+                  _metalPaymentGrossWeightCtrl.clear();
+                  _metalPaymentLessWeightCtrl.clear();
+                  _metalPaymentNetWeightCtrl.text = '0.000';
+                  _metalPaymentTouchCtrl.clear();
+                  _metalPaymentWastageCtrl.clear();
+                  _metalPaymentFineWeightCtrl.text = '0.000';
+                });
+                _calculateTotals();
+              },
+            ),
           if (_rateCutGold > 0 || _rateCutCash > 0)
             _buildSummaryRowWithActions(
               'Rate Cut @ ${_rateCutMetalRate.toStringAsFixed(2)}',
@@ -2768,19 +3100,50 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                 _calculateTotals();
               },
             ),
-          _buildSummaryRow('Voucher Total', voucherTotalGold, 0, _rateCutCash, isDr: voucherTotalGold < 0),
-          _buildSummaryRow('Total Due', totalDueGold, 0, _rateCutCash, isDr: totalDueGold < 0, isCr: _rateCutCash > 0 && _rateCutAmountType == 'Receivable'),
+          _buildSummaryRow(
+            'Voucher Total',
+            voucherTotalGold,
+            0,
+            _rateCutCash,
+            isDr: voucherTotalGold < 0,
+          ),
+          _buildSummaryRow(
+            'Total Due',
+            totalDueGold,
+            0,
+            _rateCutCash,
+            isDr: totalDueGold < 0,
+            isCr: _rateCutCash > 0 && _rateCutAmountType == 'Receivable',
+          ),
           const Divider(height: 20),
-          _buildSummaryRow('Closing Balance', closingBalanceGold, 0, _rateCutCash, isDr: closingBalanceGold < 0, isCr: _rateCutCash > 0 && _rateCutAmountType == 'Receivable', isBold: true),
+          _buildSummaryRow(
+            'Closing Balance',
+            closingBalanceGold,
+            0,
+            _rateCutCash,
+            isDr: closingBalanceGold < 0,
+            isCr: _rateCutCash > 0 && _rateCutAmountType == 'Receivable',
+            isBold: true,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryRow(String label, double gold, double silver, double cash, {bool isDr = false, bool isCr = false, bool isBold = false}) {
+  Widget _buildSummaryRow(
+    String label,
+    double gold,
+    double silver,
+    double cash, {
+    bool isDr = false,
+    bool isCr = false,
+    bool isBold = false,
+  }) {
     final drCr = isCr ? 'Cr' : (isDr ? 'Dr' : '');
-    final drCrColor = isCr ? Colors.green : (isDr ? Colors.red : AppTheme.textPrimary);
-    
+    final drCrColor = isCr
+        ? Colors.green
+        : (isDr ? Colors.red : AppTheme.textPrimary);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -2825,7 +3188,11 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                     cash.toStringAsFixed(2),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
-                      color: cash > 0 && isCr ? Colors.green : (cash > 0 && isDr ? Colors.red : AppTheme.textPrimary),
+                      color: cash > 0 && isCr
+                          ? Colors.green
+                          : (cash > 0 && isDr
+                                ? Colors.red
+                                : AppTheme.textPrimary),
                     ),
                   ),
                   if (cash > 0 && (isCr || isDr)) ...[
@@ -2858,18 +3225,17 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     required VoidCallback onDelete,
   }) {
     final drCr = isCr ? 'Rec' : (isDr ? 'Pay' : '');
-    final drCrColor = isCr ? Colors.red : (isDr ? Colors.green : AppTheme.textPrimary);
-    
+    final drCrColor = isCr
+        ? Colors.red
+        : (isDr ? Colors.green : AppTheme.textPrimary);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
           ),
           Row(
             children: [
@@ -2902,8 +3268,14 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                   Text(
                     cash.toStringAsFixed(2),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: cash > 0 ? FontWeight.w600 : FontWeight.normal,
-                      color: cash > 0 && isCr ? Colors.red : (cash > 0 && isDr ? Colors.green : AppTheme.textPrimary),
+                      fontWeight: cash > 0
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                      color: cash > 0 && isCr
+                          ? Colors.red
+                          : (cash > 0 && isDr
+                                ? Colors.green
+                                : AppTheme.textPrimary),
                     ),
                   ),
                   if (cash > 0 && (isCr || isDr)) ...[
@@ -2920,7 +3292,11 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
               ),
               const SizedBox(width: 8),
               IconButton(
-                icon: const Icon(Icons.edit, size: 16, color: AppTheme.primaryAction),
+                icon: const Icon(
+                  Icons.edit,
+                  size: 16,
+                  color: AppTheme.primaryAction,
+                ),
                 onPressed: onEdit,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -2934,38 +3310,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                 tooltip: 'Delete',
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotesSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.backgroundWhite,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Notes',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _remarksController,
-            maxLines: 4,
-            decoration: const InputDecoration(
-              hintText: 'Audio Remarks',
-              border: OutlineInputBorder(),
-            ),
           ),
         ],
       ),
@@ -2986,9 +3330,11 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
     // Fetch transaction lines for this item
     final repository = ref.read(transactionsRepositoryProvider);
-    final transactionLines = await repository.getTransactionLinesByItemId(itemId);
+    final transactionLines = await repository.getTransactionLinesByItemId(
+      itemId,
+    );
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     showDialog(
       context: context,
@@ -3005,14 +3351,15 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     );
   }
 
-  void _updateLineFromStock(int lineIndex, TransactionLine stockLine, Item item) {
+  void _updateLineFromStock(
+    int lineIndex,
+    TransactionLine stockLine,
+    Item item,
+  ) {
     if (lineIndex >= _lines.length) {
-      print('Error: lineIndex $lineIndex is out of bounds. _lines.length = ${_lines.length}');
       return;
     }
-    
-    print('Updating line $lineIndex with stock item: ${stockLine.description ?? item.name}');
-    
+
     setState(() {
       final line = _lines[lineIndex];
       line.selectedItemId = item.id;
@@ -3031,8 +3378,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
       line.unitCtrl.text = stockLine.qty.toStringAsFixed(0);
       _calculateTotals();
     });
-    
-    print('Line updated successfully');
   }
 }
 
@@ -3042,6 +3387,7 @@ class StockDetailsDialog extends StatelessWidget {
   final Function(TransactionLine) onSelect;
 
   const StockDetailsDialog({
+    super.key,
     required this.item,
     required this.transactionLines,
     required this.onSelect,
@@ -3061,9 +3407,7 @@ class StockDetailsDialog extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.backgroundLight,
-                border: Border(
-                  bottom: BorderSide(color: AppTheme.borderLight),
-                ),
+                border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
               ),
               child: Row(
                 children: [
@@ -3098,9 +3442,8 @@ class StockDetailsDialog extends StatelessWidget {
                         padding: const EdgeInsets.all(32),
                         child: Text(
                           'No stock records found for this item',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: AppTheme.textSecondary,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(color: AppTheme.textSecondary),
                         ),
                       ),
                     )
@@ -3272,9 +3615,7 @@ class StockDetailsDialog extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.backgroundLight,
-                border: Border(
-                  top: BorderSide(color: AppTheme.borderLight),
-                ),
+                border: Border(top: BorderSide(color: AppTheme.borderLight)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -3389,9 +3730,7 @@ class _MetalReceiptDialogState extends ConsumerState<MetalReceiptDialog> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.backgroundLight,
-                border: Border(
-                  bottom: BorderSide(color: AppTheme.borderLight),
-                ),
+                border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
               ),
               child: Row(
                 children: [
@@ -3423,7 +3762,8 @@ class _MetalReceiptDialogState extends ConsumerState<MetalReceiptDialog> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: widget.itemsAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (err, stack) => Center(child: Text('Error: $err')),
                   data: (items) => Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -3440,7 +3780,7 @@ class _MetalReceiptDialogState extends ConsumerState<MetalReceiptDialog> {
                           ),
                           Expanded(
                             child: DropdownButtonFormField<int>(
-                              value: widget.itemId,
+                              initialValue: widget.itemId,
                               decoration: const InputDecoration(
                                 hintText: 'Select Item',
                                 isDense: true,
@@ -3632,9 +3972,7 @@ class _MetalReceiptDialogState extends ConsumerState<MetalReceiptDialog> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.backgroundLight,
-                border: Border(
-                  top: BorderSide(color: AppTheme.borderLight),
-                ),
+                border: Border(top: BorderSide(color: AppTheme.borderLight)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -3723,9 +4061,7 @@ class _MetalPaymentDialogState extends ConsumerState<MetalPaymentDialog> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.backgroundLight,
-                border: Border(
-                  bottom: BorderSide(color: AppTheme.borderLight),
-                ),
+                border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
               ),
               child: Row(
                 children: [
@@ -3757,7 +4093,8 @@ class _MetalPaymentDialogState extends ConsumerState<MetalPaymentDialog> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: widget.itemsAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (err, stack) => Center(child: Text('Error: $err')),
                   data: (items) => Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -3774,7 +4111,7 @@ class _MetalPaymentDialogState extends ConsumerState<MetalPaymentDialog> {
                           ),
                           Expanded(
                             child: DropdownButtonFormField<int>(
-                              value: widget.itemId,
+                              initialValue: widget.itemId,
                               decoration: const InputDecoration(
                                 hintText: 'Select Item',
                                 isDense: true,
@@ -3966,9 +4303,7 @@ class _MetalPaymentDialogState extends ConsumerState<MetalPaymentDialog> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.backgroundLight,
-                border: Border(
-                  top: BorderSide(color: AppTheme.borderLight),
-                ),
+                border: Border(top: BorderSide(color: AppTheme.borderLight)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -4051,7 +4386,7 @@ class _RateCutDialogState extends State<RateCutDialog> {
     super.initState();
     _fineType = widget.fineType;
     _amountType = widget.amountType;
-    
+
     // Add listeners for auto-calculation
     widget.metalRateCtrl.addListener(_calculateAmount);
     widget.fineCtrl.addListener(_calculateAmount);
@@ -4068,7 +4403,7 @@ class _RateCutDialogState extends State<RateCutDialog> {
     final metalRate = double.tryParse(widget.metalRateCtrl.text) ?? 0;
     final fine = double.tryParse(widget.fineCtrl.text) ?? 0;
     final amount = metalRate * fine;
-    
+
     if (amount > 0 && widget.amountCtrl.text != amount.toStringAsFixed(2)) {
       widget.amountCtrl.text = amount.toStringAsFixed(2);
     }
@@ -4088,9 +4423,7 @@ class _RateCutDialogState extends State<RateCutDialog> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.backgroundLight,
-                border: Border(
-                  bottom: BorderSide(color: AppTheme.borderLight),
-                ),
+                border: Border(bottom: BorderSide(color: AppTheme.borderLight)),
               ),
               child: Row(
                 children: [
@@ -4130,7 +4463,11 @@ class _RateCutDialogState extends State<RateCutDialog> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.blue.shade700,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -4147,7 +4484,10 @@ class _RateCutDialogState extends State<RateCutDialog> {
             // Content
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -4159,22 +4499,18 @@ class _RateCutDialogState extends State<RateCutDialog> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: 'Gold',
-                          groupValue: widget.metalType,
-                          onChanged: (value) => widget.onMetalTypeChanged(value!),
-                        ),
-                        const Text('Gold'),
-                        const SizedBox(width: 24),
-                        Radio<String>(
-                          value: 'Silver',
-                          groupValue: widget.metalType,
-                          onChanged: (value) => widget.onMetalTypeChanged(value!),
-                        ),
-                        const Text('Silver'),
-                      ],
+                    RadioGroup<String>(
+                      groupValue: widget.metalType,
+                      onChanged: (value) => widget.onMetalTypeChanged(value!),
+                      child: Row(
+                        children: const [
+                          Radio<String>(value: 'Gold'),
+                          Text('Gold'),
+                          SizedBox(width: 24),
+                          Radio<String>(value: 'Silver'),
+                          Text('Silver'),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 24),
                     // Metal Rate
@@ -4232,7 +4568,7 @@ class _RateCutDialogState extends State<RateCutDialog> {
                         SizedBox(
                           width: 100,
                           child: DropdownButtonFormField<String>(
-                            value: widget.fineUnit,
+                            initialValue: widget.fineUnit,
                             decoration: const InputDecoration(
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
@@ -4245,7 +4581,9 @@ class _RateCutDialogState extends State<RateCutDialog> {
                               DropdownMenuItem(value: 'kg', child: Text('kg')),
                             ],
                             onChanged: (value) {
-                              if (value != null) widget.onFineUnitChanged(value);
+                              if (value != null) {
+                                widget.onFineUnitChanged(value);
+                              }
                             },
                           ),
                         ),
@@ -4253,7 +4591,7 @@ class _RateCutDialogState extends State<RateCutDialog> {
                         SizedBox(
                           width: 100,
                           child: DropdownButtonFormField<String>(
-                            value: _fineType,
+                            initialValue: _fineType,
                             decoration: const InputDecoration(
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
@@ -4262,8 +4600,20 @@ class _RateCutDialogState extends State<RateCutDialog> {
                               ),
                             ),
                             items: const [
-                              DropdownMenuItem(value: 'Payable', child: Text('Payable', style: TextStyle(fontSize: 12))),
-                              DropdownMenuItem(value: 'Receivable', child: Text('Receivable', style: TextStyle(fontSize: 12))),
+                              DropdownMenuItem(
+                                value: 'Payable',
+                                child: Text(
+                                  'Payable',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Receivable',
+                                child: Text(
+                                  'Receivable',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
                             ],
                             onChanged: (value) {
                               if (value != null) {
@@ -4305,7 +4655,7 @@ class _RateCutDialogState extends State<RateCutDialog> {
                         SizedBox(
                           width: 80,
                           child: DropdownButtonFormField<String>(
-                            value: widget.amountUnit,
+                            initialValue: widget.amountUnit,
                             decoration: const InputDecoration(
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
@@ -4318,7 +4668,9 @@ class _RateCutDialogState extends State<RateCutDialog> {
                               DropdownMenuItem(value: '%', child: Text('%')),
                             ],
                             onChanged: (value) {
-                              if (value != null) widget.onAmountUnitChanged(value);
+                              if (value != null) {
+                                widget.onAmountUnitChanged(value);
+                              }
                             },
                           ),
                         ),
@@ -4326,7 +4678,7 @@ class _RateCutDialogState extends State<RateCutDialog> {
                         SizedBox(
                           width: 100,
                           child: DropdownButtonFormField<String>(
-                            value: _amountType,
+                            initialValue: _amountType,
                             decoration: const InputDecoration(
                               isDense: true,
                               contentPadding: EdgeInsets.symmetric(
@@ -4335,8 +4687,20 @@ class _RateCutDialogState extends State<RateCutDialog> {
                               ),
                             ),
                             items: const [
-                              DropdownMenuItem(value: 'Payable', child: Text('Payable', style: TextStyle(fontSize: 12))),
-                              DropdownMenuItem(value: 'Receivable', child: Text('Receivable', style: TextStyle(fontSize: 12))),
+                              DropdownMenuItem(
+                                value: 'Payable',
+                                child: Text(
+                                  'Payable',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Receivable',
+                                child: Text(
+                                  'Receivable',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
                             ],
                             onChanged: (value) {
                               if (value != null) {
@@ -4359,9 +4723,7 @@ class _RateCutDialogState extends State<RateCutDialog> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.backgroundLight,
-                border: Border(
-                  top: BorderSide(color: AppTheme.borderLight),
-                ),
+                border: Border(top: BorderSide(color: AppTheme.borderLight)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,

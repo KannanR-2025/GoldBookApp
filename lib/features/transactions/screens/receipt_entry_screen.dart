@@ -400,7 +400,7 @@ class _ReceiptEntryScreenState extends ConsumerState<ReceiptEntryScreen>
             children: [
               Expanded(
                 child: DropdownButtonFormField<int>(
-                  value: _selectedPartyId,
+                  initialValue: _selectedPartyId,
                   decoration: InputDecoration(labelText: '$partyType *'),
                   items: parties
                       .map(

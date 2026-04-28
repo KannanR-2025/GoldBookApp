@@ -49,6 +49,252 @@ class TransactionsRepository {
         );
   }
 
+  // ─── Stock Change Helpers ───────────────────────────────────────────
+
+  /// Calculate stock change for a line from a TransactionLinesCompanion (create/update new lines)
+  ({double qty, double weight}) _calcStockChangeForCompanion(
+    String txnType,
+    TransactionLinesCompanion line,
+  ) {
+    final lineType = line.lineType.value;
+    final desc = line.description.value ?? '';
+    final qty = line.qty.value;
+    final weight = line.netWeight.value;
+
+    return _calcStockChange(txnType, lineType, desc, qty, weight);
+  }
+
+  /// Calculate stock change for a line from a TransactionLine (delete/update old lines)
+  ({double qty, double weight}) _calcStockChangeForLine(
+    String txnType,
+    TransactionLine line,
+  ) {
+    final lineType = line.lineType ?? '';
+    final desc = line.description ?? '';
+
+    return _calcStockChange(txnType, lineType, desc, line.qty, line.netWeight);
+  }
+
+  /// Core stock calculation logic
+  /// For Sale: regular lines decrease stock, M-Rec increases, M-Pay decreases
+  /// For Purchase: regular lines increase stock, M-Rec increases, M-Pay decreases
+  /// For MetalTransaction/StockTransfer: Credit increases, Debit decreases
+  ({double qty, double weight}) _calcStockChange(
+    String txnType,
+    String? lineType,
+    String desc,
+    double qty,
+    double weight,
+  ) {
+    if (txnType == 'Inventory Adjustment') {
+      return (qty: qty, weight: weight);
+    }
+
+    if (txnType == 'Stock Transfer' || txnType == 'MetalTransaction') {
+      if (lineType == 'Debit') {
+        return (qty: -qty, weight: -weight);
+      } else if (lineType == 'Credit') {
+        return (qty: qty, weight: weight);
+      }
+      return (qty: 0, weight: 0);
+    }
+
+    // Sale / Purchase / Metal Issue / Metal Receipt
+    final isSpecialLine = desc.startsWith('M-Rec:') ||
+        desc.startsWith('M-Pay:') ||
+        desc.startsWith('R-Cut:');
+
+    if (isSpecialLine) {
+      // M-Rec (Credit) adds stock, M-Pay (Debit) removes stock
+      // R-Cut (Credit) adds stock (metal received via rate cut settlement)
+      if (lineType == 'Credit') {
+        return (qty: qty, weight: weight);
+      } else if (lineType == 'Debit') {
+        return (qty: -qty, weight: -weight);
+      }
+      return (qty: 0, weight: 0);
+    }
+
+    // Regular lines
+    if (txnType == 'Sale' || txnType == 'Metal Issue') {
+      return (qty: -qty, weight: -weight);
+    } else if (txnType == 'Purchase' || txnType == 'Metal Receipt') {
+      return (qty: qty, weight: weight);
+    }
+
+    return (qty: 0, weight: 0);
+  }
+
+  // ─── Party Balance Helpers ──────────────────────────────────────────
+
+  /// Calculate party balance impact for new lines (TransactionLinesCompanion)
+  ({double gold, double silver, double cash}) _calcBalanceImpactFromCompanions(
+    String txnType,
+    double totalGold,
+    double totalSilver,
+    double totalAmount,
+    List<TransactionLinesCompanion> lines,
+  ) {
+    double goldImpact = 0;
+    double silverImpact = 0;
+    double cashImpact = 0;
+
+    if (txnType == 'Sale') {
+      // Sale: party owes us gold (+) and cash (+)
+      goldImpact = totalGold;
+      silverImpact = totalSilver;
+      cashImpact = totalAmount;
+      // Add M-Rec/M-Pay impact from special lines
+      for (var line in lines) {
+        final desc = line.description.value ?? '';
+        if (desc.startsWith('M-Rec:')) {
+          // Customer gives metal = reduces what they owe
+          goldImpact -= line.netWeight.value;
+        } else if (desc.startsWith('M-Pay:')) {
+          // We give extra metal = increases what they owe
+          goldImpact += line.netWeight.value;
+        } else if (desc.startsWith('R-Cut:')) {
+          final lType = line.lineType.value;
+          if (lType == 'Debit') {
+            goldImpact += line.netWeight.value;
+          } else if (lType == 'Credit') {
+            goldImpact -= line.netWeight.value;
+          }
+        }
+      }
+    } else if (txnType == 'Purchase') {
+      // Purchase: we owe supplier (-) gold and cash
+      goldImpact = -totalGold;
+      silverImpact = -totalSilver;
+      cashImpact = -totalAmount;
+      // Add M-Rec/M-Pay impact from special lines
+      for (var line in lines) {
+        final desc = line.description.value ?? '';
+        if (desc.startsWith('M-Rec:')) {
+          // Supplier gives extra metal = we owe more
+          goldImpact -= line.netWeight.value;
+        } else if (desc.startsWith('M-Pay:')) {
+          // We give metal as payment = we owe less
+          goldImpact += line.netWeight.value;
+        } else if (desc.startsWith('R-Cut:')) {
+          final lType = line.lineType.value;
+          if (lType == 'Debit') {
+            goldImpact += line.netWeight.value;
+          } else if (lType == 'Credit') {
+            goldImpact -= line.netWeight.value;
+          }
+        }
+      }
+    } else if (txnType == 'Receipt') {
+      goldImpact = -totalGold;
+      silverImpact = -totalSilver;
+      cashImpact = -totalAmount;
+    } else if (txnType == 'Payment') {
+      goldImpact = totalGold;
+      silverImpact = totalSilver;
+      cashImpact = totalAmount;
+    } else if (txnType == 'Stock Transfer' || txnType == 'MetalTransaction') {
+      for (var line in lines) {
+        final lType = line.lineType.value;
+        if (lType == 'Debit') {
+          goldImpact += line.netWeight.value;
+        } else if (lType == 'Credit') {
+          goldImpact -= line.netWeight.value;
+        }
+      }
+      if (txnType == 'MetalTransaction') {
+        cashImpact = totalAmount;
+      }
+    } else if (txnType == 'Inventory Adjustment') {
+      goldImpact = 0;
+      silverImpact = 0;
+      cashImpact = 0;
+    }
+
+    return (gold: goldImpact, silver: silverImpact, cash: cashImpact);
+  }
+
+  /// Calculate party balance impact from saved TransactionLines (for reversal)
+  ({double gold, double silver, double cash}) _calcBalanceImpactFromLines(
+    String txnType,
+    double totalGold,
+    double totalSilver,
+    double totalAmount,
+    List<TransactionLine> lines,
+  ) {
+    double goldImpact = 0;
+    double silverImpact = 0;
+    double cashImpact = 0;
+
+    if (txnType == 'Sale') {
+      goldImpact = totalGold;
+      silverImpact = totalSilver;
+      cashImpact = totalAmount;
+      for (var line in lines) {
+        final desc = line.description ?? '';
+        if (desc.startsWith('M-Rec:')) {
+          goldImpact -= line.netWeight;
+        } else if (desc.startsWith('M-Pay:')) {
+          goldImpact += line.netWeight;
+        } else if (desc.startsWith('R-Cut:')) {
+          final lType = line.lineType ?? '';
+          if (lType == 'Debit') {
+            goldImpact += line.netWeight;
+          } else if (lType == 'Credit') {
+            goldImpact -= line.netWeight;
+          }
+        }
+      }
+    } else if (txnType == 'Purchase') {
+      goldImpact = -totalGold;
+      silverImpact = -totalSilver;
+      cashImpact = -totalAmount;
+      for (var line in lines) {
+        final desc = line.description ?? '';
+        if (desc.startsWith('M-Rec:')) {
+          goldImpact -= line.netWeight;
+        } else if (desc.startsWith('M-Pay:')) {
+          goldImpact += line.netWeight;
+        } else if (desc.startsWith('R-Cut:')) {
+          final lType = line.lineType ?? '';
+          if (lType == 'Debit') {
+            goldImpact += line.netWeight;
+          } else if (lType == 'Credit') {
+            goldImpact -= line.netWeight;
+          }
+        }
+      }
+    } else if (txnType == 'Receipt') {
+      goldImpact = -totalGold;
+      silverImpact = -totalSilver;
+      cashImpact = -totalAmount;
+    } else if (txnType == 'Payment') {
+      goldImpact = totalGold;
+      silverImpact = totalSilver;
+      cashImpact = totalAmount;
+    } else if (txnType == 'Stock Transfer' || txnType == 'MetalTransaction') {
+      for (var line in lines) {
+        final lType = line.lineType ?? '';
+        if (lType == 'Debit') {
+          goldImpact += line.netWeight;
+        } else if (lType == 'Credit') {
+          goldImpact -= line.netWeight;
+        }
+      }
+      if (txnType == 'MetalTransaction') {
+        cashImpact = totalAmount;
+      }
+    } else if (txnType == 'Inventory Adjustment') {
+      goldImpact = 0;
+      silverImpact = 0;
+      cashImpact = 0;
+    }
+
+    return (gold: goldImpact, silver: silverImpact, cash: cashImpact);
+  }
+
+  // ─── CRUD Operations ───────────────────────────────────────────────
+
   Future<void> createTransaction({
     required TransactionsCompanion header,
     required List<TransactionLinesCompanion> lines,
@@ -56,72 +302,28 @@ class TransactionsRepository {
     return _db.transaction(() async {
       // 1. Insert Header
       final transactionId = await _db.into(_db.transactions).insert(header);
+      final txnType = header.type.value;
 
-      // 2. Insert Lines
+      // 2. Insert Lines & Update Stock
       for (var line in lines) {
         await _db
             .into(_db.transactionLines)
             .insert(line.copyWith(transactionId: Value(transactionId)));
 
-        // Update Item Stock if applicable
         if (line.itemId.value != null) {
           final item = await (_db.select(
             _db.items,
           )..where((t) => t.id.equals(line.itemId.value!))).getSingle();
 
-          double qtyChange = 0;
-          double weightChange = 0;
+          final change = _calcStockChangeForCompanion(txnType, line);
 
-          // Check if line has explicit lineType (for metal receipt/payment within Sale/Purchase)
-          final lineType = line.lineType.value;
-
-          if (header.type.value == 'Inventory Adjustment') {
-            // Positive Qty = Stock Increase (e.g. Found)
-            // Negative Qty = Stock Decrease (e.g. Loss)
-            qtyChange = line.qty.value;
-            weightChange = line.netWeight.value;
-          } else if (header.type.value == 'Stock Transfer') {
-            // Journal Style
-            if (lineType == 'Debit') {
-              // Outward / Issue -> Stock Decrease
-              qtyChange = -(line.qty.value);
-              weightChange = -line.netWeight.value;
-            } else if (lineType == 'Credit') {
-              // Inward / Receipt -> Stock Increase
-              qtyChange = line.qty.value;
-              weightChange = line.netWeight.value;
-            }
-          } else if (lineType != null && lineType.isNotEmpty) {
-            // Metal Receipt/Payment lines within Sale/Purchase
-            // Use lineType to determine stock direction
-            if (lineType == 'Credit') {
-              // Metal Receipt - ADD stock (receiving metal)
-              qtyChange = line.qty.value;
-              weightChange = line.netWeight.value;
-            } else if (lineType == 'Debit') {
-              // Metal Payment - DEDUCT stock (giving metal)
-              qtyChange = -(line.qty.value);
-              weightChange = -line.netWeight.value;
-            }
-          } else if (header.type.value == 'Sale' ||
-              header.type.value == 'Metal Issue') {
-            // Regular sale line - Deduct stock
-            qtyChange = -(line.qty.value);
-            weightChange = -line.netWeight.value;
-          } else if (header.type.value == 'Purchase' ||
-              header.type.value == 'Metal Receipt') {
-            // Regular purchase line - Add stock
-            qtyChange = line.qty.value;
-            weightChange = line.netWeight.value;
-          }
-
-          if (qtyChange != 0 || weightChange != 0) {
+          if (change.qty != 0 || change.weight != 0) {
             await _db
                 .update(_db.items)
                 .replace(
                   item.copyWith(
-                    stockQty: item.stockQty + qtyChange,
-                    stockWeight: item.stockWeight + weightChange,
+                    stockQty: item.stockQty + change.qty,
+                    stockWeight: item.stockWeight + change.weight,
                   ),
                 );
           }
@@ -134,72 +336,21 @@ class TransactionsRepository {
         _db.parties,
       )..where((t) => t.id.equals(partyId))).getSingle();
 
-      // Calculate impact based on transaction type
-      double goldImpact = 0;
-      double silverImpact = 0;
-      double cashImpact = 0;
-
-      final type = header.type.value; // Sale, Purchase, Receipt, Payment
-      final totalGold = header.totalGoldWeight.value;
-      final totalSilver = header.totalSilverWeight.value;
-      final totalAmount = header.totalAmount.value;
-
-      if (type == 'Sale') {
-        goldImpact = -totalGold; // Party owes gold (debit) or we gave gold?
-        // Typically in gold accounting: Sale -> Party Debit (receivable).
-        // Let's assume positive balance = Receivable
-
-        // Usually: Sale 100g
-        // Party Balance += 100g (He owes us)
-        // Stock -= 100g
-        goldImpact = totalGold;
-        silverImpact = totalSilver;
-        cashImpact =
-            totalAmount; // If cash sale? Or credit? defaulting to credit/receivable logic
-      } else if (type == 'Purchase') {
-        goldImpact = -totalGold; // We owe him
-        silverImpact = -totalSilver;
-        cashImpact = -totalAmount;
-      } else if (type == 'Receipt') {
-        // We received metal/cash
-        goldImpact = -totalGold; // Reduces his debt
-        silverImpact = -totalSilver;
-        cashImpact = -totalAmount;
-      } else if (type == 'Payment') {
-        // We gave metal/cash
-        goldImpact = totalGold; // Increases his debt / reduces our payable
-        silverImpact = totalSilver;
-        cashImpact = totalAmount;
-      } else if (type == 'Stock Transfer') {
-        // Mixed usage: Sum up lines based on type
-        // This is tricky because calculateImpact is based on Header Totals usually.
-        // But for Stock Transfer, the Header Totals might be "Net Difference" or meaningless.
-        // We should traverse lines to get exact impact.
-        // HOWEVER, to be efficient, let's assume the UI calculates a Net Difference and stores it in Header.
-        // OR better: We simply re-query lines here? No, 'lines' argument is the list of companions.
-
-        for (var line in lines) {
-          final lType = line.lineType.value;
-          if (lType == 'Debit') {
-            goldImpact += line.netWeight.value; // Add to Receivable
-          } else if (lType == 'Credit') {
-            goldImpact -= line.netWeight.value; // Reduce Receivable
-          }
-        }
-      } else if (type == 'Inventory Adjustment') {
-        // No Party Impact for Internal Adjustment
-        goldImpact = 0;
-        silverImpact = 0;
-        cashImpact = 0;
-      }
+      final impact = _calcBalanceImpactFromCompanions(
+        txnType,
+        header.totalGoldWeight.value,
+        header.totalSilverWeight.value,
+        header.totalAmount.value,
+        lines,
+      );
 
       await _db
           .update(_db.parties)
           .replace(
             party.copyWith(
-              goldBalance: party.goldBalance + goldImpact,
-              silverBalance: party.silverBalance + silverImpact,
-              cashBalance: party.cashBalance + cashImpact,
+              goldBalance: party.goldBalance + impact.gold,
+              silverBalance: party.silverBalance + impact.silver,
+              cashBalance: party.cashBalance + impact.cash,
             ),
           );
     });
@@ -226,31 +377,29 @@ class TransactionsRepository {
   Future<String?> getLastTransactionNumberForDate(DateTime date) async {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
-    
-    final transactions = await (_db.select(
-      _db.transactions,
-    )
-      ..where((t) => t.date.isBiggerOrEqualValue(startOfDay))
-      ..where((t) => t.date.isSmallerThanValue(endOfDay))
-      ..where((t) => t.type.equals('Sale'))
-      ..orderBy([(t) => OrderingTerm.desc(t.id)]))
-        .get();
-    
+
+    final transactions =
+        await (_db.select(_db.transactions)
+              ..where((t) => t.date.isBiggerOrEqualValue(startOfDay))
+              ..where((t) => t.date.isSmallerThanValue(endOfDay))
+              ..where((t) => t.type.equals('Sale'))
+              ..orderBy([(t) => OrderingTerm.desc(t.id)]))
+            .get();
+
     if (transactions.isEmpty) return null;
-    
-    // Find the last transaction with a number
+
     for (var txn in transactions) {
       if (txn.transactionNumber != null && txn.transactionNumber!.isNotEmpty) {
         return txn.transactionNumber;
       }
     }
-    
+
     return null;
   }
 
   Future<void> deleteTransaction(int id) {
     return _db.transaction(() async {
-      // 1. Fetch Transaction to reverse balance
+      // 1. Fetch Transaction
       final txn = await (_db.select(
         _db.transactions,
       )..where((t) => t.id.equals(id))).getSingle();
@@ -259,7 +408,7 @@ class TransactionsRepository {
         _db.parties,
       )..where((t) => t.id.equals(txn.partyId))).getSingle();
 
-      // 2. Fetch lines to reverse stock
+      // 2. Fetch lines
       final lines = await (_db.select(
         _db.transactionLines,
       )..where((t) => t.transactionId.equals(id))).get();
@@ -271,54 +420,16 @@ class TransactionsRepository {
             _db.items,
           )..where((t) => t.id.equals(line.itemId!))).getSingle();
 
-          double qtyChange = 0;
-          double weightChange = 0;
+          final change = _calcStockChangeForLine(txn.type, line);
 
-          // Check if line has explicit lineType (for metal receipt/payment)
-          final lineType = line.lineType;
-
-          if (txn.type == 'Inventory Adjustment') {
-            // Reverse: negative of original
-            qtyChange = -line.qty;
-            weightChange = -line.netWeight;
-          } else if (txn.type == 'Stock Transfer') {
-            if (lineType == 'Debit') {
-              // Was decrease, reverse to increase
-              qtyChange = line.qty;
-              weightChange = line.netWeight;
-            } else if (lineType == 'Credit') {
-              // Was increase, reverse to decrease
-              qtyChange = -line.qty;
-              weightChange = -line.netWeight;
-            }
-          } else if (lineType != null && lineType.isNotEmpty) {
-            // Metal Receipt/Payment lines - reverse based on lineType
-            if (lineType == 'Credit') {
-              // Was increase (Metal Receipt), reverse to decrease
-              qtyChange = -line.qty;
-              weightChange = -line.netWeight;
-            } else if (lineType == 'Debit') {
-              // Was decrease (Metal Payment), reverse to increase
-              qtyChange = line.qty;
-              weightChange = line.netWeight;
-            }
-          } else if (txn.type == 'Sale' || txn.type == 'Metal Issue') {
-            // Was decrease, reverse to increase
-            qtyChange = line.qty;
-            weightChange = line.netWeight;
-          } else if (txn.type == 'Purchase' || txn.type == 'Metal Receipt') {
-            // Was increase, reverse to decrease
-            qtyChange = -line.qty;
-            weightChange = -line.netWeight;
-          }
-
-          if (qtyChange != 0 || weightChange != 0) {
+          // Reverse: negate the original change
+          if (change.qty != 0 || change.weight != 0) {
             await _db
                 .update(_db.items)
                 .replace(
                   item.copyWith(
-                    stockQty: item.stockQty + qtyChange,
-                    stockWeight: item.stockWeight + weightChange,
+                    stockQty: item.stockQty - change.qty,
+                    stockWeight: item.stockWeight - change.weight,
                   ),
                 );
           }
@@ -326,44 +437,22 @@ class TransactionsRepository {
       }
 
       // 4. Reverse Party Balance
-      double revGold = 0;
-      double revSilver = 0;
-      double revCash = 0;
+      final impact = _calcBalanceImpactFromLines(
+        txn.type,
+        txn.totalGoldWeight,
+        txn.totalSilverWeight,
+        txn.totalAmount,
+        lines,
+      );
 
-      if (txn.type == 'Sale') {
-        revGold = -txn.totalGoldWeight;
-        revSilver = -txn.totalSilverWeight;
-        revCash = -txn.totalAmount;
-      } else if (txn.type == 'Purchase') {
-        revGold = txn.totalGoldWeight;
-        revSilver = txn.totalSilverWeight;
-        revCash = txn.totalAmount;
-      } else if (txn.type == 'Receipt') {
-        revGold = txn.totalGoldWeight;
-        revSilver = txn.totalSilverWeight;
-        revCash = txn.totalAmount;
-      } else if (txn.type == 'Payment') {
-        revGold = -txn.totalGoldWeight;
-        revSilver = -txn.totalSilverWeight;
-        revCash = -txn.totalAmount;
-      } else if (txn.type == 'Stock Transfer') {
-        for (var line in lines) {
-          final lType = line.lineType;
-          if (lType == 'Debit') {
-            revGold -= line.netWeight;
-          } else if (lType == 'Credit') {
-            revGold += line.netWeight;
-          }
-        }
-      }
-
+      // Reverse: subtract original impact
       await _db
           .update(_db.parties)
           .replace(
             party.copyWith(
-              goldBalance: party.goldBalance + revGold,
-              silverBalance: party.silverBalance + revSilver,
-              cashBalance: party.cashBalance + revCash,
+              goldBalance: party.goldBalance - impact.gold,
+              silverBalance: party.silverBalance - impact.silver,
+              cashBalance: party.cashBalance - impact.cash,
             ),
           );
 
@@ -373,9 +462,7 @@ class TransactionsRepository {
       )..where((t) => t.transactionId.equals(id))).go();
 
       // 6. Delete transaction
-      await (_db.delete(
-        _db.transactions,
-      )..where((t) => t.id.equals(id))).go();
+      await (_db.delete(_db.transactions)..where((t) => t.id.equals(id))).go();
     });
   }
 
@@ -385,118 +472,116 @@ class TransactionsRepository {
     required List<TransactionLinesCompanion> lines,
   }) {
     return _db.transaction(() async {
-      // 1. Fetch Old Transaction to reverse balance
+      // Fetch Old Transaction & Lines
       final oldTxn = await (_db.select(
         _db.transactions,
       )..where((t) => t.id.equals(id))).getSingle();
+
+      final oldLines = await (_db.select(
+        _db.transactionLines,
+      )..where((t) => t.transactionId.equals(id))).get();
+
+      // 1. Reverse old stock
+      for (var line in oldLines) {
+        if (line.itemId != null) {
+          final item = await (_db.select(
+            _db.items,
+          )..where((t) => t.id.equals(line.itemId!))).getSingle();
+
+          final change = _calcStockChangeForLine(oldTxn.type, line);
+
+          if (change.qty != 0 || change.weight != 0) {
+            await _db
+                .update(_db.items)
+                .replace(
+                  item.copyWith(
+                    stockQty: item.stockQty - change.qty,
+                    stockWeight: item.stockWeight - change.weight,
+                  ),
+                );
+          }
+        }
+      }
+
+      // 2. Reverse old party balance
       final oldParty = await (_db.select(
         _db.parties,
       )..where((t) => t.id.equals(oldTxn.partyId))).getSingle();
 
-      // Reverse Old Impact
-      double revGold = 0;
-      double revSilver = 0;
-      double revCash = 0;
-      final oldType = oldTxn.type;
-
-      if (oldType == 'Sale') {
-        revGold = -oldTxn.totalGoldWeight;
-        revSilver = -oldTxn.totalSilverWeight;
-        revCash = -oldTxn.totalAmount;
-      } else if (oldType == 'Purchase') {
-        revGold = oldTxn.totalGoldWeight;
-        revSilver = oldTxn.totalSilverWeight;
-        revCash = oldTxn.totalAmount;
-      } else if (oldType == 'Receipt') {
-        revGold = oldTxn.totalGoldWeight;
-        revSilver = oldTxn.totalSilverWeight;
-        revCash = oldTxn.totalAmount;
-      } else if (oldType == 'Payment') {
-        revGold = -oldTxn.totalGoldWeight;
-        revSilver = -oldTxn.totalSilverWeight;
-        revCash = -oldTxn.totalAmount;
-      } else if (oldType == 'Stock Transfer') {
-        // Fetch old lines to reverse mixed impact
-        final oldLines = await (_db.select(
-          _db.transactionLines,
-        )..where((t) => t.transactionId.equals(id))).get();
-
-        for (var line in oldLines) {
-          final lType = line.lineType;
-          if (lType == 'Debit') {
-            // Was +Receivable, so Reversal is -Receivable
-            revGold -= line.netWeight;
-          } else if (lType == 'Credit') {
-            // Was -Receivable, so Reversal is +Receivable
-            revGold += line.netWeight;
-          }
-        }
-      }
+      final oldImpact = _calcBalanceImpactFromLines(
+        oldTxn.type,
+        oldTxn.totalGoldWeight,
+        oldTxn.totalSilverWeight,
+        oldTxn.totalAmount,
+        oldLines,
+      );
 
       await _db
           .update(_db.parties)
           .replace(
             oldParty.copyWith(
-              goldBalance: oldParty.goldBalance + revGold,
-              silverBalance: oldParty.silverBalance + revSilver,
-              cashBalance: oldParty.cashBalance + revCash,
+              goldBalance: oldParty.goldBalance - oldImpact.gold,
+              silverBalance: oldParty.silverBalance - oldImpact.silver,
+              cashBalance: oldParty.cashBalance - oldImpact.cash,
             ),
           );
 
-      // 2. Update Header
+      // 3. Update Header
       await (_db.update(
         _db.transactions,
       )..where((t) => t.id.equals(id))).write(header);
 
-      // 3. Replace Lines
+      // 4. Replace Lines & Apply new stock
       await (_db.delete(
         _db.transactionLines,
       )..where((t) => t.transactionId.equals(id))).go();
+
+      final newType = header.type.value;
       for (var line in lines) {
         await _db
             .into(_db.transactionLines)
             .insert(line.copyWith(transactionId: Value(id)));
+
+        if (line.itemId.value != null) {
+          final item = await (_db.select(
+            _db.items,
+          )..where((t) => t.id.equals(line.itemId.value!))).getSingle();
+
+          final change = _calcStockChangeForCompanion(newType, line);
+
+          if (change.qty != 0 || change.weight != 0) {
+            await _db
+                .update(_db.items)
+                .replace(
+                  item.copyWith(
+                    stockQty: item.stockQty + change.qty,
+                    stockWeight: item.stockWeight + change.weight,
+                  ),
+                );
+          }
+        }
       }
 
-      // 4. Apply New Impact
-      // Fetch latest party state (after reversal)
+      // 5. Apply new party balance
       final currentParty = await (_db.select(
         _db.parties,
       )..where((t) => t.id.equals(header.partyId.value))).getSingle();
 
-      double newGold = 0;
-      double newSilver = 0;
-      double newCash = 0;
-      final newType = header.type.value;
-      final tGold = header.totalGoldWeight.value;
-      final tSilver = header.totalSilverWeight.value;
-      final tCash = header.totalAmount.value;
-
-      if (newType == 'Sale') {
-        newGold = tGold;
-        newSilver = tSilver;
-        newCash = tCash;
-      } else if (newType == 'Purchase') {
-        newGold = -tGold;
-        newSilver = -tSilver;
-        newCash = -tCash;
-      } else if (newType == 'Receipt') {
-        newGold = -tGold;
-        newSilver = -tSilver;
-        newCash = -tCash;
-      } else if (newType == 'Payment') {
-        newGold = tGold;
-        newSilver = tSilver;
-        newCash = tCash;
-      }
+      final newImpact = _calcBalanceImpactFromCompanions(
+        newType,
+        header.totalGoldWeight.value,
+        header.totalSilverWeight.value,
+        header.totalAmount.value,
+        lines,
+      );
 
       await _db
           .update(_db.parties)
           .replace(
             currentParty.copyWith(
-              goldBalance: currentParty.goldBalance + newGold,
-              silverBalance: currentParty.silverBalance + newSilver,
-              cashBalance: currentParty.cashBalance + newCash,
+              goldBalance: currentParty.goldBalance + newImpact.gold,
+              silverBalance: currentParty.silverBalance + newImpact.silver,
+              cashBalance: currentParty.cashBalance + newImpact.cash,
             ),
           );
     });

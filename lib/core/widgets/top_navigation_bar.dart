@@ -208,14 +208,23 @@ class TopNavigationBar extends StatelessWidget {
                   _NavDropdown(
                     label: 'Reports',
                     currentPath: currentPath,
-                    basePath: '/reports',
+                    basePath: '/reports,/customer-register,/supplier-register',
                     items: [
                       _DropdownItem(
                         label: 'All Reports',
                         path: '/reports',
                         onTap: () => context.go('/reports'),
                       ),
-                      // Future detailed reports
+                      _DropdownItem(
+                        label: 'Customer Register',
+                        path: '/customer-register',
+                        onTap: () => context.go('/customer-register'),
+                      ),
+                      _DropdownItem(
+                        label: 'Supplier Register',
+                        path: '/supplier-register',
+                        onTap: () => context.go('/supplier-register'),
+                      ),
                     ],
                   ),
                 ],
