@@ -59,7 +59,19 @@ class TransactionsRepository {
     final lineType = line.lineType.value;
     final desc = line.description.value ?? '';
     final qty = line.qty.value;
-    final weight = line.netWeight.value;
+    final netWeight = line.netWeight.value;
+
+    // Special lines (M-Rec, M-Pay, R-Cut) store fine weight directly in netWeight.
+    // Regular lines store raw net weight — convert to fine weight so stock tracks
+    // the same unit as transaction totals (totalGoldWeight uses fine weight).
+    final isSpecialLine = desc.startsWith('M-Rec:') ||
+        desc.startsWith('M-Pay:') ||
+        desc.startsWith('R-Cut:');
+    final weight = isSpecialLine
+        ? netWeight
+        : netWeight *
+              ((line.purity.value ?? 0.0) + line.wastage.value) /
+              100.0;
 
     return _calcStockChange(txnType, lineType, desc, qty, weight);
   }
@@ -72,7 +84,15 @@ class TransactionsRepository {
     final lineType = line.lineType ?? '';
     final desc = line.description ?? '';
 
-    return _calcStockChange(txnType, lineType, desc, line.qty, line.netWeight);
+    // Same fine-weight conversion as _calcStockChangeForCompanion.
+    final isSpecialLine = desc.startsWith('M-Rec:') ||
+        desc.startsWith('M-Pay:') ||
+        desc.startsWith('R-Cut:');
+    final weight = isSpecialLine
+        ? line.netWeight
+        : line.netWeight * ((line.purity ?? 0.0) + line.wastage) / 100.0;
+
+    return _calcStockChange(txnType, lineType, desc, line.qty, weight);
   }
 
   /// Core stock calculation logic

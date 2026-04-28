@@ -601,7 +601,7 @@
     },
     {
       "name": "matcher",
-      "version": "0.12.17",
+      "version": "0.12.18",
       "dependencies": [
         "async",
         "meta",
@@ -612,7 +612,7 @@
     },
     {
       "name": "test_api",
-      "version": "0.7.7",
+      "version": "0.7.8",
       "dependencies": [
         "async",
         "boolean_selector",
@@ -741,14 +741,14 @@
     },
     {
       "name": "material_color_utilities",
-      "version": "0.11.1",
+      "version": "0.13.0",
       "dependencies": [
         "collection"
       ]
     },
     {
       "name": "characters",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "dependencies": []
     },
     {
@@ -875,38 +875,6 @@
       ]
     },
     {
-      "name": "test",
-      "version": "1.26.3",
-      "dependencies": [
-        "analyzer",
-        "async",
-        "boolean_selector",
-        "collection",
-        "coverage",
-        "http_multi_server",
-        "io",
-        "js",
-        "matcher",
-        "node_preamble",
-        "package_config",
-        "path",
-        "pool",
-        "shelf",
-        "shelf_packages_handler",
-        "shelf_static",
-        "shelf_web_socket",
-        "source_span",
-        "stack_trace",
-        "stream_channel",
-        "test_api",
-        "test_core",
-        "typed_data",
-        "web_socket_channel",
-        "webkit_inspection_protocol",
-        "yaml"
-      ]
-    },
-    {
       "name": "vm_service",
       "version": "15.0.2",
       "dependencies": []
@@ -944,15 +912,39 @@
       ]
     },
     {
-      "name": "webkit_inspection_protocol",
-      "version": "1.2.1",
+      "name": "test",
+      "version": "1.28.0",
       "dependencies": [
-        "logging"
+        "analyzer",
+        "async",
+        "boolean_selector",
+        "collection",
+        "coverage",
+        "http_multi_server",
+        "io",
+        "matcher",
+        "node_preamble",
+        "package_config",
+        "path",
+        "pool",
+        "shelf",
+        "shelf_packages_handler",
+        "shelf_static",
+        "shelf_web_socket",
+        "source_span",
+        "stack_trace",
+        "stream_channel",
+        "test_api",
+        "test_core",
+        "typed_data",
+        "web_socket_channel",
+        "webkit_inspection_protocol",
+        "yaml"
       ]
     },
     {
       "name": "test_core",
-      "version": "0.6.12",
+      "version": "0.6.14",
       "dependencies": [
         "analyzer",
         "args",
@@ -978,6 +970,13 @@
       ]
     },
     {
+      "name": "webkit_inspection_protocol",
+      "version": "1.2.1",
+      "dependencies": [
+        "logging"
+      ]
+    },
+    {
       "name": "shelf_static",
       "version": "1.1.3",
       "dependencies": [
@@ -1000,11 +999,6 @@
     {
       "name": "node_preamble",
       "version": "2.0.2",
-      "dependencies": []
-    },
-    {
-      "name": "js",
-      "version": "0.7.2",
       "dependencies": []
     },
     {

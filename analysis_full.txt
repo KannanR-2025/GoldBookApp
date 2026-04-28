@@ -1,0 +1,84 @@
+Analyzing GoldBookApp...                                        
+
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:50:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:51:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:52:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:53:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:54:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:55:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:252:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:253:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:254:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:255:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:256:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:257:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/parties/screens/parties_screen.dart:258:7 • avoid_print
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/purchases/purchases_screen.dart:207:33 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/purchases/purchases_screen.dart:356:54 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/purchases/purchases_screen.dart:365:54 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/sales/sales_screen.dart:207:33 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/sales/sales_screen.dart:356:54 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/sales/sales_screen.dart:365:54 • use_build_context_synchronously
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/payment_entry_screen.dart:403:19 • deprecated_member_use
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:595:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:596:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:597:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:598:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:599:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:602:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:611:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:617:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:625:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:626:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:627:9 • avoid_print
+warning • The declaration '_buildNotesSection' isn't referenced • lib/features/transactions/screens/purchase_entry_screen.dart:3403:10 • unused_element
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/transactions/screens/purchase_entry_screen.dart:3456:7 • use_build_context_synchronously
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:3476:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:3482:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/purchase_entry_screen.dart:3505:5 • avoid_print
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/transactions/screens/purchase_entry_screen.dart:4631:27 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/transactions/screens/purchase_entry_screen.dart:4632:27 • deprecated_member_use
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/transactions/screens/purchase_entry_screen.dart:4639:27 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/transactions/screens/purchase_entry_screen.dart:4640:27 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/features/transactions/screens/purchase_entry_screen.dart:4716:33 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/features/transactions/screens/purchase_entry_screen.dart:4802:33 • curly_braces_in_flow_control_structures
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/purchase_entry_screen_old.dart:404:19 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/receipt_entry_screen.dart:403:19 • deprecated_member_use
+   info • Unnecessary braces in a string interpolation • lib/features/transactions/screens/sale_entry_screen.dart:562:103 • unnecessary_brace_in_string_interps
+   info • Unnecessary braces in a string interpolation • lib/features/transactions/screens/sale_entry_screen.dart:562:134 • unnecessary_brace_in_string_interps
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:572:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:573:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:574:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:575:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:576:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:579:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:588:11 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:594:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:602:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:603:9 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:604:9 • avoid_print
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:969:19 • deprecated_member_use
+warning • The declaration '_buildNotesSection' isn't referenced • lib/features/transactions/screens/sale_entry_screen.dart:2943:10 • unused_element
+   info • Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check • lib/features/transactions/screens/sale_entry_screen.dart:2994:7 • use_build_context_synchronously
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:3010:7 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:3014:5 • avoid_print
+   info • Don't invoke 'print' in production code • lib/features/transactions/screens/sale_entry_screen.dart:3035:5 • avoid_print
+   info • Constructors for public widgets should have a named 'key' parameter • lib/features/transactions/screens/sale_entry_screen.dart:3044:9 • use_key_in_widget_constructors
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:3443:31 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:3777:31 • deprecated_member_use
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:4166:27 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:4167:27 • deprecated_member_use
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:4173:27 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:4174:27 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:4235:29 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:4256:29 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:4308:29 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/sale_entry_screen.dart:4329:29 • deprecated_member_use
+   info • 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre • lib/features/transactions/screens/transaction_entry_screen.dart:382:37 • deprecated_member_use
+warning • Unused import: 'package:drift/drift.dart' • test/features/transactions/purchase_entry_test.dart:9:8 • unused_import
+warning • The value of the field '_db' isn't used • test/features/transactions/purchase_entry_test.dart:15:22 • unused_field
+warning • The value of the field '_db' isn't used • test/features/transactions/purchase_entry_test.dart:70:22 • unused_field
+warning • The value of the local variable 'itemSearchField' isn't used • test/features/transactions/purchase_entry_test.dart:248:11 • unused_local_variable
+   info • Don't invoke 'print' in production code • test/features/transactions/purchase_entry_test.dart:362:5 • avoid_print
+
+80 issues found. (ran in 1.4s)
