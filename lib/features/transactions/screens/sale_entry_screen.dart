@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:goldbook_desktop/config/theme.dart';
@@ -33,9 +34,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   final _dueDaysCtrl = TextEditingController(text: '0');
   DateTime? _dueDate;
   final _remarksController = TextEditingController();
-  final _referenceNoCtrl = TextEditingController();
-  final _partyWastageCtrl = TextEditingController();
-  final _partyRateCtrl = TextEditingController();
+
   final _barcodeCtrl = TextEditingController();
 
   // Payment & Discount
@@ -51,6 +50,10 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
 
   // Search controllers for item dropdowns
   final Map<int, TextEditingController> _itemSearchControllers = {};
+  final Map<int, FocusNode> _itemFocusNodes = {};
+
+  // Focus nodes for keyboard navigation
+
 
   // Totals
   double _totalGold = 0;
@@ -345,9 +348,18 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     _calculateTotals();
   }
 
+  @override
+  void dispose() {
+    for (final line in _lines) {
+      line.dispose();
+    }
+    super.dispose();
+  }
+
   void _removeLine(int index) {
     if (_lines.length > 1) {
       setState(() {
+        _lines[index].dispose();
         _lines.removeAt(index);
         _calculateTotals();
       });
@@ -730,7 +742,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Top Row: Party Information and Voucher Information
+                              // Top Row: Party Information and Summary
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -740,27 +752,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                                     child: _buildPartyInformation(parties),
                                   ),
                                   const SizedBox(width: 16),
-                                  // Voucher Information Section
-                                  Expanded(
-                                    flex: 1,
-                                    child: _buildVoucherInformation(),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              // Items Section
-                              _buildItemsSection(itemsAsync),
-                              const SizedBox(height: 16),
-                              // Bottom Row: Additional Buttons and Summary
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Additional issue/receive buttons
-                                  Expanded(
-                                    flex: 2,
-                                    child: _buildAdditionalButtons(),
-                                  ),
-                                  const SizedBox(width: 16),
                                   // Summary Section
                                   Expanded(
                                     flex: 1,
@@ -768,6 +759,12 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                                   ),
                                 ],
                               ),
+                              const SizedBox(height: 16),
+                              // Items Section
+                              _buildItemsSection(itemsAsync),
+                              const SizedBox(height: 16),
+                              // Notes Section
+                              _buildNotesSection(),
                             ],
                           ),
                         ),
@@ -835,38 +832,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
   }
 
   Widget _buildPartyInformation(List<Party> parties) {
-    Party? selectedParty;
-    if (_selectedPartyId != null) {
-      selectedParty = parties.firstWhere(
-        (p) => p.id == _selectedPartyId,
-        orElse: () => Party(
-          id: -1,
-          name: '',
-          type: '',
-          mobile: '',
-          createdAt: DateTime.now(),
-          addressLine1: '',
-          city: '',
-          state: '',
-          pinCode: '',
-          country: 'India',
-          status: 'Active',
-          openingGoldBalance: 0,
-          openingSilverBalance: 0,
-          openingCashBalance: 0,
-          goldBalance: 0,
-          silverBalance: 0,
-          cashBalance: 0,
-          creditLimitGold: 0,
-          creditLimitCash: 0,
-          discountPercentage: 0,
-          taxPreference: 'Taxable',
-          defaultWastage: null,
-          defaultRate: null,
-        ),
-      );
-    }
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -920,6 +885,11 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                     setState(() {
                       _selectedPartyId = party.id;
                       _partyCodeCtrl.text = party.code ?? '';
+                    });
+                    Future.microtask(() {
+                      if (_itemFocusNodes.containsKey(0)) {
+                        _itemFocusNodes[0]!.requestFocus();
+                      }
                     });
                   },
                   fieldViewBuilder:
@@ -990,38 +960,66 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                                   final party = options.elementAt(index);
                                   return InkWell(
                                     onTap: () => onSelected(party),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12.0),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                    child: Builder(
+                                      builder: (context) {
+                                        final isHighlighted =
+                                            AutocompleteHighlightedOption.of(
+                                              context,
+                                            ) ==
+                                            index;
+                                        if (isHighlighted) {
+                                          SchedulerBinding.instance
+                                              .addPostFrameCallback((_) {
+                                                Scrollable.ensureVisible(
+                                                  context,
+                                                  alignment: 0.5,
+                                                );
+                                              });
+                                        }
+                                        return Container(
+                                          color: isHighlighted
+                                              ? Theme.of(context).focusColor
+                                              : null,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(12.0),
+                                            child: Row(
                                               children: [
-                                                Text(
-                                                  party.code != null &&
-                                                          party.code!.isNotEmpty
-                                                      ? '${party.code} - ${party.name}'
-                                                      : party.name,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.w500,
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        party.code != null &&
+                                                                party
+                                                                    .code!
+                                                                    .isNotEmpty
+                                                            ? '${party.code} - ${party.name}'
+                                                            : party.name,
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                      if (party.mobile
+                                                          .isNotEmpty)
+                                                        Text(
+                                                          party.mobile,
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            color: AppTheme
+                                                                .textSecondary,
+                                                          ),
+                                                        ),
+                                                    ],
                                                   ),
                                                 ),
-                                                if (party.mobile.isNotEmpty)
-                                                  Text(
-                                                    party.mobile,
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: AppTheme
-                                                          .textSecondary,
-                                                    ),
-                                                  ),
                                               ],
                                             ),
                                           ),
-                                        ],
-                                      ),
+                                        );
+                                      },
                                     ),
                                   );
                                 },
@@ -1054,6 +1052,11 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                         _selectedPartyId = v;
                         _partyCodeCtrl.text = party.code ?? '';
                       });
+                      Future.microtask(() {
+                        if (_itemFocusNodes.containsKey(0)) {
+                          _itemFocusNodes[0]!.requestFocus();
+                        }
+                      });
                     }
                   },
                   validator: (v) => v == null ? 'Required' : null,
@@ -1066,106 +1069,60 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
             children: [
               Expanded(
                 child: TextFormField(
-                  controller: _partyWastageCtrl,
+                  controller: _transactionNumberCtrl,
                   decoration: const InputDecoration(
-                    labelText: 'Wast.',
+                    labelText: 'Invoice No.',
+                    hintText: 'Auto-generated',
                     isDense: true,
                   ),
-                  keyboardType: TextInputType.number,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextFormField(
-                  controller: _partyRateCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Rate.',
-                    isDense: true,
+                child: InkWell(
+                  onTap: () async {
+                    final d = await showDatePicker(
+                      context: context,
+                      initialDate: _date,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (d != null) setState(() => _date = d);
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Date',
+                      isDense: true,
+                    ),
+                    child: Text(DateFormat('dd-MMM-yyyy').format(_date)),
                   ),
-                  keyboardType: TextInputType.number,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Additional issue/receive',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary,
+            ),
           ),
           const SizedBox(height: 12),
-          if (_selectedPartyId != null)
-            TextButton.icon(
-              onPressed: () {
-                // View party details
-              },
-              icon: const Icon(Icons.info_outline, size: 18),
-              label: const Text('View Party\'s Details'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppTheme.primaryAction,
-              ),
-            ),
-          if (selectedParty != null && selectedParty.id != -1) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.backgroundLight,
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: AppTheme.borderLight),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'OPENING BALANCE:',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildBalanceRow(
-                    'Gold:',
-                    selectedParty.goldBalance.toStringAsFixed(3),
-                    selectedParty.goldBalance < 0 ? 'Dr' : 'Cr',
-                  ),
-                  _buildBalanceRow(
-                    'Silver:',
-                    selectedParty.silverBalance.toStringAsFixed(3),
-                    selectedParty.silverBalance < 0 ? 'Dr' : 'Cr',
-                  ),
-                  _buildBalanceRow(
-                    'Cash:',
-                    selectedParty.cashBalance.toStringAsFixed(2),
-                    selectedParty.cashBalance < 0 ? 'Dr' : 'Cr',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBalanceRow(String label, String value, String drCr) {
-    final isDr = drCr == 'Dr';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Text(
-                value,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+              _buildActionButton(Icons.diamond, 'Metal Received', Colors.blue),
+              _buildActionButton(
+                Icons.diamond_outlined,
+                'Metal Payment',
+                Colors.orange,
               ),
-              const SizedBox(width: 4),
-              Text(
-                drCr,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isDr ? Colors.red : Colors.green,
-                ),
+              _buildActionButton(
+                Icons.trending_down,
+                'Rate-Cut',
+                Colors.purple,
               ),
             ],
           ),
@@ -1174,7 +1131,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
     );
   }
 
-  Widget _buildVoucherInformation() {
+  Widget _buildNotesSection() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1186,94 +1143,19 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Voucher Information',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            'Notes',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: AppTheme.textPrimary,
             ),
           ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _transactionNumberCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Invoice No.',
-              hintText: 'Auto-generated',
-              isDense: true,
-            ),
-          ),
-          const SizedBox(height: 12),
-          InkWell(
-            onTap: () async {
-              final d = await showDatePicker(
-                context: context,
-                initialDate: _date,
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2100),
-              );
-              if (d != null) setState(() => _date = d);
-            },
-            child: InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Date',
-                isDense: true,
-              ),
-              child: Text(DateFormat('dd-MMM-yyyy').format(_date)),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _dueDaysCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Due Day',
-                    isDense: true,
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final d = await showDatePicker(
-                      context: context,
-                      initialDate: _dueDate ?? _date,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (d != null) setState(() => _dueDate = d);
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Due Date',
-                      isDense: true,
-                    ),
-                    child: Text(
-                      _dueDate != null
-                          ? DateFormat('dd-MMM-yyyy').format(_dueDate!)
-                          : DateFormat('dd-MMM-yyyy').format(_date),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 12),
           TextFormField(
-            controller: _partyPoCtrl,
+            controller: _remarksController,
+            maxLines: 4,
             decoration: const InputDecoration(
-              labelText: 'Party PO No.',
-              isDense: true,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _referenceNoCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Reference No.',
-              isDense: true,
+              hintText: 'Audio Remarks',
+              border: OutlineInputBorder(),
             ),
           ),
         ],
@@ -1763,6 +1645,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                     width: 80,
                     child: TextFormField(
                       controller: line.grossWeightCtrl,
+                      focusNode: line.grossWeightFocus,
                       style: const TextStyle(fontSize: 12),
                       decoration: InputDecoration(
                         isDense: true,
@@ -2401,6 +2284,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
           line.purityCtrl.text = item.purity ?? '91.6';
         });
         _calculateTotals();
+        Future.microtask(() => line.grossWeightFocus.requestFocus());
       },
       fieldViewBuilder:
           (
@@ -2458,6 +2342,7 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                 _itemSearchControllers[index] = textEditingController;
               }
             }
+            _itemFocusNodes[index] = focusNode;
             return TextFormField(
               controller: textEditingController,
               focusNode: focusNode,
@@ -2533,42 +2418,60 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
                           onTap: () {
                             onSelected(option);
                           },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppTheme.primaryAction.withValues(
-                                      alpha: 0.1,
-                                    )
-                                  : AppTheme.backgroundWhite,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    option.name,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: isSelected
-                                          ? AppTheme.primaryAction
-                                          : AppTheme.textPrimary,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                    ),
-                                  ),
+                          child: Builder(
+                            builder: (context) {
+                              final isHighlighted =
+                                  AutocompleteHighlightedOption.of(context) ==
+                                  index;
+                              if (isHighlighted) {
+                                SchedulerBinding.instance
+                                    .addPostFrameCallback((_) {
+                                      Scrollable.ensureVisible(
+                                        context,
+                                        alignment: 0.5,
+                                      );
+                                    });
+                              }
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
                                 ),
-                                if (isSelected)
-                                  const Icon(
-                                    Icons.check,
-                                    size: 18,
-                                    color: AppTheme.primaryAction,
-                                  ),
-                              ],
-                            ),
+                                decoration: BoxDecoration(
+                                  color: isHighlighted
+                                      ? Theme.of(context).focusColor
+                                      : isSelected
+                                      ? AppTheme.primaryAction.withValues(
+                                          alpha: 0.1,
+                                        )
+                                      : AppTheme.backgroundWhite,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        option.name,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: isSelected
+                                              ? AppTheme.primaryAction
+                                              : AppTheme.textPrimary,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w600
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      const Icon(
+                                        Icons.check,
+                                        size: 18,
+                                        color: AppTheme.primaryAction,
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
                         );
                       },
@@ -2578,64 +2481,6 @@ class _SaleEntryScreenState extends ConsumerState<SaleEntryScreen> {
               ),
             );
           },
-    );
-  }
-
-  Widget _buildAdditionalButtons() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.backgroundWhite,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Additional issue/receive to this transaction',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildActionButton(Icons.diamond, 'Metal Received', Colors.blue),
-              _buildActionButton(
-                Icons.diamond_outlined,
-                'Metal Payment',
-                Colors.orange,
-              ),
-              _buildActionButton(
-                Icons.trending_down,
-                'Rate-Cut',
-                Colors.purple,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Notes',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _remarksController,
-            maxLines: 4,
-            decoration: const InputDecoration(
-              hintText: 'Audio Remarks',
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -3659,6 +3504,8 @@ class TransactionLineState {
   int? selectedItemId;
   String? metalType;
 
+  final grossWeightFocus = FocusNode();
+
   final descCtrl = TextEditingController();
   final grossWeightCtrl = TextEditingController(text: '0');
   final netWeightCtrl = TextEditingController(text: '0');
@@ -3675,6 +3522,10 @@ class TransactionLineState {
   final ghatWeightCtrl = TextEditingController(text: '0');
   final discountCtrl = TextEditingController(text: '0.00');
   final unitCtrl = TextEditingController(text: '0');
+
+  void dispose() {
+    grossWeightFocus.dispose();
+  }
 }
 
 class MetalReceiptDialog extends ConsumerStatefulWidget {
